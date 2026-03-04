@@ -3,36 +3,36 @@ import { WalletNetwork } from "@creit.tech/stellar-wallets-kit";
 import { Network, NetworkType } from "../debug/types/types";
 
 const envSchema = z.object({
-  PUBLIC_STELLAR_NETWORK: z.enum([
+  NEXT_PUBLIC_STELLAR_NETWORK: z.enum([
     "PUBLIC",
     "FUTURENET",
     "TESTNET",
     "LOCAL",
     "STANDALONE", // deprecated in favor of LOCAL
   ] as const),
-  PUBLIC_STELLAR_NETWORK_PASSPHRASE: z.nativeEnum(WalletNetwork),
-  PUBLIC_STELLAR_RPC_URL: z.string(),
-  PUBLIC_STELLAR_HORIZON_URL: z.string(),
-  PUBLIC_IMPACT_SBT_CONTRACT_ID: z.string().optional(),
+  NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE: z.nativeEnum(WalletNetwork),
+  NEXT_PUBLIC_STELLAR_RPC_URL: z.string(),
+  NEXT_PUBLIC_STELLAR_HORIZON_URL: z.string(),
+  NEXT_PUBLIC_IMPACT_SBT_CONTRACT_ID: z.string().optional(),
 });
 
-const parsed = envSchema.safeParse(import.meta.env);
+const parsed = envSchema.safeParse(process.env);
 
 const env: z.infer<typeof envSchema> = parsed.success
   ? parsed.data
   : {
-      PUBLIC_STELLAR_NETWORK: "LOCAL",
-      PUBLIC_STELLAR_NETWORK_PASSPHRASE: WalletNetwork.STANDALONE,
-      PUBLIC_STELLAR_RPC_URL: "http://localhost:8000/rpc",
-      PUBLIC_STELLAR_HORIZON_URL: "http://localhost:8000",
-      PUBLIC_IMPACT_SBT_CONTRACT_ID: undefined,
+      NEXT_PUBLIC_STELLAR_NETWORK: "LOCAL",
+      NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE: WalletNetwork.STANDALONE,
+      NEXT_PUBLIC_STELLAR_RPC_URL: "http://localhost:8000/rpc",
+      NEXT_PUBLIC_STELLAR_HORIZON_URL: "http://localhost:8000",
+      NEXT_PUBLIC_IMPACT_SBT_CONTRACT_ID: undefined,
     };
 
 export const stellarNetwork =
-  env.PUBLIC_STELLAR_NETWORK === "STANDALONE"
+  env.NEXT_PUBLIC_STELLAR_NETWORK === "STANDALONE"
     ? "LOCAL"
-    : env.PUBLIC_STELLAR_NETWORK;
-export const networkPassphrase = env.PUBLIC_STELLAR_NETWORK_PASSPHRASE;
+    : env.NEXT_PUBLIC_STELLAR_NETWORK;
+export const networkPassphrase = env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE;
 
 const stellarEncode = (str: string) => {
   return str.replace(/\//g, "//").replace(/;/g, "/;");
@@ -54,10 +54,10 @@ export const labPrefix = () => {
 };
 
 // NOTE: needs to be exported for contract files in this directory
-export const rpcUrl = env.PUBLIC_STELLAR_RPC_URL;
+export const rpcUrl = env.NEXT_PUBLIC_STELLAR_RPC_URL;
 
-export const horizonUrl = env.PUBLIC_STELLAR_HORIZON_URL;
-export const impactSbtContractId = env.PUBLIC_IMPACT_SBT_CONTRACT_ID ?? "";
+export const horizonUrl = env.NEXT_PUBLIC_STELLAR_HORIZON_URL;
+export const impactSbtContractId = env.NEXT_PUBLIC_IMPACT_SBT_CONTRACT_ID ?? "";
 
 const networkToId = (network: string): NetworkType => {
   switch (network) {

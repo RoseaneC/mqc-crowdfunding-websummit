@@ -20,7 +20,9 @@ export default function CookieConsent() {
   const save = (value: Consent) => {
     try {
       localStorage.setItem(STORAGE_KEY, value);
-    } catch {}
+    } catch {
+      // ignore storage failures and continue
+    }
     setOpen(false);
   };
 
@@ -33,8 +35,8 @@ export default function CookieConsent() {
           <div className="max-w-3xl">
             <p className="font-semibold">Cookies e privacidade</p>
             <p className="text-sm text-white/80 mt-1">
-              Usamos cookies para melhorar sua experiência e entender como o site é usado.
-              Você pode aceitar ou ajustar suas preferências.
+              Usamos cookies para melhorar sua experiência e entender como o
+              site é usado. Você pode aceitar ou ajustar suas preferências.
             </p>
           </div>
 

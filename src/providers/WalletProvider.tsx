@@ -7,12 +7,15 @@ import {
   useState,
   useTransition,
 } from "react";
-import { wallet } from "../util/wallet";
 import storage from "../util/storage";
-import { fetchBalances } from "../util/wallet";
+import {
+  fetchBalances,
+  getAddress,
+  getNetwork,
+  setWallet,
+  signTransaction,
+} from "../util/wallet";
 import type { MappedBalances } from "../util/wallet";
-
-const signTransaction = wallet.signTransaction.bind(wallet);
 
 /**
  * A good-enough implementation of deepEqual.
@@ -42,7 +45,7 @@ export interface WalletContextType {
   isPending: boolean;
   network?: string;
   networkPassphrase?: string;
-  signTransaction: typeof wallet.signTransaction;
+  signTransaction: typeof signTransaction;
   updateBalances: () => Promise<void>;
 }
 
@@ -136,11 +139,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       // extension, depending on which wallet they select!
       try {
         popupLock.current = true;
-        wallet.setWallet(walletId);
-        const [a, n] = await Promise.all([
-          wallet.getAddress(),
-          wallet.getNetwork(),
-        ]);
+        setWallet(walletId);
+        const [a, n] = await Promise.all([getAddress(), getNetwork()]);
 
         if (!a.address) storage.setItem("walletId", "");
         if (

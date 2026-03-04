@@ -8,23 +8,30 @@ import {
 import { Horizon } from "@stellar/stellar-sdk";
 import { networkPassphrase, stellarNetwork } from "../contracts/util";
 
-const kit: StellarWalletsKit = new StellarWalletsKit({
-  network: networkPassphrase as WalletNetwork,
-  modules: sep43Modules(),
-});
+let kitInstance: StellarWalletsKit | null = null;
+
+function getWalletKit() {
+  if (typeof window === "undefined") {
+    throw new Error("Wallet kit is only available in the browser.");
+  }
+  if (!kitInstance) {
+    kitInstance = new StellarWalletsKit({
+      network: networkPassphrase as WalletNetwork,
+      modules: sep43Modules(),
+    });
+  }
+  return kitInstance;
+}
 
 export const connectWallet = async () => {
+  const kit = getWalletKit();
   await kit.openModal({
     modalTitle: "Connect to your wallet",
     onWalletSelected: (option: ISupportedWallet) => {
       const selectedId = option.id;
       kit.setWallet(selectedId);
 
-      // Now open selected wallet's login flow by calling `getAddress` --
-      // Yes, it's strange that a getter has a side effect of opening a modal
       void kit.getAddress().then((address) => {
-        // Once `getAddress` returns successfully, we know they actually
-        // connected the selected wallet, and we set our localStorage
         if (address.address) {
           storage.setItem("walletId", selectedId);
           storage.setItem("walletAddress", address.address);
@@ -53,13 +60,25 @@ export const connectWallet = async () => {
 };
 
 export const disconnectWallet = async () => {
-  await kit.disconnect();
+  await getWalletKit().disconnect();
   storage.removeItem("walletId");
   storage.removeItem("walletAddress");
   storage.removeItem("walletNetwork");
   storage.removeItem("networkPassphrase");
   window.dispatchEvent(new Event("wallet:changed"));
 };
+
+export const setWallet = (walletId: string) => {
+  getWalletKit().setWallet(walletId);
+};
+
+export const getAddress = () => getWalletKit().getAddress();
+
+export const getNetwork = () => getWalletKit().getNetwork();
+
+export const signTransaction: StellarWalletsKit["signTransaction"] = (
+  ...args
+) => getWalletKit().signTransaction(...args);
 
 function getHorizonHost(mode: string) {
   switch (mode) {
@@ -100,15 +119,9 @@ export const fetchBalances = async (address: string) => {
     }, {} as MappedBalances);
     return mapped;
   } catch (err) {
-    // `not found` is sort of expected, indicating an unfunded wallet, which
-    // the consumer of `balances` can understand via the lack of `xlm` key.
-    // If the error does NOT match 'not found', log the error.
-    // We should also possibly not return `{}` in this case?
     if (!(err instanceof Error && err.message.match(/not found/i))) {
       console.error(err);
     }
     return {};
   }
 };
-
-export const wallet = kit;

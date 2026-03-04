@@ -2,31 +2,31 @@ import { Button, Icon, Layout } from "@stellar/design-system";
 import "./App.module.css";
 import ConnectAccount from "./components/ConnectAccount.tsx";
 import { Routes, Route, Outlet, NavLink } from "react-router-dom";
-import Debugger from "./pages/Debugger.tsx";
+import Debugger from "./views/Debugger.tsx";
 
 // Crowdfunding imports
 import CrowdfundingLayout from "./components/crowdfunding/CrowdfundingLayout";
-import Home from "./pages/crowdfunding/Home";
-import Projects from "./pages/crowdfunding/Projects";
-import Contribute from "./pages/crowdfunding/Contribute";
-import Success from "./pages/crowdfunding/Success";
-import Dashboard from "./pages/crowdfunding/Dashboard";
-import Transparency from "./pages/crowdfunding/Transparency";
-import Login from "./pages/crowdfunding/Login";
-import Doar from "./pages/crowdfunding/Doar";
-import Apoiar from "./pages/crowdfunding/Apoiar";
-import Contact from "./pages/crowdfunding/Contact";
-import NotFound from "./pages/crowdfunding/NotFound";
+import Home from "./views/crowdfunding/Home";
+import Projects from "./views/crowdfunding/Projects";
+import Contribute from "./views/crowdfunding/Contribute";
+import Success from "./views/crowdfunding/Success";
+import Dashboard from "./views/crowdfunding/Dashboard";
+import Transparency from "./views/crowdfunding/Transparency";
+import Login from "./views/crowdfunding/Login";
+import Doar from "./views/crowdfunding/Doar";
+import Apoiar from "./views/crowdfunding/Apoiar";
+import Contact from "./views/crowdfunding/Contact";
+import NotFound from "./views/crowdfunding/NotFound";
 
 // Admin imports
 import AdminLayout from "./components/admin/AdminLayout";
 import RequireAdminAuth from "./components/admin/RequireAdminAuth";
 import RequireRole from "./components/admin/RequireRole";
-import AdminAuth from "./pages/admin/Auth";
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminProjects from "./pages/admin/Projects";
-import AdminReports from "./pages/admin/Reports";
-import AdminMROSC from "./pages/admin/MROSC";
+import AdminAuth from "./views/admin/Auth";
+import AdminDashboard from "./views/admin/Dashboard";
+import AdminProjects from "./views/admin/Projects";
+import AdminReports from "./views/admin/Reports";
+import AdminMROSC from "./views/admin/MROSC";
 
 const AppLayout: React.FC = () => (
   <main>

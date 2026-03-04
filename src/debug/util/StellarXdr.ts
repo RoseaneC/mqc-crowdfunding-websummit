@@ -13,6 +13,7 @@ declare global {
 }
 
 const initialize = async () => {
+  if (typeof window === "undefined") return;
   if (!window.__STELLAR_XDR_INIT__) {
     await init();
     window.__STELLAR_XDR_INIT__ = true;

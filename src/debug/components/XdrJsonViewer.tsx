@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PrettyJsonTextarea } from "./PrettyJsonTextarea";
 import { decode, guess, initialize } from "../util/StellarXdr";
 import { Code, Icon } from "@stellar/design-system";
@@ -30,12 +30,21 @@ const variant = {
   },
 };
 
-await initialize();
-
 export const XdrJsonViewer = ({ xdr, typeVariant }: Props) => {
+  const [ready, setReady] = useState(false);
   const [displayFormatted, setDisplayFormatted] = useState<"XDR" | "JSON">(
     "XDR",
   );
+
+  useEffect(() => {
+    void initialize().then(() => {
+      setReady(true);
+    });
+  }, []);
+
+  if (!ready) {
+    return <Code size="sm">Initializing XDR viewer...</Code>;
+  }
 
   const toggleDisplay = () => {
     setDisplayFormatted((prev) => (prev === "XDR" ? "JSON" : "XDR"));

@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const AUTH_TOKEN_KEY = "mqc_api_token";
 
 export function getAuthToken(): string | null {
@@ -18,7 +18,7 @@ export async function apiRequest<T>(
   init?: RequestInit,
 ): Promise<T> {
   const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${API_BASE_URL}/api${path}`, {
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -29,7 +29,9 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `API request failed with status ${response.status}`);
+    throw new Error(
+      text || `API request failed with status ${response.status}`,
+    );
   }
 
   return (await response.json()) as T;

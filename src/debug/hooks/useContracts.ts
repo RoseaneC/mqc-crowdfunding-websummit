@@ -5,7 +5,13 @@ import {
   ContractMetadata,
 } from "../util/loadContractMetada";
 
-const contractModules = import.meta.glob("../../contracts/*.ts");
+const contractModules: Record<string, () => Promise<unknown>> = {
+  "../../contracts/crowdfunding_core.ts": () =>
+    import("../../contracts/crowdfunding_core"),
+  "../../contracts/guess_the_number.ts": () =>
+    import("../../contracts/guess_the_number"),
+  "../../contracts/impact_sbt.ts": () => import("../../contracts/impact_sbt"),
+};
 
 type ContractModule = {
   default: Client;

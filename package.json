@@ -4,14 +4,14 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "npm start",
+    "dev": "concurrently --kill-others-on-fail --names stellar,next -c gray,green --pad-prefix \"stellar scaffold watch --build-clients\" \"next dev\"",
     "init:local": "bash ./scripts/init-local.sh",
     "sync:onchain": "bash ./scripts/sync-onchain-projects.sh",
-    "start": "concurrently --kill-others-on-fail --names stellar,vite -c gray,green --pad-prefix \"stellar scaffold watch --build-clients\" \"vite\"",
-    "dev:full": "npm run init:local && concurrently --kill-others-on-fail --names api,stellar,vite -c blue,gray,green --pad-prefix \"npm --workspace packages/api run dev\" \"stellar scaffold watch --build-clients\" \"vite\"",
-    "build": "tsc -b && vite build",
+    "start": "next start",
+    "dev:full": "npm run init:local && concurrently --kill-others-on-fail --names api,stellar,next -c blue,gray,green --pad-prefix \"npm --workspace packages/api run dev\" \"stellar scaffold watch --build-clients\" \"next dev\"",
+    "build": "next build",
     "install:contracts": "npm install --workspace=packages && npm run build --workspace=packages",
-    "preview": "vite preview",
+    "preview": "next start",
     "lint": "eslint .",
     "format": "prettier . --write",
     "prepare": "husky"
@@ -28,6 +28,7 @@
     "autoprefixer": "^10.4.27",
     "lossless-json": "^4.3.0",
     "lucide-react": "^0.576.0",
+    "next": "^15.5.7",
     "postcss": "^8.5.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -38,13 +39,14 @@
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@types/lodash": "^4.17.21",
+    "@types/node": "^24.5.2",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",
-    "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.2.1",
     "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
+    "eslint-config-next": "^15.5.7",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-dom": "^2.3.11",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -56,10 +58,7 @@
     "lint-staged": "^16.2.7",
     "prettier": "3.6.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.48.1",
-    "vite": "^7.2.6",
-    "vite-plugin-node-polyfills": "^0.24.0",
-    "vite-plugin-wasm": "^3.5.0"
+    "typescript-eslint": "^8.48.1"
   },
   "lint-staged": {
     "**/*": [

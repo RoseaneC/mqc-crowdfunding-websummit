@@ -26,7 +26,7 @@ class TypedStorage<T> {
   private readonly storage: Storage;
 
   constructor() {
-    this.storage = localStorage;
+    this.storage = getStorage();
   }
 
   public get length(): number {
@@ -78,3 +78,32 @@ class TypedStorage<T> {
  * Fully-typed wrapper around localStorage
  */
 export default new TypedStorage<Schema>();
+
+function getStorage(): Storage {
+  if (typeof window !== "undefined" && window.localStorage) {
+    return window.localStorage;
+  }
+
+  // SSR fallback for Next.js build/render phases.
+  const map = new Map<string, string>();
+  return {
+    get length() {
+      return map.size;
+    },
+    clear() {
+      map.clear();
+    },
+    getItem(key: string) {
+      return map.has(key) ? map.get(key)! : null;
+    },
+    key(index: number) {
+      return Array.from(map.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      map.delete(key);
+    },
+    setItem(key: string, value: string) {
+      map.set(key, value);
+    },
+  };
+}

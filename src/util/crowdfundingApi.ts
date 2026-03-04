@@ -198,7 +198,7 @@ export interface AdminMroscDTO {
   reports: AdminMroscReportDTO[];
 }
 
-export interface MyMroscReportDTO extends AdminMroscReportDTO {}
+export type MyMroscReportDTO = AdminMroscReportDTO;
 
 export interface ContactMessageResponseDTO {
   id: number;
@@ -376,7 +376,10 @@ export function getAdminProjectSummary() {
 
 export function updateProjectStatus(
   projectId: number,
-  payload: { status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE"; reason?: string },
+  payload: {
+    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+    reason?: string;
+  },
 ) {
   return apiRequest<{ ok: boolean }>(`/projects/${projectId}/status`, {
     method: "PATCH",
@@ -412,12 +415,18 @@ export function createMroscReport(payload: {
 
 export function updateMroscReportStatus(
   reportId: number,
-  payload: { status: "IN_REVIEW" | "APPROVED" | "REJECTED"; reviewNotes?: string },
+  payload: {
+    status: "IN_REVIEW" | "APPROVED" | "REJECTED";
+    reviewNotes?: string;
+  },
 ) {
-  return apiRequest<{ ok: boolean }>(`/admin/mrosc/reports/${reportId}/status`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  });
+  return apiRequest<{ ok: boolean }>(
+    `/admin/mrosc/reports/${reportId}/status`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export function listAdminUsers() {
@@ -469,13 +478,15 @@ export function createTaxTransfer(payload: {
   toWallet: string;
   amountXlm: number;
 }) {
-  return apiRequest<{ id: number; ok?: boolean; txHash?: string; error?: string }>(
-    "/admin/tax/transfers",
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  return apiRequest<{
+    id: number;
+    ok?: boolean;
+    txHash?: string;
+    error?: string;
+  }>("/admin/tax/transfers", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export function submitContactMessage(payload: {

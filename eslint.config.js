@@ -13,6 +13,8 @@ export default tseslint.config(
     "dist",
     "packages",
     "target/packages",
+    "next-env.d.ts",
+    "tailwind.config.ts",
     "src/contracts/*",
     "!src/contracts/util.ts",
   ]),
@@ -31,7 +33,7 @@ export default tseslint.config(
       ecmaVersion: 2020,
       globals: globals.browser,
       parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
+        project: ["./tsconfig.json"],
         tsconfigRoot: import.meta.dirname,
       },
     },
