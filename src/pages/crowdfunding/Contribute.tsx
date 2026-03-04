@@ -1,19 +1,32 @@
 import { useState, useEffect } from "react";
+import { Buffer } from "buffer";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDonations } from "../../providers/DonationProvider";
 import { useWallet } from "../../hooks/useWallet";
 import { connectWallet } from "../../util/wallet";
-import { prepareDonation, submitDonation } from "../../util/crowdfundingApi";
+import { createCrowdfundingClient } from "../../contracts/crowdfunding_core";
+import {
+  listProjectMedia,
+  listProjects,
+  prepareDonation,
+  submitDonation,
+  type ProjectDTO,
+  type ProjectMediaItemDTO,
+} from "../../util/crowdfundingApi";
 
 export default function Contribute() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addDonation } = useDonations();
-  const { address, balances, network } = useWallet();
+  const { address, balances, network, signTransaction } = useWallet();
 
   // Captura os dados passados pela página de projetos
   const projetoId = searchParams.get("projeto") || "1";
-  const projetoNome = searchParams.get("nome") || "Bootcamp Fullstack Periferia";
+  const projetoNomeParam = searchParams.get("nome")?.trim() ?? "";
+  const [project, setProject] = useState<ProjectDTO | null>(null);
+  const [projectMedia, setProjectMedia] = useState<ProjectMediaItemDTO | null>(
+    null,
+  );
 
   const [tipoDoador, setTipoDoador] = useState("PF");
   const [valorXLM, setValorXLM] = useState("0");
@@ -82,30 +95,39 @@ export default function Contribute() {
         walletAddress: address,
       });
 
-      // Placeholder until full contract invocation is wired from generated client.
-      const txHash = `stellar_${crypto.randomUUID().replace(/-/g, "")}`;
-      const nftId = Math.floor(Math.random() * 10_000) + 1;
+      const chainResult = await executeOnChainDonation({
+        walletAddress: address,
+        projectId: Number(projetoId),
+        donorType: tipoDoador as "PF" | "PJ",
+        donorDocHash,
+        amountXlm: Number(valorXLM),
+        signTransaction,
+      });
 
       await submitDonation({
         donationId: prepared.donationId,
-        txHash,
-        nftId,
+        txHash: chainResult.txHash,
+        nftId: chainResult.nftId,
+        contractDonationId: String(chainResult.contractDonationId),
       });
+      const projectName =
+        project?.title || projetoNomeParam || `Campanha #${projetoId}`;
+
       await addDonation({
         id: String(prepared.donationId),
         projectId: projetoId,
-        projectName: projetoNome,
+        projectName,
         amount: valorXLM,
         amountBRL: valorBRL,
         timestamp: Date.now(),
-        nftId,
+        nftId: chainResult.nftId,
         donorType: tipoDoador as "PF" | "PJ",
         walletAddress: address,
-        txHash,
+        txHash: chainResult.txHash,
       });
 
       navigate(
-        `/sucesso?donationId=${prepared.donationId}&txHash=${txHash}&nftId=${nftId}&xlm=${valorXLM}&tipo=${tipoDoador}&projeto=${projetoNome}`,
+        `/sucesso?donationId=${prepared.donationId}&txHash=${chainResult.txHash}&nftId=${chainResult.nftId}&xlm=${valorXLM}&tipo=${tipoDoador}&projeto=${encodeURIComponent(projectName)}`,
       );
     } catch (error) {
       const message =
@@ -120,53 +142,82 @@ export default function Contribute() {
     setIdentificacao("");
   }, [tipoDoador]);
 
+  useEffect(() => {
+    void Promise.all([listProjects(), listProjectMedia()])
+      .then(([projects, media]) => {
+        const selected = projects.find((item) => String(item.id) === projetoId);
+        setProject(selected ?? null);
+        const selectedMedia = media.find((item) => item.id === projetoId);
+        setProjectMedia(selectedMedia ?? null);
+      })
+      .catch(() => {});
+  }, [projetoId]);
+
+  const progressPercent = project
+    ? Math.min(
+        100,
+        Math.round((Number(project.raisedXlm) / Number(project.targetXlm)) * 100),
+      )
+    : 0;
+  const displayProjectName =
+    project?.title || projetoNomeParam || `Campanha #${projetoId}`;
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 font-sans text-slate-900 dark:text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 transition-colors duration-200">
 
       <main className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
             <div className="h-64 relative flex items-end p-6 bg-[#002B99]">
-              <img
-                src="https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80"
-                className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
-                alt="Mulheres estudando"
-              />
+              {projectMedia?.img ? (
+                <img
+                  src={projectMedia.img}
+                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
+                  alt={displayProjectName}
+                />
+              ) : null}
               <div className="relative z-10 space-y-3">
                 <span className="bg-yellow-400 text-[#002B99] text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                  Educação & Tecnologia
+                  {project?.taxCategory ?? "Educacao & Tecnologia"}
                 </span>
                 <h2 className="text-white font-black text-3xl leading-tight tracking-tight uppercase">
                   Apoiando:<br />
-                  <span className="text-yellow-400 italic">{projetoNome}</span>
+                  <span className="text-yellow-400 italic">
+                    {displayProjectName}
+                  </span>
                 </h2>
               </div>
             </div>
 
             <div className="p-8 space-y-6">
-              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium leading-relaxed uppercase tracking-widest">
-                Sua doação financia bolsas de estudo integrais para mulheres de
-                periferia em desenvolvimento Full Stack.
+              <p className="text-sm text-slate-500 font-medium leading-relaxed uppercase tracking-widest">
+                {project?.description ??
+                  "Sua doacao financia bolsas de estudo integrais para mulheres em tecnologia."}
               </p>
 
               <div className="space-y-3">
-                <div className="flex justify-between text-xs font-black uppercase tracking-widest text-[#002B99] dark:text-blue-400">
+                <div className="flex justify-between text-xs font-black uppercase tracking-widest text-[#002B99]">
                   <span>Meta do Projeto</span>
-                  <span className="text-slate-400">75% alcançado</span>
+                  <span className="text-slate-400">
+                    {progressPercent}% alcancado
+                  </span>
                 </div>
-                <div className="w-full bg-slate-100 dark:bg-slate-700 h-3 rounded-full overflow-hidden">
-                  <div className="bg-orange-500 h-full w-3/4 rounded-full"></div>
+                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                  <div
+                    className="bg-orange-500 h-full rounded-full"
+                    style={{ width: `${progressPercent}%` }}
+                  ></div>
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl flex items-center gap-3">
-                <div className="bg-green-100 dark:bg-green-900/30 w-8 h-8 rounded-full flex items-center justify-center">
-                  <span className="material-icons text-green-600 dark:text-green-400 text-sm">
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3">
+                <div className="bg-green-100 w-8 h-8 rounded-full flex items-center justify-center">
+                  <span className="material-icons text-green-600 text-sm">
                     verified
                   </span>
                 </div>
-                <span className="text-xs text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider">
-                  Projeto aprovado na Lei Rouanet (Art. 18)
+                <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">
+                  Projeto com captacao habilitada na plataforma
                 </span>
               </div>
             </div>
@@ -210,26 +261,26 @@ export default function Contribute() {
           </div>
         </div>
 
-        <div className="lg:col-span-7 bg-white dark:bg-slate-800 rounded-3xl shadow-xl p-8 lg:p-12 border border-slate-100 dark:border-slate-700">
+        <div className="lg:col-span-7 bg-white rounded-3xl shadow-xl p-8 lg:p-12 border border-slate-100">
           <div className="mb-8">
-            <h1 className="text-4xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
+            <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">
               Realizar Doação
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-base">
+            <p className="text-slate-500 text-base">
               Complete os dados abaixo para contribuir via Stellar (XLM).
             </p>
           </div>
 
           <div className="space-y-10">
-            <div className="border-2 border-orange-100 dark:border-orange-900/30 bg-orange-50/50 dark:bg-orange-900/10 p-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="border-2 border-orange-100 bg-orange-50/50 p-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-sm border border-orange-100 dark:border-orange-900/50 shrink-0">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-orange-100 shrink-0">
                   <span className="material-icons text-orange-500 text-3xl">
                     account_balance_wallet
                   </span>
                 </div>
                 <div>
-                  <h4 className="font-black text-lg text-slate-800 dark:text-white leading-none mb-1">
+                  <h4 className="font-black text-lg text-slate-800 leading-none mb-1">
                     Carteira Freighter
                   </h4>
                   <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
@@ -245,14 +296,14 @@ export default function Contribute() {
                   Conectar Carteira
                 </button>
               ) : (
-                <div className="w-full sm:w-auto bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl px-4 py-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-300">
+                <div className="w-full sm:w-auto bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
                     Carteira Conectada
                   </p>
-                  <p className="text-xs font-bold text-slate-700 dark:text-slate-200 mt-1">
+                  <p className="text-xs font-bold text-slate-700 mt-1">
                     {shortAddress(address)}
                   </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-[11px] text-slate-500 mt-1">
                     {balances?.xlm?.balance ?? "-"} XLM
                     {network ? ` • ${network}` : ""}
                   </p>
@@ -269,14 +320,14 @@ export default function Contribute() {
                   onClick={() => setTipoDoador("PF")}
                   className={`flex flex-col items-center justify-center p-6 border-2 rounded-2xl transition-all ${
                     tipoDoador === "PF"
-                      ? "border-[#002B99] bg-blue-50/50 dark:bg-blue-900/20"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300"
+                      ? "border-[#002B99] bg-blue-50/50"
+                      : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
                   <span
                     className={`material-icons text-3xl mb-3 ${
                       tipoDoador === "PF"
-                        ? "text-[#002B99] dark:text-blue-400"
+                        ? "text-[#002B99]"
                         : "text-slate-400"
                     }`}
                   >
@@ -285,7 +336,7 @@ export default function Contribute() {
                   <span
                     className={`font-black text-sm tracking-wide ${
                       tipoDoador === "PF"
-                        ? "text-[#002B99] dark:text-blue-400"
+                        ? "text-[#002B99]"
                         : "text-slate-500"
                     }`}
                   >
@@ -296,14 +347,14 @@ export default function Contribute() {
                   onClick={() => setTipoDoador("PJ")}
                   className={`flex flex-col items-center justify-center p-6 border-2 rounded-2xl transition-all ${
                     tipoDoador === "PJ"
-                      ? "border-[#002B99] bg-blue-50/50 dark:bg-blue-900/20"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300"
+                      ? "border-[#002B99] bg-blue-50/50"
+                      : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
                   <span
                     className={`material-icons text-3xl mb-3 ${
                       tipoDoador === "PJ"
-                        ? "text-[#002B99] dark:text-blue-400"
+                        ? "text-[#002B99]"
                         : "text-slate-400"
                     }`}
                   >
@@ -312,7 +363,7 @@ export default function Contribute() {
                   <span
                     className={`font-black text-sm tracking-wide ${
                       tipoDoador === "PJ"
-                        ? "text-[#002B99] dark:text-blue-400"
+                        ? "text-[#002B99]"
                         : "text-slate-500"
                     }`}
                   >
@@ -339,19 +390,19 @@ export default function Contribute() {
                       ? "000.000.000-00"
                       : "00.000.000/0000-00"
                   }
-                  className="w-full pl-14 pr-6 py-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#002B99] text-base font-bold text-slate-700 dark:text-white transition-all placeholder:font-normal"
+                  className="w-full pl-14 pr-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#002B99] text-base font-bold text-slate-700 transition-all placeholder:font-normal"
                 />
               </div>
             </div>
 
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800">
+            <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                 <div className="space-y-4">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
                     Valor da Doação
                   </label>
-                  <div className="flex items-center gap-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-[#002B99] transition-all">
-                    <div className="flex flex-col text-[10px] font-black text-[#002B99] dark:text-blue-400 pr-4 border-r border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-[#002B99] transition-all">
+                    <div className="flex flex-col text-[10px] font-black text-[#002B99] pr-4 border-r border-slate-200">
                       <span>XLM</span>
                       <span className="material-icons text-base mt-1">
                         currency_exchange
@@ -361,7 +412,7 @@ export default function Contribute() {
                       type="number"
                       value={valorXLM}
                       onChange={(e) => setValorXLM(e.target.value)}
-                      className="w-full bg-transparent font-black text-3xl text-slate-900 dark:text-white outline-none"
+                      className="w-full bg-transparent font-black text-3xl text-slate-900 outline-none"
                     />
                     <span className="text-slate-400 font-black tracking-widest uppercase text-sm">
                       XLM
@@ -369,19 +420,19 @@ export default function Contribute() {
                   </div>
                   <p className="text-[10px] text-slate-400 font-bold ml-1 uppercase tracking-widest">
                     Taxa de rede estimada:{" "}
-                    <span className="text-slate-600 dark:text-slate-300">
+                    <span className="text-slate-600">
                       0.00001 XLM
                     </span>
                   </p>
                 </div>
 
-                <div className="space-y-4 md:border-l border-slate-200 dark:border-slate-700 md:pl-8 h-full flex flex-col justify-center pt-2">
+                <div className="space-y-4 md:border-l border-slate-200 md:pl-8 h-full flex flex-col justify-center pt-2">
                   <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
                     Aproximadamente
                   </label>
                   <div className="flex items-baseline gap-2 mb-2">
                     <span className="text-slate-400 text-xl font-bold">R$</span>
-                    <span className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">
+                    <span className="text-4xl font-black text-slate-900 tracking-tighter">
                       {valorBRL.replace(".", ",")}
                     </span>
                   </div>
@@ -392,18 +443,18 @@ export default function Contribute() {
               </div>
             </div>
 
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 p-6 rounded-2xl flex items-start gap-4 shadow-sm">
+            <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl flex items-start gap-4 shadow-sm">
               <div className="bg-[#002B99] text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-md">
                 <span className="material-icons text-sm">info</span>
               </div>
               <div className="space-y-1 pt-1">
-                <h5 className="font-black text-sm text-[#002B99] dark:text-blue-400 uppercase tracking-widest">
+                <h5 className="font-black text-sm text-[#002B99] uppercase tracking-widest">
                   Incentivo Fiscal Ativo
                 </h5>
-                <p className="text-xs text-blue-900 dark:text-blue-300 font-medium leading-relaxed">
+                <p className="text-xs text-blue-900 font-medium leading-relaxed">
                   Baseado no seu perfil ({tipoDoador}), esta doação pode gerar
                   um abatimento de aprox.{" "}
-                  <span className="font-black text-[#002B99] dark:text-blue-400 bg-white dark:bg-slate-800 px-2 py-0.5 rounded">
+                  <span className="font-black text-[#002B99] bg-white px-2 py-0.5 rounded">
                     R$ {calcularAbatimento()}
                   </span>{" "}
                   no seu próximo IR.
@@ -447,4 +498,54 @@ async function hashStringHex(value: string): Promise<string> {
 function shortAddress(value: string): string {
   if (value.length <= 14) return value;
   return `${value.slice(0, 6)}...${value.slice(-6)}`;
+}
+
+async function executeOnChainDonation(input: {
+  walletAddress: string;
+  projectId: number;
+  donorType: "PF" | "PJ";
+  donorDocHash: string;
+  amountXlm: number;
+  signTransaction: ReturnType<typeof useWallet>["signTransaction"];
+}) {
+  const client = createCrowdfundingClient(input.walletAddress);
+  try {
+    await client.get_project({ project_id: BigInt(input.projectId) });
+  } catch {
+    throw new Error(
+      "Projeto ainda nao sincronizado no contrato local. Rode o sync on-chain dos projetos e tente novamente.",
+    );
+  }
+
+  const assembled = await client.donate({
+    donor: input.walletAddress,
+    project_id: BigInt(input.projectId),
+    donor_type: input.donorType === "PF" ? 1 : 2,
+    donor_doc_hash: Buffer.from(input.donorDocHash, "hex"),
+    amount_stroops: BigInt(Math.round(input.amountXlm * 10_000_000)),
+  });
+
+  const sent = await assembled.signAndSend({
+    signTransaction: input.signTransaction,
+  });
+
+  const sentTx = sent as {
+    result?: unknown;
+    sendTransactionResponse?: { hash?: string };
+    getTransactionResponse?: { txHash?: string };
+  };
+  const txHash =
+    sentTx.getTransactionResponse?.txHash ??
+    sentTx.sendTransactionResponse?.hash ??
+    "";
+  const txResult = sentTx.result;
+  if (!txHash || !Array.isArray(txResult) || txResult.length < 2) {
+    throw new Error("Falha ao confirmar transacao on-chain.");
+  }
+
+  return {
+    txHash,
+    contractDonationId: Number(txResult[0]),
+    nftId: Number(txResult[1]),
+  };
 }

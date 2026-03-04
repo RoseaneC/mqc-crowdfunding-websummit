@@ -51,7 +51,7 @@ export default function Projects() {
   }, [projects, query]);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-200">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
       <header className="relative bg-[#002B99] overflow-hidden">
         <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-orange-500 rounded-full opacity-20 blur-3xl" />
         <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 bg-yellow-400 rounded-full opacity-20 blur-3xl" />
@@ -68,9 +68,9 @@ export default function Projects() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="mb-10 bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800">
+        <div className="mb-10 bg-white p-6 rounded-[2rem] shadow-xl border border-slate-100">
           <input
-            className="block w-full px-4 py-3 border border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#002B99] font-bold text-sm"
+            className="block w-full px-4 py-3 border border-slate-200 rounded-2xl bg-slate-50 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#002B99] font-bold text-sm"
             placeholder="Buscar projetos, tags..."
             type="text"
             value={query}
@@ -78,25 +78,25 @@ export default function Projects() {
           />
         </div>
 
-        <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-10 uppercase tracking-tighter">
+        <h2 className="text-3xl font-black text-slate-900 mb-10 uppercase tracking-tighter">
           Projetos Aprovados
         </h2>
 
         {loading ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-8 text-sm font-bold text-slate-500">
+          <div className="bg-white border border-slate-100 rounded-2xl p-8 text-sm font-bold text-slate-500">
             Carregando projetos...
           </div>
         ) : error ? (
-          <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-2xl p-8">
-            <p className="text-rose-700 dark:text-rose-300 text-sm font-bold">
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8">
+            <p className="text-rose-700 text-sm font-bold">
               Nao foi possivel carregar os projetos.
             </p>
-            <p className="text-rose-600 dark:text-rose-400 text-xs mt-2 break-all">
+            <p className="text-rose-600 text-xs mt-2 break-all">
               {error}
             </p>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-8 text-sm font-bold text-slate-500">
+          <div className="bg-white border border-slate-100 rounded-2xl p-8 text-sm font-bold text-slate-500">
             Nenhum projeto encontrado.
           </div>
         ) : (
@@ -108,7 +108,7 @@ export default function Projects() {
             return (
               <div
                 key={project.id}
-                className="group bg-white dark:bg-slate-900 rounded-[2rem] shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col"
+                className="group bg-white rounded-[2rem] shadow-xl border border-slate-100 overflow-hidden flex flex-col"
               >
                 <div className="h-52 bg-slate-200 relative overflow-hidden">
                   <img
@@ -118,13 +118,13 @@ export default function Projects() {
                   />
                 </div>
                 <div className="p-7 flex-1 flex flex-col">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg w-fit">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-lg w-fit">
                     {project.taxCategory}
                   </span>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-4 mb-3 tracking-tight leading-none uppercase">
+                  <h3 className="text-2xl font-bold text-slate-900 mt-4 mb-3 tracking-tight leading-none uppercase">
                     {project.title}
                   </h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 font-medium leading-relaxed flex-1">
+                  <p className="text-slate-500 text-sm mb-6 font-medium leading-relaxed flex-1">
                     {project.description}
                   </p>
                   <div className="mb-6 space-y-3">
@@ -133,7 +133,7 @@ export default function Projects() {
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
                           Arrecadado
                         </span>
-                        <span className="font-black text-slate-900 dark:text-white">
+                        <span className="font-black text-slate-900">
                           {Number(project.raisedXlm).toLocaleString("pt-BR")} XLM
                         </span>
                       </div>
@@ -141,7 +141,7 @@ export default function Projects() {
                         {progress}% da Meta
                       </span>
                     </div>
-                    <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                       <div
                         className={`${accent} h-full rounded-full transition-all duration-700`}
                         style={{ width: `${progress}%` }}

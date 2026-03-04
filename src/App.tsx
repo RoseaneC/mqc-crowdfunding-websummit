@@ -20,6 +20,9 @@ import NotFound from "./pages/crowdfunding/NotFound";
 
 // Admin imports
 import AdminLayout from "./components/admin/AdminLayout";
+import RequireAdminAuth from "./components/admin/RequireAdminAuth";
+import RequireRole from "./components/admin/RequireRole";
+import AdminAuth from "./pages/admin/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProjects from "./pages/admin/Projects";
 import AdminReports from "./pages/admin/Reports";
@@ -92,11 +95,33 @@ function App() {
       </Route>
 
       {/* Admin Routes with admin layout */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin/auth" element={<AdminAuth />} />
+      <Route
+        path="/admin"
+        element={
+          <RequireAdminAuth>
+            <AdminLayout />
+          </RequireAdminAuth>
+        }
+      >
         <Route index element={<AdminDashboard />} />
         <Route path="projetos" element={<AdminProjects />} />
-        <Route path="relatorios" element={<AdminReports />} />
-        <Route path="mrosc" element={<AdminMROSC />} />
+        <Route
+          path="relatorios"
+          element={
+            <RequireRole role="SUPERADMIN">
+              <AdminReports />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="mrosc"
+          element={
+            <RequireRole role="SUPERADMIN">
+              <AdminMROSC />
+            </RequireRole>
+          }
+        />
       </Route>
 
       {/* Debugger Routes with Stellar Design layout */}

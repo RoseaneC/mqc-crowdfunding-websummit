@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "npm start",
     "init:local": "bash ./scripts/init-local.sh",
+    "sync:onchain": "bash ./scripts/sync-onchain-projects.sh",
     "start": "concurrently --kill-others-on-fail --names stellar,vite -c gray,green --pad-prefix \"stellar scaffold watch --build-clients\" \"vite\"",
     "dev:full": "npm run init:local && concurrently --kill-others-on-fail --names api,stellar,vite -c blue,gray,green --pad-prefix \"npm --workspace packages/api run dev\" \"stellar scaffold watch --build-clients\" \"vite\"",
     "build": "tsc -b && vite build",
@@ -27,7 +28,6 @@
     "autoprefixer": "^10.4.27",
     "lossless-json": "^4.3.0",
     "lucide-react": "^0.576.0",
-    "next-themes": "^0.4.6",
     "postcss": "^8.5.8",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

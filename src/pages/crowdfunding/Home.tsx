@@ -10,7 +10,7 @@ const partners = [
 
 export default function Home() {
   return (
-    <div className="min-h-screen font-body bg-background-light dark:bg-background-dark">
+    <div className="min-h-screen font-body bg-background-light">
       {/* HERO */}
       <header className="relative overflow-hidden bg-[#070039] pt-20 sm:pt-24 lg:pt-28 pb-14 sm:pb-16">
         {/* FUNDO DO HERO - sempre azul sólido */}
@@ -146,65 +146,65 @@ export default function Home() {
 
       <section
         id="sobre"
-        className="py-20 bg-background-light dark:bg-background-dark"
+        className="py-20 bg-background-light"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 dark:text-white mt-2 mb-4">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-gray-900 mt-2 mb-4">
               Como funciona?
             </h2>
-            <span className="dark-text tracking-wider text-sm dark:text-white">
+            <span className="dark-text tracking-wider text-sm">
               Transparência total em cada etapa. Utilizamos a rede Stellar para garantir que sua contribuição chegue ao destino.
             </span>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {/* CARD 1 */}
-            <div className="bg-white dark:bg-surface-dark p-8 rounded-3xl shadow-md border-b-4 border-primary hover:-translate-y-1 transition-all duration-300 group text-center">
-              <div className="w-16 h-16 bg-primary/10 dark:bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-primary dark:text-white text-3xl">
+            <div className="bg-white p-8 rounded-3xl shadow-md border-b-4 border-primary hover:-translate-y-1 transition-all duration-300 group text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-primary text-3xl">
                   search_check
                 </span>
               </div>
 
-              <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-xl font-display font-bold text-gray-900 mb-3">
                 1. Escolha um projeto
               </h3>
 
-              <p className="text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+              <p className="text-gray-600 font-medium leading-relaxed">
                 Navegue por causas de educação tech em diferentes comunidades do Brasil e escolha qual apoiar.
               </p>
             </div>
 
             {/* CARD 2 */}
-            <div className="bg-white dark:bg-surface-dark p-8 rounded-3xl shadow-md border-b-4 border-secondary hover:-translate-y-1 transition-all duration-300 group text-center">
-              <div className="w-16 h-16 bg-secondary/10 dark:bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-secondary dark:text-white text-3xl">
+            <div className="bg-white p-8 rounded-3xl shadow-md border-b-4 border-secondary hover:-translate-y-1 transition-all duration-300 group text-center">
+              <div className="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-secondary text-3xl">
                   currency_exchange
                 </span>
               </div>
 
-              <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-xl font-display font-bold text-gray-900 mb-3">
                 2. Doação em XLM
               </h3>
 
-              <p className="text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+              <p className="text-gray-600 font-medium leading-relaxed">
                 Sua doação é processada via XLM (Stellar), garantindo taxas mínimas e rastreabilidade total.
               </p>
             </div>
 
             {/* CARD 3 */}
-            <div className="bg-white dark:bg-surface-dark p-8 rounded-3xl shadow-md border-b-4 border-accent hover:-translate-y-1 transition-all duration-300 group text-center">
-              <div className="w-16 h-16 bg-accent/10 dark:bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-accent dark:text-white text-3xl">
+            <div className="bg-white p-8 rounded-3xl shadow-md border-b-4 border-accent hover:-translate-y-1 transition-all duration-300 group text-center">
+              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-accent text-3xl">
                   token
                 </span>
               </div>
 
-              <h3 className="text-xl font-display font-bold text-gray-900 dark:text-white mb-3">
+              <h3 className="text-xl font-display font-bold text-gray-900 mb-3">
                 3. NFT de Impacto
               </h3>
 
-              <p className="text-gray-600 dark:text-gray-300 font-medium leading-relaxed">
+              <p className="text-gray-600 font-medium leading-relaxed">
                 Receba um NFT exclusivo que serve como certificado digital de impacto e dá acesso à nossa comunidade.
               </p>
             </div>
@@ -212,28 +212,28 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="faq" className="py-20 bg-white dark:bg-gray-800">
+      <section id="faq" className="py-20 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-display font-bold text-gray-900 dark:text-white text-center mb-12">
+          <h2 className="text-3xl font-display font-bold text-gray-900 text-center mb-12">
             Perguntas Frequentes
           </h2>
           <div className="space-y-4">
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">O que é a plataforma?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 Uma plataforma de crowdfunding baseada na blockchain Stellar
                 conectando doadores a projetos de impacto social voltados para
                 mulheres.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">
                   Preciso entender blockchain para doar?
                 </h3>
@@ -241,27 +241,27 @@ export default function Home() {
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 Não A interface foi desenhada sem jargões complexos Você só
                 precisa conectar uma carteira compatível e seguir as instruções.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">Minha doação pode ser deduzida?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 Sim dependendo da categoria fiscal do projeto e do seu tipo de
                 declaração informamos os percentuais durante o fluxo de doação.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">
                   O que é o Certificado Digital de Impacto?
                 </h3>
@@ -269,86 +269,86 @@ export default function Home() {
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 É um NFT intransferível cunhado na rede Stellar que serve como
                 prova imutável e transparente do seu apoio ao projeto.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">Empresas podem doar?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 Sim aceitamos doações de Pessoas Jurídicas com taxas reduzidas e
                 possibilidade de abatimento via Lucro Real.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">Como funciona dedução PF e PJ?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 PF pode deduzir até seis porcento no IRPF completo PJ pode
                 deduzir de um a quatro porcento dependendo da lei de incentivo.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">Como ONGs enviam projetos?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 Representantes devem acessar a rota de cadastro preencher os
                 dados do projeto definir a carteira Stellar e submeter para
                 revisão administrativa.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">Quais documentos são necessários?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 Documentação legal da ONG CNPJ ativo e certificados
                 governamentais relativos às tags fiscais escolhidas.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">O que é Stellar?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 Stellar é uma rede blockchain de código aberto otimizada para
                 pagamentos rápidos seguros e com taxas mínimas.
               </p>
             </details>
 
-            <details className="group bg-background-light dark:bg-background-dark rounded-xl p-4 border border-gray-100 dark:border-gray-700">
-              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 dark:text-white font-bold list-none">
+            <details className="group bg-background-light rounded-xl p-4 border border-gray-100">
+              <summary className="flex cursor-pointer items-center justify-between gap-1.5 text-gray-900 font-bold list-none">
                 <h3 className="text-lg">Por que usar blockchain?</h3>
                 <span className="material-icons-outlined group-open:-rotate-180 transition-transform">
                   expand_more
                 </span>
               </summary>
-              <p className="mt-4 leading-relaxed text-gray-700 dark:text-gray-300">
+              <p className="mt-4 leading-relaxed text-gray-700">
                 A blockchain garante que os fundos cheguem diretamente ao
                 projeto de forma transparente atomatizando a divisão de taxas e
                 criando registros imutáveis.

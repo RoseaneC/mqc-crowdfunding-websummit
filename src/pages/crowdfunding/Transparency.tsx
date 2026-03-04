@@ -1,8 +1,32 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getTransparencySummary } from "../../util/crowdfundingApi";
 
 export default function Transparency() {
+  const [summary, setSummary] = useState({
+    totalXlm: 0,
+    projectXlm: 0,
+    feeXlm: 0,
+    approvedProjects: 0,
+    uniqueDonors: 0,
+  });
+
+  useEffect(() => {
+    void getTransparencySummary()
+      .then((response) => {
+        setSummary({
+          totalXlm: response.totalXlm,
+          projectXlm: response.projectXlm,
+          feeXlm: response.feeXlm,
+          approvedProjects: response.approvedProjects,
+          uniqueDonors: response.uniqueDonors,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
 
       {/* HERO SECTION - REQUISITO VISUAL IMAGE_D719D8 */}
       <section className="bg-[#002B99] py-24 px-4 text-center relative overflow-hidden">
@@ -26,48 +50,73 @@ export default function Transparency() {
         </div>
       </section>
 
+      <section className="max-w-7xl mx-auto px-4 -mt-10 relative z-20">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <MetricCard
+            label="Total Doado"
+            value={`${summary.totalXlm.toLocaleString("pt-BR")} XLM`}
+          />
+          <MetricCard
+            label="Liquido em Projetos"
+            value={`${summary.projectXlm.toLocaleString("pt-BR")} XLM`}
+          />
+          <MetricCard
+            label="Taxa da Plataforma"
+            value={`${summary.feeXlm.toLocaleString("pt-BR")} XLM`}
+          />
+          <MetricCard
+            label="Projetos Aprovados"
+            value={summary.approvedProjects.toLocaleString("pt-BR")}
+          />
+          <MetricCard
+            label="Doadores Unicos"
+            value={summary.uniqueDonors.toLocaleString("pt-BR")}
+          />
+        </div>
+      </section>
+
       {/* FLUXO DA DOAÇÃO */}
       <section className="max-w-7xl mx-auto px-4 py-24">
         <div className="text-center space-y-4 mb-16">
-          <h2 className="text-4xl font-black text-[#002B99] dark:text-white tracking-tighter uppercase">O Fluxo da Doação</h2>
+          <h2 className="text-4xl font-black text-[#002B99] tracking-tighter uppercase">O Fluxo da Doação</h2>
           <div className="w-20 h-1.5 bg-orange-500 mx-auto rounded-full"></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Passo 1 */}
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 text-center space-y-6 group hover:border-[#002B99] transition-all">
-            <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-3xl flex items-center justify-center mx-auto transition-transform group-hover:rotate-12">
+          <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 text-center space-y-6 group hover:border-[#002B99] transition-all">
+            <div className="w-20 h-20 bg-blue-50 rounded-3xl flex items-center justify-center mx-auto transition-transform group-hover:rotate-12">
               <span className="material-icons text-[#002B99] text-4xl">payments</span>
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-black uppercase tracking-tight">1. Você Contribui</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed font-bold">
+              <p className="text-slate-500 text-sm leading-relaxed font-bold">
                 Faça sua doação em Reais ou XLM. Nossa plataforma converte automaticamente o valor para um ativo digital seguro na rede Stellar.
               </p>
             </div>
           </div>
 
           {/* Passo 2 */}
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 text-center space-y-6 group hover:border-[#002B99] transition-all">
-            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-3xl flex items-center justify-center mx-auto transition-transform group-hover:rotate-12">
+          <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 text-center space-y-6 group hover:border-[#002B99] transition-all">
+            <div className="w-20 h-20 bg-orange-50 rounded-3xl flex items-center justify-center mx-auto transition-transform group-hover:rotate-12">
               <span className="material-icons text-orange-500 text-4xl">school</span>
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-black uppercase tracking-tight">2. Bolsas são Geradas</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed font-bold">
+              <p className="text-slate-500 text-sm leading-relaxed font-bold">
                 Os recursos são direcionados diretamente para financiar bootcamps de programação e kits de tecnologia para alunas em comunidades periféricas.
               </p>
             </div>
           </div>
 
           {/* Passo 3 */}
-          <div className="bg-white dark:bg-slate-900 p-10 rounded-[2.5rem] shadow-xl border border-slate-100 dark:border-slate-800 text-center space-y-6 group hover:border-[#002B99] transition-all">
-            <div className="w-20 h-20 bg-emerald-50 dark:bg-emerald-900/20 rounded-3xl flex items-center justify-center mx-auto transition-transform group-hover:rotate-12">
+          <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100 text-center space-y-6 group hover:border-[#002B99] transition-all">
+            <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto transition-transform group-hover:rotate-12">
               <span className="material-icons text-emerald-600 text-4xl">verified</span>
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-black uppercase tracking-tight">3. Você Recebe um NFT</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed font-bold">
+              <p className="text-slate-500 text-sm leading-relaxed font-bold">
                 Como comprovante imutável do seu impacto social, você recebe um "Impact NFT" exclusivo em sua carteira digital Stellar.
               </p>
             </div>
@@ -76,7 +125,7 @@ export default function Transparency() {
       </section>
 
       {/* SEÇÃO NFT DE IMPACTO - REQUISITO VISUAL IMAGE_D719D8 */}
-      <section className="bg-slate-100 dark:bg-slate-900/50 py-24">
+      <section className="bg-slate-100 py-24">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="relative group">
             <div className="absolute inset-0 bg-orange-500 blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
@@ -91,9 +140,9 @@ export default function Transparency() {
           <div className="space-y-8">
             <div className="space-y-2">
               <span className="text-orange-500 font-black text-[11px] uppercase tracking-[0.4em]">Transparência Radical</span>
-              <h2 className="text-5xl font-black text-slate-900 dark:text-white tracking-tighter uppercase leading-none">O que é o <span className="text-[#002B99] dark:text-blue-400">NFT de Impacto?</span></h2>
+              <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none">O que é o <span className="text-[#002B99]">NFT de Impacto?</span></h2>
             </div>
-            <p className="text-lg text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
+            <p className="text-lg text-slate-500 leading-relaxed font-medium">
               Não é arte especulativa. É um recibo digital eterno. Ao contrário de recibos de papel que se perdem, o NFT (Token Não Fungível) de Impacto é registrado na blockchain da Stellar Network.
             </p>
 
@@ -130,17 +179,17 @@ export default function Transparency() {
 
       {/* FAQ - DÚVIDAS FREQUENTES */}
       <section className="max-w-4xl mx-auto px-4 py-24 space-y-16">
-        <h2 className="text-4xl font-black text-center text-slate-900 dark:text-white tracking-tighter uppercase leading-none">Dúvidas Frequentes</h2>
+        <h2 className="text-4xl font-black text-center text-slate-900 tracking-tighter uppercase leading-none">Dúvidas Frequentes</h2>
 
         <div className="space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-lg">
+          <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-lg">
              <h4 className="text-lg font-black uppercase text-[#002B99] mb-3">Preciso entender de criptomoedas para doar?</h4>
-             <p className="text-slate-500 dark:text-slate-400 font-medium">Absolutamente não! Nossa interface aceita PIX e Cartão de Crédito. A tecnologia blockchain roda "nos bastidores" apenas para garantir a segurança e a transparência do processo.</p>
+             <p className="text-slate-500 font-medium">Absolutamente não! Nossa interface aceita PIX e Cartão de Crédito. A tecnologia blockchain roda "nos bastidores" apenas para garantir a segurança e a transparência do processo.</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-lg">
+          <div className="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-lg">
              <h4 className="text-lg font-black uppercase text-[#002B99] mb-3">Para onde vai o dinheiro?</h4>
-             <p className="text-slate-500 dark:text-slate-400 font-medium">100% das doações líquidas vão para o fundo educacional do Mulheres que Codam, financiando professoras, computadores e internet para alunas em situação de vulnerabilidade.</p>
+             <p className="text-slate-500 font-medium">100% das doações líquidas vão para o fundo educacional do Mulheres que Codam, financiando professoras, computadores e internet para alunas em situação de vulnerabilidade.</p>
           </div>
         </div>
       </section>
@@ -167,6 +216,19 @@ export default function Transparency() {
         </div>
       </section>
 
+    </div>
+  );
+}
+
+function MetricCard(props: { label: string; value: string }) {
+  return (
+    <div className="bg-white border border-slate-100 rounded-2xl p-4 shadow-sm">
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+        {props.label}
+      </p>
+      <p className="text-lg sm:text-xl font-black text-slate-900 mt-2">
+        {props.value}
+      </p>
     </div>
   );
 }

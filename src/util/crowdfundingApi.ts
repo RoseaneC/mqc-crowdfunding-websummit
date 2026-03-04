@@ -45,8 +45,37 @@ export interface AdminReportSummaryDTO {
   uniqueDonors: number;
 }
 
+export interface TransparencySummaryDTO {
+  totalXlm: number;
+  projectXlm: number;
+  feeXlm: number;
+  approvedProjects: number;
+  uniqueDonors: number;
+  recentImpacts: Array<{
+    id: number;
+    projectId: number;
+    projectName: string;
+    amountXlm: number;
+    nftId: number | null;
+    walletAddress: string;
+    confirmedAt: string | null;
+  }>;
+}
+
 export interface NftCatalogItemDTO {
   id: number;
+  name: string;
+  color: string;
+  gradient: string;
+  icon: string;
+  rarity: string;
+  description: string;
+  thanks: string;
+}
+
+export interface ProjectNftCatalogItemDTO {
+  projectId: number;
+  projectTitle: string;
   name: string;
   color: string;
   gradient: string;
@@ -67,14 +96,18 @@ export interface AdminDashboardDTO {
     icon: string;
     title: string;
     description: string;
-    timeLabel: string;
     tone: "green" | "blue" | "orange";
+    occurredAt: string;
   }>;
   featuredProjects: Array<{
-    name: string;
-    leader: string;
-    status: string;
-    action: string;
+    projectId: number;
+    title: string;
+    ngoName: string;
+    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+    raisedXlm: number;
+    targetXlm: number;
+    donors: number;
+    createdAt: string;
   }>;
 }
 
@@ -85,57 +118,72 @@ export interface AdminProjectsDTO {
     rejected: number;
     totalProjects: number;
   };
-  recentRequests: Array<{
-    name: string;
-    ngo: string;
-    status: string;
-    timeLabel: string;
-    initials: string;
-    tone: "orange" | "green";
-    active: boolean;
-  }>;
-  selectedRequest: {
-    status: string;
-    idLabel: string;
-    title: string;
-    submittedAt: string;
-    organization: string;
-    contactName: string;
-    contactEmail: string;
-    cnpj: string;
-    cnpjStatus: string;
-    location: string;
-    description: string;
-  };
+}
+
+export interface AdminProjectPendingDTO {
+  id: number;
+  ngoName: string;
+  title: string;
+  taxCategory: string;
+  targetXlm: number;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+  createdAt: string;
+}
+
+export interface AdminProjectSummaryDTO {
+  pending: number;
+  approved: number;
+  rejected: number;
+  total_projects: number;
 }
 
 export interface AdminReportsDTO {
   kpis: {
-    totalCollected: string;
-    activeDonors: string;
-    fundedProjects: string;
-    avgTicket: string;
+    totalCollectedXlm: number;
+    activeDonors: number;
+    fundedProjects: number;
+    avgTicketXlm: number;
   };
   distribution: Array<{
     label: string;
     percent: number;
-    value: string;
+    totalProjectXlm: number;
   }>;
   topProjects: Array<{
     rank: number;
+    projectId: number;
     name: string;
     incentive: string;
-    amount: string;
+    totalProjectXlm: number;
   }>;
   recentDonations: Array<{
-    donor: string;
-    initials: string;
+    id: number;
+    donorWallet: string;
     project: string;
     incentive: string;
-    date: string;
-    amount: string;
-    status: "confirmed" | "pending";
+    confirmedAt: string;
+    amountXlm: number;
+    status: "CONFIRMED";
+    txHash: string | null;
+    nftId: number | null;
   }>;
+}
+
+export interface AdminMroscReportDTO {
+  id: number;
+  projectId: number;
+  projectTitle: string;
+  ngoName: string;
+  ngoWallet: string;
+  submittedAt: string;
+  status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED";
+  periodStart: string;
+  periodEnd: string;
+  financialTotalXlm: number;
+  beneficiariesCount: number;
+  submittedByName?: string | null;
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
 }
 
 export interface AdminMroscDTO {
@@ -143,22 +191,116 @@ export interface AdminMroscDTO {
     pending: number;
     inReview: number;
     approved: number;
+    rejected: number;
+    totalResults: number;
     activeOrgs: number;
   };
-  reports: Array<{
-    org: string;
-    initials: string;
-    cnpj: string;
-    project: string;
-    projectId: string;
-    submitted: string;
-    status: string;
-  }>;
-  totalResults: number;
+  reports: AdminMroscReportDTO[];
+}
+
+export interface MyMroscReportDTO extends AdminMroscReportDTO {}
+
+export interface ContactMessageResponseDTO {
+  id: number;
+  createdAt: string;
+}
+
+export interface AuthSessionDTO {
+  token: string;
+  expiresAt: string;
+}
+
+export interface AuthMeDTO {
+  id: number;
+  name: string;
+  email: string;
+  walletAddress: string | null;
+  roles: Array<"SUPERADMIN" | "PROJECT_ADMIN">;
+}
+
+export interface AdminUserDTO {
+  id: number;
+  name: string;
+  email: string;
+  walletAddress: string | null;
+  roles: Array<"SUPERADMIN" | "PROJECT_ADMIN">;
+}
+
+export interface ProjectAdminDTO {
+  id: number;
+  name: string;
+  email: string;
+  walletAddress: string | null;
+  assignedAt: string;
+}
+
+export interface TransferBudgetDTO {
+  totalProjectXlm?: number;
+  totalFeeXlm?: number;
+  transferredXlm: number;
+  availableXlm: number;
+}
+
+export interface AdminTransferDTO {
+  id: number;
+  projectId?: number;
+  initiatedByUserId: number;
+  fromWallet: string;
+  toWallet: string;
+  amountXlm: number;
+  status: "PENDING" | "CONFIRMED" | "FAILED";
+  txHash: string | null;
+  failureReason: string | null;
+  createdAt: string;
+  confirmedAt: string | null;
 }
 
 export function listProjects() {
   return apiRequest<ProjectDTO[]>("/projects");
+}
+
+export function registerUser(payload: {
+  name: string;
+  email: string;
+  password: string;
+  walletAddress?: string;
+}) {
+  return apiRequest<AuthSessionDTO>("/auth/register", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createProject(payload: {
+  ngoName: string;
+  ngoWallet: string;
+  title: string;
+  description: string;
+  taxCategory: string;
+  targetXlm: number;
+  metadataUri: string;
+}) {
+  return apiRequest<{ id: number }>("/projects", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function loginUser(payload: { email: string; password: string }) {
+  return apiRequest<AuthSessionDTO>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function logoutUser() {
+  return apiRequest<{ ok: boolean }>("/auth/logout", {
+    method: "POST",
+  });
+}
+
+export function getAuthMe() {
+  return apiRequest<AuthMeDTO>("/auth/me");
 }
 
 export function prepareDonation(payload: {
@@ -200,8 +342,16 @@ export function getAdminReportSummary() {
   return apiRequest<AdminReportSummaryDTO>("/admin/reports/summary");
 }
 
+export function getTransparencySummary() {
+  return apiRequest<TransparencySummaryDTO>("/transparency/summary");
+}
+
 export function listNftCatalog() {
   return apiRequest<NftCatalogItemDTO[]>("/catalog/nfts");
+}
+
+export function listProjectNftCatalog() {
+  return apiRequest<ProjectNftCatalogItemDTO[]>("/catalog/project-nfts");
 }
 
 export function listProjectMedia() {
@@ -216,10 +366,126 @@ export function getAdminProjects() {
   return apiRequest<AdminProjectsDTO>("/admin/projects");
 }
 
+export function listAdminPendingProjects() {
+  return apiRequest<AdminProjectPendingDTO[]>("/admin/projects/pending");
+}
+
+export function getAdminProjectSummary() {
+  return apiRequest<AdminProjectSummaryDTO>("/admin/projects/summary");
+}
+
+export function updateProjectStatus(
+  projectId: number,
+  payload: { status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE"; reason?: string },
+) {
+  return apiRequest<{ ok: boolean }>(`/projects/${projectId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
 export function getAdminReports() {
   return apiRequest<AdminReportsDTO>("/admin/reports");
 }
 
 export function getAdminMrosc() {
   return apiRequest<AdminMroscDTO>("/admin/mrosc");
+}
+
+export function listMyMroscReports() {
+  return apiRequest<MyMroscReportDTO[]>("/admin/mrosc/reports/my");
+}
+
+export function createMroscReport(payload: {
+  projectId: number;
+  periodStart: string;
+  periodEnd: string;
+  summary: string;
+  financialTotalXlm: number;
+  beneficiariesCount: number;
+}) {
+  return apiRequest<{ id: number; ok: boolean }>("/admin/mrosc/reports", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateMroscReportStatus(
+  reportId: number,
+  payload: { status: "IN_REVIEW" | "APPROVED" | "REJECTED"; reviewNotes?: string },
+) {
+  return apiRequest<{ ok: boolean }>(`/admin/mrosc/reports/${reportId}/status`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listAdminUsers() {
+  return apiRequest<AdminUserDTO[]>("/admin/users");
+}
+
+export function listProjectAdmins(projectId: number) {
+  return apiRequest<ProjectAdminDTO[]>(`/admin/projects/${projectId}/admins`);
+}
+
+export function assignProjectAdmin(projectId: number, userId: number) {
+  return apiRequest<{ ok: boolean }>(`/admin/projects/${projectId}/admins`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+}
+
+export function removeProjectAdmin(projectId: number, userId: number) {
+  return apiRequest<{ ok: boolean }>(
+    `/admin/projects/${projectId}/admins/${userId}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
+export function listMyAdminProjects() {
+  return apiRequest<
+    Array<{
+      id: number;
+      title: string;
+      status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+      targetXlm: number;
+      raisedXlm: number;
+      createdAt: string;
+    }>
+  >("/admin/projects/my");
+}
+
+export function getTaxTransferBudget() {
+  return apiRequest<TransferBudgetDTO>("/admin/tax/transfer-budget");
+}
+
+export function listTaxTransfers() {
+  return apiRequest<AdminTransferDTO[]>("/admin/tax/transfers");
+}
+
+export function createTaxTransfer(payload: {
+  toWallet: string;
+  amountXlm: number;
+}) {
+  return apiRequest<{ id: number; ok?: boolean; txHash?: string; error?: string }>(
+    "/admin/tax/transfers",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function submitContactMessage(payload: {
+  name: string;
+  email: string;
+  message: string;
+  source?: string;
+}) {
+  return apiRequest<ContactMessageResponseDTO>("/contact-messages", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }

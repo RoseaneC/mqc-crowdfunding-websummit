@@ -3,13 +3,18 @@ import {
   getAdminReports,
   type AdminReportsDTO,
 } from "../../util/crowdfundingApi";
+import {
+  buildNftTokenExplorerUrl,
+  buildTransactionExplorerUrl,
+  getExplorerLabel,
+} from "../../util/explorerLinks";
 
 const emptyData: AdminReportsDTO = {
   kpis: {
-    totalCollected: "R$ 0",
-    activeDonors: "0",
-    fundedProjects: "0",
-    avgTicket: "R$ 0",
+    totalCollectedXlm: 0,
+    activeDonors: 0,
+    fundedProjects: 0,
+    avgTicketXlm: 0,
   },
   distribution: [],
   topProjects: [],
@@ -18,6 +23,7 @@ const emptyData: AdminReportsDTO = {
 
 export default function Reports() {
   const [data, setData] = useState<AdminReportsDTO>(emptyData);
+  const explorerLabel = getExplorerLabel();
 
   useEffect(() => {
     void getAdminReports()
@@ -33,10 +39,10 @@ export default function Reports() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <KpiCard title="Total Arrecadado" value={data.kpis.totalCollected} />
-        <KpiCard title="Doadores Ativos" value={data.kpis.activeDonors} />
-        <KpiCard title="Projetos Financiados" value={data.kpis.fundedProjects} />
-        <KpiCard title="Ticket Medio" value={data.kpis.avgTicket} />
+        <KpiCard title="Total Arrecadado" value={`${data.kpis.totalCollectedXlm.toLocaleString("pt-BR")} XLM`} />
+        <KpiCard title="Doadores Ativos" value={data.kpis.activeDonors.toLocaleString("pt-BR")} />
+        <KpiCard title="Projetos Financiados" value={data.kpis.fundedProjects.toLocaleString("pt-BR")} />
+        <KpiCard title="Ticket Medio" value={`${data.kpis.avgTicketXlm.toLocaleString("pt-BR")} XLM`} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -72,7 +78,9 @@ export default function Reports() {
                     <p className="text-[10px] text-[#002B99]">{project.incentive}</p>
                   </div>
                 </div>
-                <span className="font-black text-slate-900">{project.amount}</span>
+                <span className="font-black text-slate-900">
+                  {project.totalProjectXlm.toLocaleString("pt-BR")} XLM
+                </span>
               </div>
             ))}
           </div>
@@ -92,21 +100,59 @@ export default function Reports() {
                 <th className="px-6 py-4">Incentivo</th>
                 <th className="px-6 py-4">Data</th>
                 <th className="px-6 py-4 text-right">Valor</th>
+                <th className="px-6 py-4 text-center">Tx</th>
+                <th className="px-6 py-4 text-center">NFT</th>
                 <th className="px-6 py-4 text-center">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data.recentDonations.map((donation) => (
-                <tr className="hover:bg-slate-50" key={`${donation.donor}-${donation.date}`}>
-                  <td className="px-6 py-4 font-medium text-slate-900">{donation.donor}</td>
+                <tr className="hover:bg-slate-50" key={donation.id}>
+                  <td className="px-6 py-4 font-medium text-slate-900">
+                    {shortWallet(donation.donorWallet)}
+                  </td>
                   <td className="px-6 py-4 text-[#002B99]">{donation.project}</td>
                   <td className="px-6 py-4">{donation.incentive}</td>
-                  <td className="px-6 py-4 text-[#002B99]">{donation.date}</td>
-                  <td className="px-6 py-4 text-right font-medium">{donation.amount}</td>
+                  <td className="px-6 py-4 text-[#002B99]">
+                    {new Date(donation.confirmedAt).toLocaleDateString("pt-BR")}
+                  </td>
+                  <td className="px-6 py-4 text-right font-medium">
+                    {donation.amountXlm.toLocaleString("pt-BR")} XLM
+                  </td>
                   <td className="px-6 py-4 text-center">
-                    <span className="material-icons text-[18px]">
-                      {donation.status === "confirmed" ? "check_circle" : "schedule"}
-                    </span>
+                    {buildTransactionExplorerUrl(donation.txHash) ? (
+                      <a
+                        href={buildTransactionExplorerUrl(donation.txHash) ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#002B99] hover:underline inline-flex items-center gap-1"
+                        title={`Abrir transacao no ${explorerLabel}`}
+                      >
+                        Tx
+                        <span className="material-icons text-sm">open_in_new</span>
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    {buildNftTokenExplorerUrl(donation.nftId) ? (
+                      <a
+                        href={buildNftTokenExplorerUrl(donation.nftId) ?? "#"}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-orange-600 hover:underline inline-flex items-center gap-1"
+                        title={`Abrir NFT no ${explorerLabel}`}
+                      >
+                        NFT
+                        <span className="material-icons text-sm">open_in_new</span>
+                      </a>
+                    ) : (
+                      <span className="text-slate-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className="material-icons text-[18px]">check_circle</span>
                   </td>
                 </tr>
               ))}
@@ -116,6 +162,11 @@ export default function Reports() {
       </div>
     </div>
   );
+}
+
+function shortWallet(wallet: string) {
+  if (wallet.length <= 12) return wallet;
+  return `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
 }
 
 function KpiCard(props: { title: string; value: string }) {

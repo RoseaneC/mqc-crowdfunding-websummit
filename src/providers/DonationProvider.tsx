@@ -14,6 +14,7 @@ interface Donation {
   timestamp: number;
   txHash?: string;
   nftId?: number;
+  status?: "PENDING" | "CONFIRMED" | "FAILED";
   donorType: "PF" | "PJ";
   walletAddress: string;
 }
@@ -40,7 +41,9 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const items = await listWalletDonations(address);
-      const normalized = items.map(normalizeApiDonation);
+      const normalized = items
+        .filter((item) => item.status === "CONFIRMED")
+        .map(normalizeApiDonation);
       setDonations(normalized);
     } catch {
       // Keep UI responsive even if API is not reachable.
@@ -79,15 +82,19 @@ export function useDonations() {
 
 function normalizeApiDonation(item: DonationReceiptDTO): Donation {
   const amount = Number(item.amountXlm);
+  const projectId = Number(item.projectId);
+  const nftId =
+    item.nftId === null || item.nftId === undefined ? undefined : Number(item.nftId);
   return {
-    id: item.id,
-    projectId: item.projectId,
+    id: Number(item.id),
+    projectId: Number.isFinite(projectId) ? projectId : item.projectId,
     projectName: item.projectName,
     amount,
     amountBRL: (amount * 0.5432).toFixed(2),
     timestamp: new Date(item.createdAt).getTime(),
     txHash: item.txHash ?? undefined,
-    nftId: item.nftId ?? undefined,
+    nftId: Number.isFinite(nftId) ? nftId : undefined,
+    status: item.status,
     donorType: item.donorType,
     walletAddress: item.walletAddress,
   };

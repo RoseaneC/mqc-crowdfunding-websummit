@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import {
   getAdminDashboard,
+  getAdminProjectSummary,
   getAdminReportSummary,
+  listMyAdminProjects,
   type AdminDashboardDTO,
 } from "../../util/crowdfundingApi";
+import { useAuth } from "../../providers/AuthProvider";
 
 const emptyDashboard: AdminDashboardDTO = {
   activity: [],
@@ -11,23 +14,83 @@ const emptyDashboard: AdminDashboardDTO = {
 };
 
 export default function Dashboard() {
+  const { hasRole } = useAuth();
+  const isSuperadmin = hasRole("SUPERADMIN");
   const [summary, setSummary] = useState({
     totalXlm: 0,
     projectXlm: 0,
     feeXlm: 0,
     totalProjects: 0,
+    pendingProjects: 0,
     uniqueDonors: 0,
   });
   const [dashboard, setDashboard] = useState<AdminDashboardDTO>(emptyDashboard);
+  const [myProjectsCount, setMyProjectsCount] = useState(0);
+  const [myPendingCount, setMyPendingCount] = useState(0);
+  const [myApprovedCount, setMyApprovedCount] = useState(0);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    void Promise.all([getAdminReportSummary(), getAdminDashboard()])
-      .then(([summaryResponse, dashboardResponse]) => {
-        setSummary(summaryResponse);
-        setDashboard(dashboardResponse);
+    if (isSuperadmin) {
+      void Promise.all([
+        getAdminReportSummary(),
+        getAdminProjectSummary(),
+        getAdminDashboard(),
+      ])
+        .then(([summaryResponse, projectSummaryResponse, dashboardResponse]) => {
+          setSummary({
+            ...summaryResponse,
+            pendingProjects: projectSummaryResponse.pending,
+          });
+          setDashboard(dashboardResponse);
+        })
+        .catch(() => setLoadError(true));
+      return;
+    }
+    void listMyAdminProjects()
+      .then((projects) => {
+        setMyProjectsCount(projects.length);
+        setMyPendingCount(
+          projects.filter((project) => project.status === "PENDING").length,
+        );
+        setMyApprovedCount(
+          projects.filter((project) => project.status === "APPROVED").length,
+        );
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => setLoadError(true));
+  }, [isSuperadmin]);
+
+  if (!isSuperadmin) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+          Painel do Administrador de Projeto
+        </h1>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <MetricCard
+            title="Projetos enviados"
+            value={myProjectsCount.toLocaleString("pt-BR")}
+            subtitle="Solicitações criadas pela sua conta"
+          />
+          <MetricCard
+            title="Pendentes"
+            value={myPendingCount.toLocaleString("pt-BR")}
+            subtitle="Aguardando avaliação do superadmin"
+          />
+          <MetricCard
+            title="Aprovados"
+            value={myApprovedCount.toLocaleString("pt-BR")}
+            subtitle="Projetos habilitados para repasses"
+          />
+        </div>
+        {loadError ? (
+          <p className="text-sm font-bold text-red-600">
+            Não foi possível carregar dados do painel.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in">
@@ -41,7 +104,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <MetricCard title="Total Arrecadado" value={`${summary.totalXlm.toLocaleString("pt-BR")} XLM`} subtitle={`Liquido projetos: ${summary.projectXlm.toLocaleString("pt-BR")} XLM`} />
         <MetricCard title="Doadores Ativos" value={summary.uniqueDonors.toLocaleString("pt-BR")} subtitle="No ultimo mes" />
-        <MetricCard title="Projetos em Analise" value={summary.totalProjects.toLocaleString("pt-BR")} subtitle="Aguardando aprovacao" />
+        <MetricCard title="Projetos em Analise" value={summary.pendingProjects.toLocaleString("pt-BR")} subtitle="Aguardando aprovacao" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -60,17 +123,20 @@ export default function Dashboard() {
           <h3 className="text-lg font-bold text-slate-900 mb-6">Atividade Recente</h3>
           <div className="space-y-5">
             {dashboard.activity.map((item) => (
-              <div key={`${item.title}-${item.timeLabel}`} className="flex items-start gap-3">
+              <div key={`${item.title}-${item.occurredAt}`} className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
                   <span className="material-icons text-[16px]">{item.icon}</span>
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900">{item.title}</p>
                   <p className="text-xs text-slate-500">{item.description}</p>
-                  <p className="text-[10px] text-slate-400 mt-1">{item.timeLabel}</p>
+                  <p className="text-[10px] text-slate-400 mt-1">{formatRelativeTime(item.occurredAt)}</p>
                 </div>
               </div>
             ))}
+            {dashboard.activity.length === 0 ? (
+              <p className="text-sm text-slate-500">Sem atividade recente.</p>
+            ) : null}
           </div>
         </div>
       </div>
@@ -84,30 +150,50 @@ export default function Dashboard() {
             <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
               <tr>
                 <th className="px-6 py-4">Nome do Projeto</th>
-                <th className="px-6 py-4">Lider</th>
+                <th className="px-6 py-4">ONG</th>
                 <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Acoes</th>
+                <th className="px-6 py-4">Captação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {dashboard.featuredProjects.map((project) => (
-                <tr className="hover:bg-slate-50" key={`${project.name}-${project.leader}`}>
-                  <td className="px-6 py-4 font-medium text-slate-900">{project.name}</td>
-                  <td className="px-6 py-4 text-slate-500">{project.leader}</td>
+                <tr className="hover:bg-slate-50" key={project.projectId}>
+                  <td className="px-6 py-4 font-medium text-slate-900">{project.title}</td>
+                  <td className="px-6 py-4 text-slate-500">{project.ngoName}</td>
                   <td className="px-6 py-4">
                     <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">{project.status}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <button className="text-[#002B99] font-bold text-xs">{project.action}</button>
+                    <span className="text-[#002B99] font-bold text-xs">
+                      {project.raisedXlm.toLocaleString("pt-BR")} / {project.targetXlm.toLocaleString("pt-BR")} XLM
+                    </span>
                   </td>
                 </tr>
               ))}
+              {dashboard.featuredProjects.length === 0 ? (
+                <tr>
+                  <td className="px-6 py-4 text-sm text-slate-500" colSpan={4}>
+                    Sem projetos para destacar.
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
         </div>
       </div>
     </div>
   );
+}
+
+function formatRelativeTime(isoDate: string) {
+  const diffMs = Date.now() - new Date(isoDate).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "agora";
+  if (diffMin < 60) return `há ${diffMin} min`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `há ${diffHour} h`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `há ${diffDay} dia(s)`;
 }
 
 function MetricCard(props: { title: string; value: string; subtitle: string }) {

@@ -65,5 +65,12 @@ fi
 log "applying schema and seed data"
 docker exec -i "$POSTGRES_CONTAINER" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < "$SCHEMA_FILE" >/dev/null
 
+if [[ -x "$ROOT_DIR/scripts/sync-onchain-projects.sh" ]]; then
+  log "syncing approved projects to crowdfunding_core (best effort)"
+  if ! "$ROOT_DIR/scripts/sync-onchain-projects.sh"; then
+    log "warning: on-chain project sync failed; continue"
+  fi
+fi
+
 log "done"
 log "database url: postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:$POSTGRES_PORT/$POSTGRES_DB"
