@@ -4,6 +4,9 @@ import { Menu, X } from "lucide-react";
 import { useWallet } from "../../hooks/useWallet";
 import { connectWallet, disconnectWallet } from "../../util/wallet";
 
+import Image from "next/image";
+import LogoImg from "../../images/home-page/logo1_mqc.png";
+
 type NavItem = {
   label: string;
   href: string;
@@ -11,7 +14,7 @@ type NavItem = {
 
 export default function Navbar() {
   const location = useLocation();
-  const { address, balances, network, isPending } = useWallet();
+  const { address, isPending } = useWallet();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [walletActionPending, setWalletActionPending] = useState(false);
 
@@ -22,12 +25,11 @@ export default function Navbar() {
       { label: "Parceiros", href: "/transparencia" },
       { label: "Contato", href: "/contato" },
     ],
-    []
+    [],
   );
 
   const isPageActive = (path: string) => location.pathname === path;
 
-  // Close mobile menu on navigation
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
@@ -35,20 +37,20 @@ export default function Navbar() {
   const shortAddress = address
     ? `${address.slice(0, 6)}...${address.slice(-4)}`
     : null;
-  const xlmBalance = balances?.xlm?.balance ?? "-";
 
   const handleConnect = async () => {
     setWalletActionPending(true);
+
     try {
       await connectWallet();
     } finally {
-      // Keep a short delay so users can see transition feedback.
       setTimeout(() => setWalletActionPending(false), 400);
     }
   };
 
   const handleDisconnect = async () => {
     setWalletActionPending(true);
+
     try {
       await disconnectWallet();
     } finally {
@@ -57,210 +59,138 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/85 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-1 sm:px-6 lg:px-8">
-        {/* Logo */}
+    <nav className="z-50 bg-[var(--color-primary)] py-2 overflow-visible font-[var(--font-body)]">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8">
+        {/* Logo Container */}
         <Link
           to="/"
-          className="group inline-flex items-center gap-3"
+          className="group inline-flex items-center"
           aria-label="Voltar para a Home"
         >
-          <div className="flex flex-col leading-none">
-            {/* Linha 1 */}
-            <span className="font-display font-black uppercase tracking-tight text-primary text-lg leading-none">
-              Mulheres
-            </span>
+          {/* Logo Imagem: Desktop */}
+          <div className="hidden lg:block">
+            <Image
+              src={LogoImg}
+              alt="Mulheres Que Codam"
+              width={180}
+              height={50}
+              className="h-12 w-auto object-contain scale-[1.8] origin-left"
+              priority
+            />
+          </div>
 
-            {/* Linha 2: QUE + CODAM juntos */}
-            <span className="-mt-1 font-display font-black uppercase tracking-tight text-primary text-sm sm:text-base leading-none">
-              <span className="inline-flex items-baseline gap-1 sm:gap-1.5">
-                <span>Que</span>
-                <span className="text-accent">Codam</span>
-              </span>
+          {/* Logo Sigla: Mobile */}
+          <div className="lg:hidden flex items-center">
+            <span className="font-[var(--font-heading)] font-black uppercase tracking-tighter text-[var(--color-white)] text-2xl">
+              MQ<span className="text-[var(--color-accent)]">C</span>
             </span>
           </div>
         </Link>
 
-        {/* Links desktop */}
+        {/* Menu e Wallet */}
         <div className="hidden lg:flex items-center gap-10">
-          {navItems.map((item) => {
-            const active = isPageActive(item.href);
-            return (
+          <div className="flex items-center gap-8">
+            {navItems.map((item) => (
               <Link
                 key={item.href}
                 to={item.href}
-                className={[
-                  "text-sm font-semibold tracking-wide transition-colors",
-                  "text-slate-600 hover:text-primary",
-                  active ? "text-primary" : "",
-                ].join(" ")}
+                className={`text-sm font-medium transition-colors ${
+                  isPageActive(item.href)
+                    ? "text-[var(--color-accent)]"
+                    : "text-[var(--color-white)] hover:text-[var(--color-accent)]"
+                }`}
               >
-                <span className="relative">
-                  {item.label}
-                  <span
-                    className={[
-                      "absolute -bottom-2 left-0 h-0.5 w-full rounded-full transition-opacity",
-                      "bg-accent",
-                      active ? "opacity-100" : "opacity-0 group-hover:opacity-40",
-                    ].join(" ")}
-                    aria-hidden
-                  />
-                </span>
+                {item.label}
               </Link>
-            );
-          })}
-        </div>
+            ))}
+          </div>
 
-        {/* Ações */}
-        <div className="flex items-center gap-3">
-          {/* Wallet status desktop */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="flex items-center">
             {!address ? (
               <button
                 type="button"
                 onClick={() => void handleConnect()}
                 disabled={walletActionPending}
-                className="
-                  inline-flex items-center justify-center rounded-xl px-4 py-2
-                  text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700
-                  disabled:opacity-60 transition
-                "
+                className="inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-accent-dark)] disabled:opacity-60"
               >
-                {walletActionPending || isPending ? "Conectando..." : "Conectar Carteira"}
+                {walletActionPending || isPending
+                  ? "Conectando..."
+                  : "Conectar carteira"}
               </button>
             ) : (
-              <>
-                <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  <span className="text-xs font-bold text-emerald-700">
+              <div className="flex items-center gap-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2">
+                  <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
+                  <span className="text-xs font-bold text-[var(--color-white)]">
                     {shortAddress}
                   </span>
-                  <span className="text-[11px] font-semibold text-slate-600">
-                    {xlmBalance} XLM
-                  </span>
-                  {network ? (
-                    <span className="text-[10px] uppercase tracking-wider text-slate-500">
-                      {network}
-                    </span>
-                  ) : null}
                 </div>
+
                 <button
                   type="button"
                   onClick={() => void handleDisconnect()}
-                  disabled={walletActionPending}
-                  className="inline-flex items-center justify-center rounded-xl px-3 py-2 text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-100 transition disabled:opacity-60"
+                  className="text-xs text-white/70 underline transition hover:text-[var(--color-white)]"
                 >
-                  Desconectar
+                  Sair
                 </button>
-              </>
+              </div>
             )}
           </div>
-
-          {/* CTA Faça parte */}
-          <Link
-            to="/dashboard"
-            className="
-              hidden sm:inline-flex items-center justify-center
-              rounded-xl px-4 py-2
-              text-sm font-semibold
-              bg-primary text-white
-              hover:brightness-110
-              transition
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40
-            "
-          >
-            Faça parte
-          </Link>
-
-          {/* Hamburger (mobile) */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            className="
-              lg:hidden inline-flex items-center justify-center
-              rounded-xl p-2
-              bg-slate-50 text-slate-700
-              hover:bg-slate-100
-              border border-slate-200
-              transition
-             
-              focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50
-            "
-            aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
-            aria-expanded={mobileOpen}
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
+
+        {/* Mobile Button */}
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          className="lg:hidden p-2 text-[var(--color-white)]"
+          aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
+        >
+          {mobileOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
       </div>
 
-      {/* Menu mobile dropdown */}
+      {/* Mobile Menu */}
       <div
-        className={[
-          "lg:hidden overflow-hidden border-t border-slate-200/70",
-          mobileOpen ? "max-h-96" : "max-h-0",
-          "transition-[max-height] duration-300 ease-in-out",
-        ].join(" ")}
+        className={`lg:hidden overflow-hidden bg-[var(--color-primary-dark)] transition-all duration-300 ease-in-out ${
+          mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+        }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex flex-col gap-2">
+        <div className="flex flex-col gap-6 px-6 py-8">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
+              className={`border-b border-white/10 pb-2 text-lg font-bold transition-colors ${
+                isPageActive(item.href)
+                  ? "text-[var(--color-accent)]"
+                  : "text-[var(--color-white)] hover:text-[var(--color-accent)]"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+
           {!address ? (
             <button
               type="button"
               onClick={() => void handleConnect()}
               disabled={walletActionPending}
-              className="inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition"
+              className="w-full rounded-lg bg-[var(--color-accent)] py-4 font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-accent-dark)] disabled:opacity-60"
             >
-              {walletActionPending || isPending ? "Conectando..." : "Conectar Carteira"}
+              {walletActionPending || isPending
+                ? "Conectando..."
+                : "Conectar carteira"}
             </button>
           ) : (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 space-y-2">
-              <p className="text-xs font-bold text-emerald-700">
-                Carteira conectada: {shortAddress}
-              </p>
-              <p className="text-xs text-slate-700">
-                Saldo: {xlmBalance} XLM
-              </p>
-              <button
-                type="button"
-                onClick={() => void handleDisconnect()}
-                disabled={walletActionPending}
-                className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold border border-slate-300 text-slate-700 hover:bg-slate-100 transition disabled:opacity-60"
-              >
-                Desconectar
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => void handleDisconnect()}
+              disabled={walletActionPending}
+              className="w-full rounded-lg border border-white/20 py-4 font-semibold text-[var(--color-white)] transition hover:bg-white/10 disabled:opacity-60"
+            >
+              Sair da carteira
+            </button>
           )}
-
-          {/* CTA no mobile */}
-          <Link
-            to="/dashboard"
-            className="
-              inline-flex items-center justify-center
-              rounded-xl px-4 py-3
-              text-sm font-semibold
-              bg-primary text-white
-              hover:brightness-110 transition
-            "
-          >
-            Faça parte
-          </Link>
-
-          {navItems.map((item) => {
-            const active = isPageActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={[
-                  "rounded-xl px-4 py-3 text-sm font-semibold transition",
-                  "bg-slate-50 text-slate-700 hover:bg-slate-100",
-                  active ? "ring-2 ring-accent/50" : "",
-                ].join(" ")}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
         </div>
       </div>
     </nav>
