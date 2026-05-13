@@ -1,5 +1,3 @@
-import { app } from "../../../../packages/api/src/index";
-
 type HttpMethod =
   | "GET"
   | "POST"
@@ -9,48 +7,196 @@ type HttpMethod =
   | "HEAD"
   | "OPTIONS";
 
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+
+function json(data: JsonValue, status = 200) {
+  return Response.json(data, {
+    status,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "content-type, authorization",
+      "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+    },
+  });
+}
+
+async function readRequestBody(request: Request) {
+  const text = await request.text();
+
+  if (!text) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(text) as JsonValue;
+  } catch {
+    return text;
+  }
+}
+
+function getApiBaseUrl() {
+  return (process.env.API_BASE_URL ?? "").replace(/\/$/, "");
+}
+
+function getFallbackResponse(method: HttpMethod, path: string) {
+  if (path === "/health" && method === "GET") {
+    return json({
+      ok: true,
+      status: "ok",
+      source: "local-fallback",
+    });
+  }
+
+  if (path === "/contact-messages" && method === "POST") {
+    return json(
+      {
+        ok: true,
+        message: "Mensagem recebida em ambiente local.",
+        source: "local-fallback",
+      },
+      201,
+    );
+  }
+
+  if (path === "/projects" && method === "GET") {
+    return json([]);
+  }
+
+  if (path === "/projects" && method === "POST") {
+    return json(
+      {
+        ok: true,
+        message: "Projeto recebido em ambiente local.",
+        source: "local-fallback",
+      },
+      201,
+    );
+  }
+
+  if (path === "/catalog/project-media" && method === "GET") {
+    return json([]);
+  }
+
+  if (path === "/catalog/project-nfts" && method === "GET") {
+    return json([]);
+  }
+
+  if (path === "/catalog/nfts" && method === "GET") {
+    return json([]);
+  }
+
+  if (path === "/transparency/summary" && method === "GET") {
+    return json({
+      totalXlm: 0,
+      projectXlm: 0,
+      feeXlm: 0,
+      approvedProjects: 0,
+      uniqueDonors: 0,
+      recentImpacts: [],
+      source: "local-fallback",
+    });
+  }
+
+  return json(
+    {
+      ok: false,
+      error: "API route not implemented locally.",
+      method,
+      path,
+    },
+    404,
+  );
+}
+
 export async function proxyToFastify(
   request: Request,
   method: HttpMethod,
   targetPath: string,
 ) {
-  const search = new URL(request.url).search;
-
-  let payload: string | Buffer | undefined;
-  if (method !== "GET" && method !== "HEAD") {
-    const contentType = request.headers.get("content-type") ?? "";
-    if (
-      contentType.includes("application/json") ||
-      contentType.includes("text/")
-    ) {
-      payload = await request.text();
-    } else {
-      payload = Buffer.from(await request.arrayBuffer());
-    }
+  if (method === "OPTIONS") {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "content-type, authorization",
+        "Access-Control-Allow-Methods": "GET,POST,PATCH,OPTIONS",
+      },
+    });
   }
 
-  const response = await app.inject({
-    method,
-    url: `${targetPath}${search}`,
-    headers: Object.fromEntries(request.headers.entries()),
-    payload,
+  const apiBaseUrl = getApiBaseUrl();
+
+  if (!apiBaseUrl) {
+    return getFallbackResponse(method, targetPath);
+  }
+
+  const url = new URL(`${apiBaseUrl}${targetPath}`);
+  const incomingUrl = new URL(request.url);
+
+  incomingUrl.searchParams.forEach((value, key) => {
+    url.searchParams.set(key, value);
   });
 
   const headers = new Headers();
-  for (const [key, value] of Object.entries(response.headers)) {
-    if (Array.isArray(value)) {
-      for (const item of value) {
-        headers.append(key, item);
-      }
-    } else if (value !== undefined) {
-      headers.set(key, String(value));
-    }
+
+  const authorization = request.headers.get("authorization");
+  if (authorization) {
+    headers.set("authorization", authorization);
   }
 
-  return new Response(response.body, {
-    status: response.statusCode,
-    headers,
-  });
+  const contentType = request.headers.get("content-type");
+  if (contentType) {
+    headers.set("content-type", contentType);
+  }
+
+  headers.set("accept", "application/json");
+  headers.set("accept-encoding", "identity");
+
+  const body =
+    method === "GET" || method === "HEAD"
+      ? undefined
+      : JSON.stringify(await readRequestBody(request));
+
+  try {
+    const response = await fetch(url.toString(), {
+      method,
+      headers,
+      body,
+      cache: "no-store",
+    });
+
+    const responseText = await response.text();
+
+    let data: JsonValue;
+
+    try {
+      data = JSON.parse(responseText) as JsonValue;
+    } catch {
+      data = {
+        ok: response.ok,
+        status: response.status,
+        body: responseText,
+      };
+    }
+
+    return json(data, response.status);
+  } catch (error) {
+    return json(
+      {
+        ok: false,
+        error: "Failed to proxy request.",
+        targetUrl: url.toString(),
+        message: error instanceof Error ? error.message : "Unknown error",
+      },
+      502,
+    );
+  }
 }
 
 export const runtime = "nodejs";

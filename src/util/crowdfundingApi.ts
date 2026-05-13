@@ -255,8 +255,40 @@ export interface AdminTransferDTO {
   confirmedAt: string | null;
 }
 
-export function listProjects() {
-  return apiRequest<ProjectDTO[]>("/projects");
+type ProjectListResponse =
+  | ProjectDTO[]
+  | {
+      value?: ProjectDTO[];
+      data?: ProjectDTO[];
+      projects?: ProjectDTO[];
+      items?: ProjectDTO[];
+      Count?: number;
+    };
+
+export async function listProjects() {
+  const response = await apiRequest<ProjectListResponse>("/projects");
+
+  if (Array.isArray(response)) {
+    return response;
+  }
+
+  if (Array.isArray(response.value)) {
+    return response.value;
+  }
+
+  if (Array.isArray(response.data)) {
+    return response.data;
+  }
+
+  if (Array.isArray(response.projects)) {
+    return response.projects;
+  }
+
+  if (Array.isArray(response.items)) {
+    return response.items;
+  }
+
+  return [];
 }
 
 export function registerUser(payload: {

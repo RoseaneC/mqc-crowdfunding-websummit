@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import Image from "next/image";
 import AdesivoImg from "../../images/home-page/adesivo_mqc.jpg";
+import { ArrowRight } from "lucide-react";
 
 const partners = [
   { name: "Blockchain Rio", src: "/images/logos-parceiros/logo_rio.webp" },
@@ -21,8 +22,15 @@ export default function Home() {
     <div className="min-h-screen font-body bg-background-light">
       {/* HERO */}
       <header className="relative overflow-hidden bg-[var(--color-primary)] px-4 py-28 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(15,0,161,0.85),transparent_55%)]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.10),rgba(0,0,0,0.42))]" />
+        <div className="absolute inset-0 bg-[var(--color-primary)]" />
+
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,var(--color-primary-light)_0%,rgba(232,230,255,0.45)_18%,transparent_42%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,202,0,0.20)_0%,transparent_28%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_20%,rgba(255,255,255,0.22)_0%,transparent_34%)]" />
+
+        <div className="absolute inset-0 opacity-[0.60] mix-blend-soft-light bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.85)_1px,transparent_0)] bg-[size:14px_14px]" />
+
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(15,0,161,0.10),rgba(5,0,36,0.62))]" />
         <div className="absolute inset-0 bg-black/10" />
         <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/35 to-transparent" />
 
@@ -39,30 +47,27 @@ export default function Home() {
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
             <Link
               to="/projetos"
-              className="inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-8 py-4 text-base font-bold text-[var(--color-white)] transition hover:bg-[var(--color-accent-dark)]"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-7 py-3 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent-dark)]"
             >
               Explorar projetos
-            </Link>
-
-            <Link
-              to="/sobre"
-              className="inline-flex items-center justify-center rounded-lg border border-white/20 px-8 py-4 text-base font-bold text-[var(--color-white)] transition hover:bg-white/10"
-            >
-              Saiba mais
+              <ArrowRight size={16} strokeWidth={2} />
             </Link>
           </div>
 
           <div
-            id="sobre-hero"
-            className="mt-20 grid gap-10 border-t border-white/15 pt-12 text-left lg:grid-cols-[0.8fr_1.2fr]"
+            id="sobreNos"
+            className="mt-20 border-t border-white/15 pt-12 text-left"
           >
-            <div>
-              <p className="text-sm font-[var(--font-heading)] tracking-[0.25em] text-[var(--color-accent)]">
-                Sobre o Programa
-              </p>
-            </div>
+            <div className="grid items-center gap-12 lg:grid-cols-[1.15fr_0.85fr]">
+              <div>
+                <Image
+                  src={AdesivoImg}
+                  alt="Sobre o programa Mulheres que Codam"
+                  className="h-auto w-[88%] rounded-[1.75rem] object-contain shadow-[0_18px_40px_rgba(0,0,0,0.18)]"
+                  priority
+                />
+              </div>
 
-            <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
               <div>
                 <p className="max-w-3xl text-2xl font-light leading-relaxed text-[var(--color-white)] sm:text-3xl">
                   Lorem ipsum dolor sit amet, consectetur adipiscing elit.
@@ -77,19 +82,6 @@ export default function Home() {
                   Ut enim ad minim veniam, quis nostrud exercitation ullamco
                   laboris.
                 </p>
-              </div>
-
-              <div className="relative">
-                <div className="absolute -inset-4 rounded-[2rem] bg-[var(--color-accent)]/15 blur-2xl" />
-
-                <div className="relative overflow-hidden rounded-[2rem] border border-white/15 bg-white/10 p-4 shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur">
-                  <Image
-                    src={AdesivoImg}
-                    alt="Adesivo Mulheres que Codam"
-                    className="h-auto w-full rounded-[1.5rem] object-contain"
-                    priority
-                  />
-                </div>
               </div>
             </div>
           </div>

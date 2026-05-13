@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import { useWallet } from "../../hooks/useWallet";
 import { connectWallet, disconnectWallet } from "../../util/wallet";
 
@@ -20,9 +20,9 @@ export default function Navbar() {
 
   const navItems: NavItem[] = useMemo(
     () => [
-      { label: "Sobre nós", href: "/dashboard" },
+      { label: "Sobre nós", href: "/#sobreNos" },
       { label: "Projetos", href: "/projetos" },
-      { label: "Parceiros", href: "/transparencia" },
+      { label: "Parceiros", href: "#" },
       { label: "Contato", href: "/contato" },
     ],
     [],
@@ -59,37 +59,35 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="z-50 bg-[var(--color-primary)] py-2 overflow-visible font-[var(--font-body)]">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-8">
-        {/* Logo Container */}
+    <nav className="z-50 bg-[var(--color-primary)] py-3 font-[var(--font-body)]">
+      <div className="relative mx-auto flex max-w-[92rem] items-center justify-between px-6 lg:px-10">
+        {/* Logo */}
         <Link
           to="/"
           className="group inline-flex items-center"
           aria-label="Voltar para a Home"
         >
-          {/* Logo Imagem: Desktop */}
           <div className="hidden lg:block">
             <Image
               src={LogoImg}
               alt="Mulheres Que Codam"
               width={180}
               height={50}
-              className="h-12 w-auto object-contain scale-[1.8] origin-left"
+              className="h-9 w-auto origin-left scale-[3] object-contain"
               priority
             />
           </div>
 
-          {/* Logo Sigla: Mobile */}
-          <div className="lg:hidden flex items-center">
-            <span className="font-[var(--font-heading)] font-black uppercase tracking-tighter text-[var(--color-white)] text-2xl">
+          <div className="flex items-center lg:hidden">
+            <span className="font-[var(--font-heading)] text-2xl font-black uppercase tracking-tighter text-[var(--color-white)]">
               MQ<span className="text-[var(--color-accent)]">C</span>
             </span>
           </div>
         </Link>
 
-        {/* Menu e Wallet */}
-        <div className="hidden lg:flex items-center gap-10">
-          <div className="flex items-center gap-8">
+        {/* Menu centralizado */}
+        <div className="absolute left-1/2 hidden -translate-x-1/2 lg:flex">
+          <div className="flex items-center gap-10">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -104,45 +102,54 @@ export default function Navbar() {
               </Link>
             ))}
           </div>
+        </div>
 
-          <div className="flex items-center">
-            {!address ? (
+        {/* Ações desktop */}
+        <div className="hidden items-center gap-3 lg:flex">
+          {!address ? (
+            <button
+              type="button"
+              onClick={() => void handleConnect()}
+              disabled={walletActionPending}
+              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-transparent px-5 py-2 text-sm font-medium text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
+            >
+              {walletActionPending || isPending
+                ? "Conectando..."
+                : "Conectar carteira"}
+            </button>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2">
+                <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
+                <span className="text-xs font-bold text-[var(--color-white)]">
+                  {shortAddress}
+                </span>
+              </div>
+
               <button
                 type="button"
-                onClick={() => void handleConnect()}
-                disabled={walletActionPending}
-                className="inline-flex items-center justify-center rounded-lg bg-[var(--color-accent)] px-6 py-2 text-sm font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-accent-dark)] disabled:opacity-60"
+                onClick={() => void handleDisconnect()}
+                className="text-xs text-white/70 underline transition hover:text-[var(--color-white)]"
               >
-                {walletActionPending || isPending
-                  ? "Conectando..."
-                  : "Conectar carteira"}
+                Sair
               </button>
-            ) : (
-              <div className="flex items-center gap-3">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2">
-                  <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
-                  <span className="text-xs font-bold text-[var(--color-white)]">
-                    {shortAddress}
-                  </span>
-                </div>
+            </div>
+          )}
 
-                <button
-                  type="button"
-                  onClick={() => void handleDisconnect()}
-                  className="text-xs text-white/70 underline transition hover:text-[var(--color-white)]"
-                >
-                  Sair
-                </button>
-              </div>
-            )}
-          </div>
+          <Link
+            to="/contato"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-white)] px-5 py-2 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
+          >
+            Faça parte
+            <ArrowRight size={16} strokeWidth={2} />
+          </Link>
         </div>
 
         {/* Mobile Button */}
         <button
           type="button"
           onClick={() => setMobileOpen((v) => !v)}
-          className="lg:hidden p-2 text-[var(--color-white)]"
+          className="justify-self-end p-2 text-[var(--color-white)] lg:hidden"
           aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
         >
           {mobileOpen ? <X size={28} /> : <Menu size={28} />}
@@ -151,7 +158,7 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       <div
-        className={`lg:hidden overflow-hidden bg-[var(--color-primary-dark)] transition-all duration-300 ease-in-out ${
+        className={`overflow-hidden bg-[var(--color-primary-dark)] transition-all duration-300 ease-in-out lg:hidden ${
           mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
         }`}
       >
@@ -175,7 +182,7 @@ export default function Navbar() {
               type="button"
               onClick={() => void handleConnect()}
               disabled={walletActionPending}
-              className="w-full rounded-lg bg-[var(--color-accent)] py-4 font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-accent-dark)] disabled:opacity-60"
+              className="w-full rounded-full border border-white/25 py-4 font-semibold text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
             >
               {walletActionPending || isPending
                 ? "Conectando..."
@@ -186,11 +193,19 @@ export default function Navbar() {
               type="button"
               onClick={() => void handleDisconnect()}
               disabled={walletActionPending}
-              className="w-full rounded-lg border border-white/20 py-4 font-semibold text-[var(--color-white)] transition hover:bg-white/10 disabled:opacity-60"
+              className="w-full rounded-full border border-white/20 py-4 font-semibold text-[var(--color-white)] transition hover:bg-white/10 disabled:opacity-60"
             >
               Sair da carteira
             </button>
           )}
+
+          <Link
+            to="/contato"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-white)] py-4 font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
+          >
+            Faça parte
+            <ArrowRight size={18} strokeWidth={2} />
+          </Link>
         </div>
       </div>
     </nav>

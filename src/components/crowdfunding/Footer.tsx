@@ -1,14 +1,17 @@
-import { Link } from "react-router-dom";
 import { Twitter, Instagram, Linkedin, Mail } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer style={{ backgroundColor: "#1D1E27" }} aria-labelledby="footer-label">
-      <h2 id="footer-label" className="sr-only">Rodapé</h2>
+    <footer
+      style={{ backgroundColor: "#1D1E27" }}
+      aria-labelledby="footer-label"
+    >
+      <h2 id="footer-label" className="sr-only">
+        Rodapé
+      </h2>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
-
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-start gap-3 mb-4">
@@ -28,14 +31,31 @@ export default function Footer() {
             </div>
 
             <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-xs">
-              Juntas programando o futuro. Transformando vidas através da educação em tecnologia.
+              Juntas programando o futuro. Transformando vidas através da
+              educação em tecnologia.
             </p>
             <div className="flex items-center gap-3">
               {[
-                { Icon: Instagram, label: "Instagram", href: "https://www.instagram.com/mulheresquecodam.oficial?igsh=ZDNzOXo4ODl6OGk3" },
-                { Icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/mulheresquecodam?utm_source=share_via&utm_content=profile&utm_medium=member_android" },
-                { Icon: Twitter, label: "X (Twitter)", href: "https://x.com/SEU_PERFIL" },
-                { Icon: Mail, label: "E-mail", href: "mailto:contato@mulheresquecodam.org" },
+                {
+                  Icon: Instagram,
+                  label: "Instagram",
+                  href: "https://www.instagram.com/mulheresquecodam.oficial?igsh=ZDNzOXo4ODl6OGk3",
+                },
+                {
+                  Icon: Linkedin,
+                  label: "LinkedIn",
+                  href: "https://www.linkedin.com/in/mulheresquecodam?utm_source=share_via&utm_content=profile&utm_medium=member_android",
+                },
+                {
+                  Icon: Twitter,
+                  label: "X (Twitter)",
+                  href: "https://x.com/SEU_PERFIL",
+                },
+                {
+                  Icon: Mail,
+                  label: "E-mail",
+                  href: "mailto:contato@mulheresquecodam.org",
+                },
               ].map(({ Icon, label, href }) => (
                 <a
                   key={label}
@@ -62,24 +82,64 @@ export default function Footer() {
               Plataforma
             </h3>
             <ul className="space-y-3">
-              <li><Link to="/projetos" className="text-gray-400 hover:text-white text-sm">Projetos Ativos</Link></li>
-              <li><Link to="/#sobre" className="text-gray-400 hover:text-white text-sm">Como Funciona</Link></li>
-              <li><Link to="/transparencia" className="text-gray-400 hover:text-white text-sm">Transparência</Link></li>
-              <li><Link to="/contato" className="text-gray-400 hover:text-white text-sm">Contato</Link></li>
+              <li>
+                <a
+                  href="/projetos"
+                  className="text-sm text-gray-400 transition hover:text-white"
+                >
+                  Projetos Ativos
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="/#sobre"
+                  className="text-sm text-gray-400 transition hover:text-white"
+                >
+                  Como Funciona
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="/transparencia"
+                  className="text-sm text-gray-400 transition hover:text-white"
+                >
+                  Transparência
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="/contato"
+                  className="text-sm text-gray-400 transition hover:text-white"
+                >
+                  Contato
+                </a>
+              </li>
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h3 className="text-white font-bold text-sm uppercase tracking-widest mb-5">
+            <h3 className="mb-5 text-sm font-bold uppercase tracking-widest text-white">
               Legal
             </h3>
+
             <ul className="space-y-3">
-              {["Termos de Uso", "Política de Privacidade", "Política de Cookies", "FAQ"].map((label) => (
-                <li key={label}>
-                  <button className="text-gray-400 hover:text-white text-sm">
-                    {label}
-                  </button>
+              {[
+                { label: "Termos de Uso", href: "/termos" },
+                { label: "Política de Privacidade", href: "/privacidade" },
+                { label: "Política de Cookies", href: "/cookies" },
+                { label: "FAQ", href: "/#faq" },
+              ].map((item) => (
+                <li key={item.label}>
+                  <a
+                    href={item.href}
+                    className="text-sm text-gray-400 transition hover:text-white"
+                  >
+                    {item.label}
+                  </a>
                 </li>
               ))}
             </ul>
@@ -99,14 +159,13 @@ export default function Footer() {
               <input
                 type="email"
                 placeholder="seu@email.com"
-                className="flex-1 bg-white/10 border border-white/20 rounded-l-lg px-3 py-2 text-white text-xs placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 bg-white/10  rounded-l-lg px-3 py-2 text-white text-xs placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <button className="px-3 py-2 rounded-r-lg text-white text-xs font-bold bg-orange-500 hover:opacity-90 transition-opacity">
+              <button className="px-3 py-2 rounded-r-lg text-white text-xs font-bold bg-[var(--color-accent)] hover:opacity-90 transition-opacity">
                 OK
               </button>
             </div>
           </div>
-
         </div>
 
         {/* Bottom */}
