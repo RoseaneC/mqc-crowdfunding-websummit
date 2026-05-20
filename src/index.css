@@ -132,8 +132,10 @@ pre {
 
 .marquee__track {
   display: flex;
+  width: max-content;
   gap: 3rem;
-  animation: marquee 40s linear infinite;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
 }
 
 .marquee__item {

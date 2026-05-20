@@ -91,7 +91,7 @@ export default function Contact() {
               />
 
               <SocialLink
-                href="mailto:contato@mulheresquecodam.org"
+                href="mailto:mulheresquecodam@gmail.com"
                 label="E-mail"
                 icon={<Mail size={17} />}
               />

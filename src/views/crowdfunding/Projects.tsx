@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import type { ProjectDTO } from "../../util/crowdfundingApi";
+import HeroProjectsImg from "../../images/projects-page/foto_ideiathon1.jpg";
+
+import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
+import EloMeCardImg from "../../images/projects-page/cards/elo-me.png";
+import StellarbridgeCardImg from "../../images/projects-page/cards/stellarbridge.png";
+import KarnCardImg from "../../images/projects-page/cards/karn.png";
+import VizinhancaCardImg from "../../images/projects-page/cards/vizinhanca-cuidadora.png";
+import Web3CardImg from "../../images/projects-page/cards/web3-lideranca.jpeg";
+import FormacaoCardImg from "../../images/projects-page/cards/formacaoMulheres.jpeg";
 
 type ProjectsApiResponse =
   | ProjectDTO[]
@@ -11,6 +20,33 @@ type ProjectsApiResponse =
       items?: ProjectDTO[];
       Count?: number;
     };
+
+type ProjectAxis =
+  | "Todos"
+  | "Educação"
+  | "Saúde"
+  | "Tokenização"
+  | "DeFi"
+  | "Social";
+
+const axisFilters: ProjectAxis[] = [
+  "Todos",
+  "Educação",
+  "Saúde",
+  "Tokenização",
+  "DeFi",
+  "Social",
+];
+
+const projectImages: Record<string, string> = {
+  "1": MqcCardImg.src,
+  "2": EloMeCardImg.src,
+  "3": StellarbridgeCardImg.src,
+  "4": KarnCardImg.src,
+  "5": VizinhancaCardImg.src,
+  "6": Web3CardImg.src,
+  "8": FormacaoCardImg.src,
+};
 
 function unwrapProjects(response: ProjectsApiResponse): ProjectDTO[] {
   if (Array.isArray(response)) return response;
@@ -34,9 +70,59 @@ function formatXlm(value: number | string) {
   });
 }
 
+function normalizeText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+}
+
+function getProjectAxis(project: ProjectDTO): ProjectAxis {
+  const content = normalizeText(
+    `${project.title} ${project.description} ${project.taxCategory} ${project.metadataUri}`,
+  );
+
+  if (
+    content.includes("saude") ||
+    content.includes("health") ||
+    content.includes("clinico")
+  ) {
+    return "Saúde";
+  }
+
+  if (
+    content.includes("token") ||
+    content.includes("nft") ||
+    content.includes("sbt") ||
+    content.includes("recibo")
+  ) {
+    return "Tokenização";
+  }
+
+  if (
+    content.includes("defi") ||
+    content.includes("financa") ||
+    content.includes("financeiro")
+  ) {
+    return "DeFi";
+  }
+
+  if (
+    content.includes("social") ||
+    content.includes("comunidade") ||
+    content.includes("cuidadora") ||
+    content.includes("inclusao")
+  ) {
+    return "Social";
+  }
+
+  return "Educação";
+}
+
 export default function Projects() {
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [query, setQuery] = useState("");
+  const [selectedAxis, setSelectedAxis] = useState<ProjectAxis>("Todos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +140,7 @@ export default function Projects() {
 
         if (!response.ok) {
           const text = await response.text();
+
           throw new Error(
             text || `Falha ao carregar projetos. Status: ${response.status}`,
           );
@@ -76,148 +163,255 @@ export default function Projects() {
     void loadProjects();
   }, []);
 
-  const filtered = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
+  const approvedProjects = useMemo(() => {
+    return projects.filter((project) => project.status === "APPROVED");
+  }, [projects]);
 
-    if (!normalized) return projects;
+  const axisCounts = useMemo(() => {
+    const counts = new Map<ProjectAxis, number>();
 
-    return projects.filter((project) => {
-      return (
-        project.title.toLowerCase().includes(normalized) ||
-        project.description.toLowerCase().includes(normalized) ||
-        project.taxCategory.toLowerCase().includes(normalized)
-      );
+    axisFilters.forEach((axis) => counts.set(axis, 0));
+    counts.set("Todos", approvedProjects.length);
+
+    approvedProjects.forEach((project) => {
+      const axis = getProjectAxis(project);
+      counts.set(axis, (counts.get(axis) ?? 0) + 1);
     });
-  }, [projects, query]);
+
+    return counts;
+  }, [approvedProjects]);
+
+  const filtered = useMemo(() => {
+    const normalized = normalizeText(query.trim());
+
+    return approvedProjects.filter((project) => {
+      const axis = getProjectAxis(project);
+
+      const matchesAxis = selectedAxis === "Todos" || axis === selectedAxis;
+
+      const matchesSearch =
+        !normalized ||
+        normalizeText(project.title).includes(normalized) ||
+        normalizeText(project.description).includes(normalized) ||
+        normalizeText(project.taxCategory).includes(normalized) ||
+        normalizeText(project.metadataUri).includes(normalized) ||
+        normalizeText(axis).includes(normalized);
+
+      return matchesAxis && matchesSearch;
+    });
+  }, [approvedProjects, query, selectedAxis]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] font-[var(--font-body)] text-[var(--color-text)]">
-      <header className="relative overflow-hidden bg-[var(--color-primary)]">
-        <div className="absolute right-0 top-0 -mr-20 -mt-20 h-80 w-80 rounded-full bg-[var(--color-accent)] opacity-20 blur-3xl" />
-        <div className="absolute bottom-0 left-0 -mb-20 -ml-20 h-80 w-80 rounded-full bg-[var(--color-accent-light)] opacity-20 blur-3xl" />
+    <div className="min-h-screen bg-[#fbfcff] font-[var(--font-body)] text-[var(--color-text)]">
+      <header className="relative min-h-[520px] overflow-hidden bg-[var(--color-primary)]">
+        <img
+          src={HeroProjectsImg.src}
+          alt="Mulheres participantes do programa Mulheres Que Codam"
+          className="absolute inset-0 h-full w-full object-cover object-center"
+        />
 
-        <div className="relative mx-auto max-w-7xl px-4 py-20 text-center sm:px-6 sm:text-left lg:px-8">
-          <h1 className="mb-4 font-[var(--font-body)] text-4xl font-light leading-tight tracking-tight text-[var(--color-white)] sm:text-6xl">
-            Decodificando o sistema,
-            <br />
-            <span className="text-[var(--color-accent)]">
-              construindo o futuro.
-            </span>
-          </h1>
+        <div className="absolute inset-0 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,0,112,0.92)_0%,rgba(15,0,161,0.72)_48%,rgba(15,0,161,0.32)_100%)]" />
+        <div className="absolute inset-0 bg-black/20" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[rgba(251,252,255,0.50)] to-transparent" />
 
-          <p className="max-w-3xl text-base font-normal leading-8 text-white/75 sm:text-lg">
-            Apoie projetos que empoderam mulheres de comunidades periféricas
-            através da educação tecnológica.
-          </p>
+        <div className="relative mx-auto flex min-h-[520px] max-w-7xl items-center px-4 py-24 text-center sm:px-6 sm:text-left lg:px-8">
+          <div className="max-w-4xl">
+            <h1 className="mb-6 font-[var(--font-body)] text-4xl font-light leading-[1.05] tracking-tight text-[var(--color-white)] sm:text-5xl lg:text-6xl">
+              Juntas
+              <br />
+              <span className="font-medium text-[var(--color-accent)]">
+                programando o futuro.
+              </span>
+            </h1>
+
+            <p className="max-w-2xl text-base font-normal leading-8 text-white/80 sm:text-lg">
+              Apoie projetos feitos mulheres de comunidades periféricas através
+              da educação tecnológica.
+            </p>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-10 rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] p-6 shadow-[0_18px_50px_rgba(15,0,161,0.08)]">
-          <input
-            className="block w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium text-[var(--color-text)] placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] focus:bg-[var(--color-white)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
-            placeholder="Buscar projetos, tags..."
-            type="text"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-        </div>
+      <main className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+        <section className="-mt-16 rounded-[1.75rem] border border-[var(--color-border)] bg-[rgba(255,255,255,0.88)] px-5 py-5 shadow-[0_18px_50px_rgba(15,0,161,0.08)] backdrop-blur sm:px-6">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="mt-2 font-[var(--font-body)] text-2xl font-medium tracking-tight text-[var(--color-text)]">
+                  Projetos aprovados
+                </h2>
+              </div>
 
-        <h2 className="mb-10 font-[var(--font-body)] text-3xl font-medium tracking-tight text-[var(--color-text)]">
-          Projetos aprovados
-        </h2>
+              <p className="text-sm text-[var(--color-text-muted)]">
+                <span className="font-medium text-[var(--color-text)]">
+                  {filtered.length}
+                </span>{" "}
+                projeto{filtered.length === 1 ? "" : "s"} encontrado
+                {filtered.length === 1 ? "" : "s"}
+              </p>
+            </div>
 
-        {loading ? (
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)]">
-            Carregando projetos...
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative w-full lg:max-w-md">
+                <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-[var(--color-text-soft)]">
+                  search
+                </span>
+
+                <input
+                  className="block w-full rounded-full bg-[var(--color-white)] py-3 pl-12 pr-4 text-sm font-medium text-[var(--color-text)] placeholder:text-[var(--color-text-soft)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
+                  placeholder="Buscar por projeto, eixo ou descrição..."
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {axisFilters.map((axis) => {
+                  const isActive = selectedAxis === axis;
+
+                  return (
+                    <button
+                      key={axis}
+                      type="button"
+                      onClick={() => setSelectedAxis(axis)}
+                      className={[
+                        "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition",
+                        isActive
+                          ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-white)]"
+                          : "border-[var(--color-border)] bg-transparent text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
+                      ].join(" ")}
+                    >
+                      <span>{axis}</span>
+
+                      <span
+                        className={[
+                          "text-[10px]",
+                          isActive
+                            ? "text-white/70"
+                            : "text-[var(--color-text-soft)]",
+                        ].join(" ")}
+                      >
+                        {axisCounts.get(axis) ?? 0}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
-        ) : error ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8">
-            <p className="text-sm font-semibold text-rose-700">
-              Não foi possível carregar os projetos.
-            </p>
-            <p className="mt-2 break-all text-xs text-rose-600">{error}</p>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)]">
-            Nenhum projeto encontrado.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((project) => {
-              const progress = percent(
-                Number(project.raisedXlm),
-                Number(project.targetXlm),
-              );
+        </section>
 
-              return (
-                <article
-                  key={project.id}
-                  className="group flex flex-col overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_50px_rgba(15,0,161,0.08)]"
-                >
-                  <div className="relative h-52 overflow-hidden bg-[var(--color-primary)]">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,202,0,0.26),transparent_38%)]" />
-                    <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--color-primary),var(--color-primary-dark))]" />
+        <section className="mt-12">
+          {loading ? (
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)]">
+              Carregando projetos...
+            </div>
+          ) : error ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8">
+              <p className="text-sm font-semibold text-rose-700">
+                Não foi possível carregar os projetos.
+              </p>
+              <p className="mt-2 break-all text-xs text-rose-600">{error}</p>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)]">
+              Nenhum projeto encontrado.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((project) => {
+                const progress = percent(
+                  Number(project.raisedXlm),
+                  Number(project.targetXlm),
+                );
 
-                    <div className="relative flex h-full items-end p-6">
-                      <p className="max-w-xs font-[var(--font-body)] text-2xl font-semibold leading-tight text-[var(--color-white)]">
-                        {project.title}
-                      </p>
+                const projectImage =
+                  projectImages[String(project.id)] ?? HeroProjectsImg.src;
+
+                return (
+                  <article
+                    key={project.id}
+                    className="group flex min-h-[520px] flex-col overflow-hidden rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_50px_rgba(15,0,161,0.06)] transition-shadow duration-300 hover:shadow-[0_24px_70px_rgba(15,0,161,0.12)]"
+                  >
+                    <div className="relative h-48 overflow-hidden bg-[var(--color-primary)]">
+                      <img
+                        src={projectImage}
+                        alt={`Imagem do projeto ${project.title}`}
+                        className="h-full w-full transform-gpu object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                      />
+
+                      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(10,0,112,0.04),rgba(10,0,112,0.38))]" />
                     </div>
-                  </div>
 
-                  <div className="flex flex-1 flex-col p-7">
-                    <span className="w-fit rounded-full bg-[var(--color-primary-light)] px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--color-primary)]">
-                      {project.taxCategory}
-                    </span>
+                    <div className="flex flex-1 flex-col justify-between p-6">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                          {project.taxCategory}
+                        </p>
 
-                    <h3 className="mb-3 mt-4 font-[var(--font-body)] text-2xl font-medium leading-tight tracking-tight text-[var(--color-text)]">
-                      {project.title}
-                    </h3>
+                        <h3 className="mt-4 font-[var(--font-body)] text-xl font-medium leading-tight tracking-tight text-[var(--color-text)]">
+                          {project.title}
+                        </h3>
 
-                    <p className="mb-6 flex-1 text-sm font-normal leading-7 text-[var(--color-text-muted)]">
-                      {project.description}
-                    </p>
+                        <p className="mt-5 text-sm leading-7 text-[var(--color-text-muted)]">
+                          {project.description}
+                        </p>
+                      </div>
 
-                    <div className="mb-6 space-y-3">
-                      <div className="flex items-end justify-between gap-4">
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-soft)]">
-                            Arrecadado
-                          </span>
+                      <div className="mt-8">
+                        <div className="flex items-end justify-between gap-5">
+                          <div>
+                            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                              Arrecadado
+                            </p>
 
-                          <span className="font-semibold text-[var(--color-text)]">
-                            {formatXlm(project.raisedXlm)} XLM
-                          </span>
+                            <p className="mt-1 text-lg font-semibold text-[var(--color-text)]">
+                              {formatXlm(project.raisedXlm)} XLM
+                            </p>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                              Meta
+                            </p>
+
+                            <p className="mt-1 text-sm font-semibold text-[var(--color-primary)]">
+                              {progress}%
+                            </p>
+                          </div>
                         </div>
 
-                        <span className="text-right text-[10px] font-semibold uppercase tracking-widest text-[var(--color-primary)]">
-                          {progress}% da meta
-                        </span>
-                      </div>
+                        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
+                          <div
+                            className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-700"
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
 
-                      <div className="h-2.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
-                        <div
-                          className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-700"
-                          style={{ width: `${progress}%` }}
-                        />
+                        <div className="mt-6 flex items-center justify-between gap-4">
+                          <p className="text-xs leading-5 text-[var(--color-text-soft)]">
+                            Apoie este projeto e acompanhe o impacto gerado.
+                          </p>
+
+                          <Link
+                            to={`/contribuir?projeto=${project.id}&nome=${encodeURIComponent(
+                              project.title,
+                            )}`}
+                            className="shrink-0 rounded-full bg-[var(--color-black)] px-5 py-2.5 text-xs font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary)]"
+                          >
+                            Apoiar
+                          </Link>
+                        </div>
                       </div>
                     </div>
-
-                    <Link
-                      to={`/contribuir?projeto=${project.id}&nome=${encodeURIComponent(
-                        project.title,
-                      )}`}
-                      className="block w-full rounded-full bg-[var(--color-primary)] px-6 py-4 text-center text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-white)] transition hover:bg-[var(--color-primary-dark)]"
-                    >
-                      Apoiar projeto
-                    </Link>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </main>
     </div>
   );

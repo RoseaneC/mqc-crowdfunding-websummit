@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Buffer } from "buffer";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDonations } from "../../providers/DonationProvider";
 import { useWallet } from "../../hooks/useWallet";
 import { connectWallet } from "../../util/wallet";
@@ -14,58 +14,158 @@ import {
   type ProjectMediaItemDTO,
 } from "../../util/crowdfundingApi";
 
+import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
+import EloMeCardImg from "../../images/projects-page/cards/elo-me.png";
+import StellarbridgeCardImg from "../../images/projects-page/cards/stellarbridge.png";
+import KarnCardImg from "../../images/projects-page/cards/karn.png";
+import VizinhancaCardImg from "../../images/projects-page/cards/vizinhanca-cuidadora.png";
+import Web3CardImg from "../../images/projects-page/cards/web3-lideranca.jpeg";
+import FormacaoCardImg from "../../images/projects-page/cards/formacaoMulheres.jpeg";
+
+type DonorType = "PF" | "PJ";
+type CurrencyCode = "XLM" | "USDC" | "BRZ";
+
+type CurrencyOption = {
+  code: CurrencyCode;
+  name: string;
+  description: string;
+  brlRate: number;
+  xlmRate: number;
+  status: "active" | "soon";
+};
+
+const currencyOptions: CurrencyOption[] = [
+  {
+    code: "XLM",
+    name: "Stellar Lumens",
+    description: "Disponível para doações em Testnet",
+    brlRate: 0.5432,
+    xlmRate: 1,
+    status: "active",
+  },
+  {
+    code: "USDC",
+    name: "USDC",
+    description: "Preparado para stablecoin em dólar",
+    brlRate: 5.2,
+    xlmRate: 5.2 / 0.5432,
+    status: "soon",
+  },
+  {
+    code: "BRZ",
+    name: "BRZ",
+    description: "Preparado para real tokenizado",
+    brlRate: 1,
+    xlmRate: 1 / 0.5432,
+    status: "soon",
+  },
+];
+
+const projectImages: Record<string, string> = {
+  "1": MqcCardImg.src,
+  "2": EloMeCardImg.src,
+  "3": StellarbridgeCardImg.src,
+  "4": KarnCardImg.src,
+  "5": VizinhancaCardImg.src,
+  "6": Web3CardImg.src,
+  "8": FormacaoCardImg.src,
+};
+
+type DonationSignTransaction = ReturnType<typeof useWallet>["signTransaction"];
+
+type DonationAssembledTransaction = {
+  signAndSend: (input: {
+    signTransaction: DonationSignTransaction;
+  }) => Promise<unknown>;
+};
+
+type CrowdfundingClientLike = {
+  get_project: (input: { project_id: bigint }) => Promise<unknown>;
+  donate: (input: {
+    donor: string;
+    project_id: bigint;
+    donor_type: number;
+    donor_doc_hash: Buffer;
+    amount_stroops: bigint;
+  }) => Promise<DonationAssembledTransaction>;
+};
+
+type SentDonationTransaction = {
+  result?: unknown;
+  sendTransactionResponse?: {
+    hash?: string;
+  };
+  getTransactionResponse?: {
+    txHash?: string;
+  };
+};
+
 export default function Contribute() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addDonation } = useDonations();
   const { address, balances, network, signTransaction } = useWallet();
 
-  // Captura os dados passados pela página de projetos
   const projetoId = searchParams.get("projeto") || "1";
   const projetoNomeParam = searchParams.get("nome")?.trim() ?? "";
+
   const [project, setProject] = useState<ProjectDTO | null>(null);
   const [projectMedia, setProjectMedia] = useState<ProjectMediaItemDTO | null>(
     null,
   );
 
-  const [tipoDoador, setTipoDoador] = useState("PF");
-  const [valorXLM, setValorXLM] = useState("0");
+  const [tipoDoador, setTipoDoador] = useState<DonorType>("PF");
+  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>("XLM");
+  const [contributionValue, setContributionValue] = useState("100");
   const [identificacao, setIdentificacao] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const cotacaoXLM = 0.5432;
-  const valorBRL = (Number(valorXLM) * cotacaoXLM).toFixed(2);
+  const displayProjectName =
+    project?.title || projetoNomeParam || `Campanha #${projetoId}`;
 
-  const formatarEntrada = (valor: string) => {
-    const limpo = valor.replace(/\D/g, "");
-    if (tipoDoador === "PF") {
-      return limpo
-        .slice(0, 11)
-        .replace(/(\d{3})(\d)/, "$1.$2")
-        .replace(/(\d{3})(\d)/, "$1.$2")
-        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-    } else {
-      return limpo
-        .slice(0, 14)
-        .replace(/^(\d{2})(\d)/, "$1.$2")
-        .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-        .replace(/\.(\d{3})(\d)/, ".$1/$2")
-        .replace(/(\d{4})(\d)/, "$1-$2");
-    }
-  };
+  const projectImage =
+    projectImages[projetoId] ?? projectMedia?.img ?? MqcCardImg.src;
 
-  const handleIdentificacaoChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setIdentificacao(formatarEntrada(e.target.value));
-  };
+  const currency = useMemo(() => {
+    return (
+      currencyOptions.find((option) => option.code === selectedCurrency) ??
+      currencyOptions[0]
+    );
+  }, [selectedCurrency]);
 
-  const calcularAbatimento = () => {
-    const brl = Number(valorBRL);
-    if (tipoDoador === "PF") {
-      return (brl * 0.06).toFixed(2).replace(".", ",");
-    }
-    return (brl * 0.04).toFixed(2).replace(".", ",");
+  const numericContribution = Number(contributionValue || 0);
+  const amountBRL = numericContribution * currency.brlRate;
+  const amountXlm = numericContribution * currency.xlmRate;
+  const valorBRL = amountBRL.toFixed(2);
+
+  const progressPercent = project
+    ? Math.min(
+        100,
+        Math.round(
+          (Number(project.raisedXlm) / Number(project.targetXlm)) * 100,
+        ),
+      )
+    : 0;
+
+  const isDocumentValid = useMemo(() => {
+    const digits = identificacao.replace(/\D/g, "");
+
+    if (!digits) return false;
+
+    return tipoDoador === "PF" ? isValidCPF(digits) : isValidCNPJ(digits);
+  }, [identificacao, tipoDoador]);
+
+  const fiscalBenefit = useMemo(() => {
+    const rate = tipoDoador === "PF" ? 0.06 : 0.04;
+
+    return (amountBRL * rate).toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, [amountBRL, tipoDoador]);
+
+  const handleIdentificacaoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setIdentificacao(formatDocument(event.target.value, tipoDoador));
   };
 
   const handleConfirmarDoacao = async () => {
@@ -73,34 +173,43 @@ export default function Contribute() {
       alert("Conecte sua carteira antes de continuar.");
       return;
     }
+
     if (!identificacao) {
       alert(`Informe seu ${tipoDoador === "PF" ? "CPF" : "CNPJ"}.`);
       return;
     }
-    if (Number(valorXLM) <= 0) {
+
+    if (!isDocumentValid) {
+      alert(`Informe um ${tipoDoador === "PF" ? "CPF" : "CNPJ"} válido.`);
+      return;
+    }
+
+    if (numericContribution <= 0) {
       alert("Informe um valor de doação válido.");
       return;
     }
 
     setIsSubmitting(true);
+
     try {
       const donorDocHash = await hashStringHex(
         identificacao.replace(/\D/g, ""),
       );
+
       const prepared = await prepareDonation({
         projectId: Number(projetoId),
-        donorType: tipoDoador as "PF" | "PJ",
+        donorType: tipoDoador,
         donorDocHash,
-        amountXlm: Number(valorXLM),
+        amountXlm,
         walletAddress: address,
       });
 
       const chainResult = await executeOnChainDonation({
         walletAddress: address,
         projectId: Number(projetoId),
-        donorType: tipoDoador as "PF" | "PJ",
+        donorType: tipoDoador,
         donorDocHash,
-        amountXlm: Number(valorXLM),
+        amountXlm,
         signTransaction,
       });
 
@@ -110,24 +219,26 @@ export default function Contribute() {
         nftId: chainResult.nftId,
         contractDonationId: String(chainResult.contractDonationId),
       });
-      const projectName =
-        project?.title || projetoNomeParam || `Campanha #${projetoId}`;
 
       await addDonation({
         id: String(prepared.donationId),
         projectId: projetoId,
-        projectName,
-        amount: valorXLM,
+        projectName: displayProjectName,
+        amount: amountXlm.toFixed(7),
         amountBRL: valorBRL,
         timestamp: Date.now(),
         nftId: chainResult.nftId,
-        donorType: tipoDoador as "PF" | "PJ",
+        donorType: tipoDoador,
         walletAddress: address,
         txHash: chainResult.txHash,
       });
 
       void navigate(
-        `/sucesso?donationId=${prepared.donationId}&txHash=${chainResult.txHash}&nftId=${chainResult.nftId}&xlm=${valorXLM}&tipo=${tipoDoador}&projeto=${encodeURIComponent(projectName)}`,
+        `/sucesso?donationId=${prepared.donationId}&txHash=${chainResult.txHash}&nftId=${chainResult.nftId}&xlm=${amountXlm.toFixed(
+          7,
+        )}&moeda=${selectedCurrency}&valor=${numericContribution}&tipo=${tipoDoador}&projeto=${encodeURIComponent(
+          displayProjectName,
+        )}`,
       );
     } catch (error) {
       const message =
@@ -143,339 +254,499 @@ export default function Contribute() {
   }, [tipoDoador]);
 
   useEffect(() => {
-    void Promise.all([listProjects(), listProjectMedia()])
-      .then(([projects, media]) => {
+    async function loadProjectData() {
+      try {
+        const projects = await listProjects();
         const selected = projects.find((item) => String(item.id) === projetoId);
         setProject(selected ?? null);
+      } catch {
+        setProject(null);
+      }
+
+      try {
+        const media = await listProjectMedia();
         const selectedMedia = media.find((item) => item.id === projetoId);
         setProjectMedia(selectedMedia ?? null);
-      })
-      .catch(() => {});
+      } catch {
+        setProjectMedia(null);
+      }
+    }
+
+    void loadProjectData();
   }, [projetoId]);
 
-  const progressPercent = project
-    ? Math.min(
-        100,
-        Math.round(
-          (Number(project.raisedXlm) / Number(project.targetXlm)) * 100,
-        ),
-      )
-    : 0;
-  const displayProjectName =
-    project?.title || projetoNomeParam || `Campanha #${projetoId}`;
-
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 transition-colors duration-200">
-      <main className="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-5 space-y-6">
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-            <div className="h-64 relative flex items-end p-6 bg-[#002B99]">
-              {projectMedia?.img ? (
-                <img
-                  src={projectMedia.img}
-                  className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
-                  alt={displayProjectName}
-                />
-              ) : null}
-              <div className="relative z-10 space-y-3">
-                <span className="bg-yellow-400 text-[#002B99] text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-widest shadow-sm">
-                  {project?.taxCategory ?? "Educacao & Tecnologia"}
-                </span>
-                <h2 className="text-white font-black text-3xl leading-tight tracking-tight uppercase">
-                  Apoiando:
-                  <br />
-                  <span className="text-yellow-400 italic">
+    <div className="min-h-screen bg-[var(--color-surface)] font-[var(--font-body)] text-[var(--color-text)]">
+      <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              void navigate("/projetos");
+            }}
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--color-text-muted)] transition hover:text-[var(--color-primary)]"
+          >
+            <span className="material-symbols-outlined text-lg">
+              arrow_back
+            </span>
+            Voltar para projetos
+          </button>
+
+          <span className="hidden rounded-full border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-2 text-xs font-medium text-[var(--color-text-muted)] sm:inline-flex">
+            Ambiente de contribuição
+          </span>
+        </div>
+
+        <section className="overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_24px_80px_rgba(15,0,161,0.10)]">
+          <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="relative min-h-[480px] overflow-hidden bg-[var(--color-primary)]">
+              <img
+                src={projectImage}
+                alt={displayProjectName}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,0,36,0.84)_0%,rgba(15,0,161,0.50)_58%,rgba(15,0,161,0.20)_100%)]" />
+              <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[rgba(5,0,36,0.92)] to-transparent" />
+
+              <div className="relative z-10 flex min-h-[480px] flex-col justify-end p-8 sm:p-10">
+                <div className="max-w-3xl">
+                  <div className="mb-5 flex flex-wrap items-center gap-3">
+                    <span className="rounded-full bg-[var(--color-accent)] px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
+                      {project?.taxCategory ?? "Projeto de impacto"}
+                    </span>
+
+                    <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur">
+                      Doação via Stellar
+                    </span>
+                  </div>
+
+                  <h1 className="font-[var(--font-heading)] text-4xl font-bold leading-tight tracking-tight text-[var(--color-white)] sm:text-5xl">
                     {displayProjectName}
-                  </span>
-                </h2>
+                  </h1>
+
+                  <p className="mt-5 max-w-2xl text-base leading-8 text-white/78">
+                    {project?.description ??
+                      "Projeto selecionado na plataforma Mulheres Que Codam para receber apoio financeiro e fortalecer iniciativas lideradas por mulheres."}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="p-8 space-y-6">
-              <p className="text-sm text-slate-500 font-medium leading-relaxed uppercase tracking-widest">
-                {project?.description ??
-                  "Sua doacao financia bolsas de estudo integrais para mulheres em tecnologia."}
-              </p>
+            <aside className="bg-[var(--color-white)] p-6 sm:p-8">
+              <div className="rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-text-soft)]">
+                  Progresso da campanha
+                </p>
 
-              <div className="space-y-3">
-                <div className="flex justify-between text-xs font-black uppercase tracking-widest text-[#002B99]">
-                  <span>Meta do Projeto</span>
-                  <span className="text-slate-400">
-                    {progressPercent}% alcancado
-                  </span>
+                <div className="mt-5 grid grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-2xl font-semibold text-[var(--color-text)]">
+                      {progressPercent}%
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      alcançado
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-2xl font-semibold text-[var(--color-text)]">
+                      {Number(project?.raisedXlm ?? 0).toLocaleString("pt-BR", {
+                        maximumFractionDigits: 0,
+                      })}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      XLM captados
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-2xl font-semibold text-[var(--color-text)]">
+                      {Number(project?.targetXlm ?? 0).toLocaleString("pt-BR", {
+                        maximumFractionDigits: 0,
+                      })}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      XLM meta
+                    </p>
+                  </div>
                 </div>
-                <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+
+                <div className="mt-6 h-2.5 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
                   <div
-                    className="bg-orange-500 h-full rounded-full"
+                    className="h-full rounded-full bg-[var(--color-accent)]"
                     style={{ width: `${progressPercent}%` }}
-                  ></div>
+                  />
                 </div>
               </div>
 
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3">
-                <div className="bg-green-100 w-8 h-8 rounded-full flex items-center justify-center">
-                  <span className="material-icons text-green-600 text-sm">
-                    verified
-                  </span>
-                </div>
-                <span className="text-xs text-slate-600 font-bold uppercase tracking-wider">
-                  Projeto com captacao habilitada na plataforma
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-[#002B99] p-8 rounded-3xl text-white space-y-6 shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600 rounded-full opacity-20 -mr-10 -mt-10 blur-2xl"></div>
-
-            <div className="flex items-center gap-3 relative z-10">
-              <div className="bg-yellow-400 w-10 h-10 rounded-xl flex items-center justify-center shadow-inner">
-                <span className="material-icons text-[#002B99]">savings</span>
-              </div>
-              <h3 className="font-black text-lg uppercase tracking-wider text-yellow-400">
-                Benefício Fiscal
-              </h3>
-            </div>
-
-            <div className="space-y-5 relative z-10">
-              <div className="flex items-center gap-4 bg-blue-900/40 p-4 rounded-2xl border border-blue-800">
-                <div className="bg-blue-100 text-[#002B99] w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shrink-0">
-                  PF
-                </div>
-                <p className="text-sm text-blue-100 font-medium leading-tight">
-                  Abatimento de até{" "}
-                  <span className="font-black text-white text-base">6%</span> no
-                  Imposto de Renda devido para Pessoas Físicas.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-4 bg-blue-900/40 p-4 rounded-2xl border border-blue-800">
-                <div className="bg-slate-700 text-white w-10 h-10 rounded-full flex items-center justify-center text-xs font-black shrink-0">
-                  PJ
-                </div>
-                <p className="text-sm text-blue-100 font-medium leading-tight">
-                  Abatimento de até{" "}
-                  <span className="font-black text-white text-base">4%</span>{" "}
-                  para Pessoas Jurídicas (Lucro Real).
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-7 bg-white rounded-3xl shadow-xl p-8 lg:p-12 border border-slate-100">
-          <div className="mb-8">
-            <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">
-              Realizar Doação
-            </h1>
-            <p className="text-slate-500 text-base">
-              Complete os dados abaixo para contribuir via Stellar (XLM).
-            </p>
-          </div>
-
-          <div className="space-y-10">
-            <div className="border-2 border-orange-100 bg-orange-50/50 p-6 rounded-[2rem] flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-orange-100 shrink-0">
-                  <span className="material-icons text-orange-500 text-3xl">
-                    account_balance_wallet
-                  </span>
-                </div>
-                <div>
-                  <h4 className="font-black text-lg text-slate-800 leading-none mb-1">
-                    Carteira Freighter
-                  </h4>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
-                    Wallet oficial conforme Requisito DN-01
+              <div className="mt-6 rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-white)] p-6 shadow-[0_16px_45px_rgba(15,0,161,0.08)]">
+                <div className="border-b border-[var(--color-border)] pb-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent-dark)]">
+                    Contribuição
                   </p>
+
+                  <h2 className="mt-2 font-[var(--font-heading)] text-2xl font-semibold text-[var(--color-text)]">
+                    Apoiar projeto
+                  </h2>
                 </div>
-              </div>
-              {!address ? (
-                <button
-                  onClick={() => void connectWallet()}
-                  className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white font-black px-8 py-3.5 rounded-xl text-xs uppercase tracking-widest transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)] active:scale-95"
-                >
-                  Conectar Carteira
-                </button>
-              ) : (
-                <div className="w-full sm:w-auto bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
-                    Carteira Conectada
-                  </p>
-                  <p className="text-xs font-bold text-slate-700 mt-1">
-                    {shortAddress(address)}
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-1">
-                    {balances?.xlm?.balance ?? "-"} XLM
-                    {network ? ` • ${network}` : ""}
-                  </p>
-                </div>
-              )}
-            </div>
 
-            <div className="space-y-4">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
-                Tipo de Doador
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => setTipoDoador("PF")}
-                  className={`flex flex-col items-center justify-center p-6 border-2 rounded-2xl transition-all ${
-                    tipoDoador === "PF"
-                      ? "border-[#002B99] bg-blue-50/50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`material-icons text-3xl mb-3 ${
-                      tipoDoador === "PF" ? "text-[#002B99]" : "text-slate-400"
-                    }`}
-                  >
-                    person
-                  </span>
-                  <span
-                    className={`font-black text-sm tracking-wide ${
-                      tipoDoador === "PF" ? "text-[#002B99]" : "text-slate-500"
-                    }`}
-                  >
-                    Pessoa Física
-                  </span>
-                </button>
-                <button
-                  onClick={() => setTipoDoador("PJ")}
-                  className={`flex flex-col items-center justify-center p-6 border-2 rounded-2xl transition-all ${
-                    tipoDoador === "PJ"
-                      ? "border-[#002B99] bg-blue-50/50"
-                      : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
-                >
-                  <span
-                    className={`material-icons text-3xl mb-3 ${
-                      tipoDoador === "PJ" ? "text-[#002B99]" : "text-slate-400"
-                    }`}
-                  >
-                    domain
-                  </span>
-                  <span
-                    className={`font-black text-sm tracking-wide ${
-                      tipoDoador === "PJ" ? "text-[#002B99]" : "text-slate-500"
-                    }`}
-                  >
-                    Pessoa Jurídica
-                  </span>
-                </button>
-              </div>
-            </div>
+                <div className="mt-6 space-y-5">
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-soft)]">
+                      Tipo de doador
+                    </label>
 
-            <div className="space-y-4">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
-                {tipoDoador === "PF" ? "CPF" : "CNPJ"}
-              </label>
-              <div className="relative">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 material-icons text-slate-400">
-                  badge
-                </span>
-                <input
-                  type="text"
-                  value={identificacao}
-                  onChange={handleIdentificacaoChange}
-                  placeholder={
-                    tipoDoador === "PF"
-                      ? "000.000.000-00"
-                      : "00.000.000/0000-00"
-                  }
-                  className="w-full pl-14 pr-6 py-5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#002B99] text-base font-bold text-slate-700 transition-all placeholder:font-normal"
-                />
-              </div>
-            </div>
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      {(["PF", "PJ"] as DonorType[]).map((type) => {
+                        const isActive = tipoDoador === type;
 
-            <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                <div className="space-y-4">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">
-                    Valor da Doação
-                  </label>
-                  <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-2xl px-5 py-3 shadow-sm focus-within:ring-2 focus-within:ring-[#002B99] transition-all">
-                    <div className="flex flex-col text-[10px] font-black text-[#002B99] pr-4 border-r border-slate-200">
-                      <span>XLM</span>
-                      <span className="material-icons text-base mt-1">
-                        currency_exchange
-                      </span>
+                        return (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setTipoDoador(type)}
+                            className={[
+                              "rounded-2xl border px-4 py-3 text-sm font-semibold transition",
+                              isActive
+                                ? "border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                                : "border-[var(--color-border)] bg-[var(--color-white)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]",
+                            ].join(" ")}
+                          >
+                            {type === "PF"
+                              ? "Pessoa Física"
+                              : "Pessoa Jurídica"}
+                          </button>
+                        );
+                      })}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-soft)]">
+                      {tipoDoador === "PF" ? "CPF" : "CNPJ"}
+                    </label>
+
                     <input
-                      type="number"
-                      value={valorXLM}
-                      onChange={(e) => setValorXLM(e.target.value)}
-                      className="w-full bg-transparent font-black text-3xl text-slate-900 outline-none"
+                      type="text"
+                      value={identificacao}
+                      onChange={handleIdentificacaoChange}
+                      placeholder={
+                        tipoDoador === "PF"
+                          ? "000.000.000-00"
+                          : "00.000.000/0000-00"
+                      }
+                      className={[
+                        "mt-3 w-full rounded-2xl border bg-[var(--color-surface)] px-4 py-3 text-sm font-medium text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)] focus:bg-[var(--color-white)] focus:ring-4",
+                        identificacao && !isDocumentValid
+                          ? "border-[var(--color-error)] focus:ring-[var(--color-error)]/10"
+                          : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/10",
+                      ].join(" ")}
                     />
-                    <span className="text-slate-400 font-black tracking-widest uppercase text-sm">
-                      XLM
-                    </span>
+
+                    {identificacao && !isDocumentValid ? (
+                      <p className="mt-2 text-xs font-medium text-[var(--color-error)]">
+                        {tipoDoador === "PF"
+                          ? "CPF inválido."
+                          : "CNPJ inválido."}
+                      </p>
+                    ) : null}
                   </div>
-                  <p className="text-[10px] text-slate-400 font-bold ml-1 uppercase tracking-widest">
-                    Taxa de rede estimada:{" "}
-                    <span className="text-slate-600">0.00001 XLM</span>
+
+                  <div>
+                    <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-soft)]">
+                      Valor
+                    </label>
+
+                    <div className="mt-3 grid grid-cols-[1fr_118px] gap-3">
+                      <div className="flex items-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 focus-within:border-[var(--color-primary)] focus-within:bg-[var(--color-white)] focus-within:ring-4 focus-within:ring-[var(--color-primary)]/10">
+                        <input
+                          type="number"
+                          min="0"
+                          value={contributionValue}
+                          onChange={(event) =>
+                            setContributionValue(event.target.value)
+                          }
+                          className="w-full bg-transparent text-3xl font-semibold text-[var(--color-text)] outline-none"
+                        />
+                      </div>
+
+                      <select
+                        value={selectedCurrency}
+                        onChange={(event) =>
+                          setSelectedCurrency(
+                            event.target.value as CurrencyCode,
+                          )
+                        }
+                        className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] px-3 text-sm font-semibold text-[var(--color-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
+                      >
+                        {currencyOptions.map((option) => (
+                          <option key={option.code} value={option.code}>
+                            {option.code}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="mt-3 rounded-2xl bg-[var(--color-surface)] p-4">
+                      <div className="flex items-center justify-between gap-4 text-sm">
+                        <span className="text-[var(--color-text-muted)]">
+                          Conversão estimada
+                        </span>
+
+                        <span className="font-semibold text-[var(--color-text)]">
+                          R${" "}
+                          {amountBRL.toLocaleString("pt-BR", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="mt-2 flex items-center justify-between gap-4 text-xs">
+                        <span className="text-[var(--color-text-soft)]">
+                          Equivalente para contrato atual
+                        </span>
+
+                        <span className="font-medium text-[var(--color-primary)]">
+                          {amountXlm.toFixed(4)} XLM
+                        </span>
+                      </div>
+
+                      {currency.status === "soon" ? (
+                        <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+                          {currency.code} está preparado na interface para
+                          futura integração com ativos reais. Nesta versão, a
+                          liquidação segue em equivalente XLM.
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[var(--color-primary)]/15 bg-[var(--color-primary-light)] p-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+                      Incentivo fiscal estimado
+                    </p>
+
+                    <p className="mt-2 text-sm leading-6 text-[var(--color-primary-dark)]">
+                      Para {tipoDoador}, esta contribuição pode gerar abatimento
+                      aproximado de{" "}
+                      <span className="font-semibold">R$ {fiscalBenefit}</span>.
+                    </p>
+                  </div>
+
+                  {!address ? (
+                    <button
+                      type="button"
+                      onClick={() => void connectWallet()}
+                      className="w-full rounded-full bg-[var(--color-black)] px-6 py-4 text-sm font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary)]"
+                    >
+                      Conectar carteira
+                    </button>
+                  ) : (
+                    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-success)]">
+                        Carteira conectada
+                      </p>
+
+                      <p className="mt-2 text-sm font-semibold text-[var(--color-text)]">
+                        {shortAddress(address)}
+                      </p>
+
+                      <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                        {balances?.xlm?.balance ?? "-"} XLM
+                        {network ? ` • ${network}` : ""}
+                      </p>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void handleConfirmarDoacao();
+                    }}
+                    disabled={isSubmitting}
+                    className="w-full rounded-full bg-[var(--color-primary)] px-6 py-4 text-sm font-semibold text-[var(--color-white)] shadow-[0_12px_34px_rgba(15,0,161,0.25)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSubmitting ? "Processando..." : "Confirmar doação"}
+                  </button>
+
+                  <p className="text-center text-[11px] leading-5 text-[var(--color-text-soft)]">
+                    Ao prosseguir, você concorda com os Termos de Uso. A
+                    conversão é estimada e poderá variar conforme a integração
+                    de ativos.
                   </p>
                 </div>
-
-                <div className="space-y-4 md:border-l border-slate-200 md:pl-8 h-full flex flex-col justify-center pt-2">
-                  <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
-                    Aproximadamente
-                  </label>
-                  <div className="flex items-baseline gap-2 mb-2">
-                    <span className="text-slate-400 text-xl font-bold">R$</span>
-                    <span className="text-4xl font-black text-slate-900 tracking-tighter">
-                      {valorBRL.replace(".", ",")}
-                    </span>
-                  </div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    1 XLM = R$ 0,54
-                  </p>
-                </div>
               </div>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl flex items-start gap-4 shadow-sm">
-              <div className="bg-[#002B99] text-white w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-md">
-                <span className="material-icons text-sm">info</span>
-              </div>
-              <div className="space-y-1 pt-1">
-                <h5 className="font-black text-sm text-[#002B99] uppercase tracking-widest">
-                  Incentivo Fiscal Ativo
-                </h5>
-                <p className="text-xs text-blue-900 font-medium leading-relaxed">
-                  Baseado no seu perfil ({tipoDoador}), esta doação pode gerar
-                  um abatimento de aprox.{" "}
-                  <span className="font-black text-[#002B99] bg-white px-2 py-0.5 rounded">
-                    R$ {calcularAbatimento()}
-                  </span>{" "}
-                  no seu próximo IR.
-                </p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                void handleConfirmarDoacao();
-              }}
-              disabled={isSubmitting}
-              className="w-full bg-[#002B99] hover:bg-blue-800 text-white font-black py-5 rounded-2xl flex items-center justify-center gap-3 transition-all shadow-[0_10px_30px_rgba(0,43,153,0.25)] active:scale-95 group text-sm uppercase tracking-widest mt-4"
-            >
-              {isSubmitting ? "Processando..." : "Confirmar Doação"}
-              <span className="material-icons text-lg group-hover:translate-x-2 transition-transform">
-                bolt
-              </span>
-            </button>
-
-            <p className="text-[9px] text-center text-slate-400 max-w-2xl mx-auto leading-relaxed uppercase font-bold tracking-widest">
-              Ao prosseguir, você concorda com nossos Termos de Uso. A dedução
-              fiscal está sujeita às regras da Receita Federal.
-            </p>
+            </aside>
           </div>
-        </div>
+        </section>
+
+        <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.75fr]">
+          <div className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_14px_40px_rgba(15,0,161,0.05)]">
+            <p className="text-sm font-medium uppercase tracking-[0.16em] text-[var(--color-accent-dark)]">
+              Por que apoiar este projeto?
+            </p>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {[
+                {
+                  title: "Impacto direto",
+                  text: "Sua contribuição fortalece iniciativas lideradas por mulheres e amplia oportunidades reais.",
+                  icon: "diversity_3",
+                },
+                {
+                  title: "Transparência",
+                  text: "A plataforma usa infraestrutura Stellar para registrar e acompanhar operações com mais rastreabilidade.",
+                  icon: "account_tree",
+                },
+                {
+                  title: "Recibo digital",
+                  text: "A doação pode gerar registros digitais e comprovantes associados ao projeto apoiado.",
+                  icon: "verified",
+                },
+              ].map((item) => (
+                <div
+                  key={item.title}
+                  className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+                >
+                  <span className="material-symbols-outlined text-3xl text-[var(--color-primary)]">
+                    {item.icon}
+                  </span>
+
+                  <h3 className="mt-4 font-[var(--font-heading)] text-base font-semibold text-[var(--color-text)]">
+                    {item.title}
+                  </h3>
+
+                  <p className="mt-3 text-sm leading-6 text-[var(--color-text-muted)]">
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_14px_40px_rgba(15,0,161,0.05)]">
+            <p className="text-sm font-medium uppercase tracking-[0.16em] text-[var(--color-accent-dark)]">
+              Quem realiza
+            </p>
+
+            <h2 className="mt-3 font-[var(--font-heading)] text-2xl font-semibold text-[var(--color-text)]">
+              {project?.ngoName ?? "Organização responsável"}
+            </h2>
+
+            <p className="mt-4 text-sm leading-7 text-[var(--color-text-muted)]">
+              A organização responsável cadastra as informações, acompanha a
+              captação e responde pela execução da iniciativa. A plataforma atua
+              como ponte tecnológica para doações, transparência e
+              acompanhamento de impacto.
+            </p>
+
+            {project?.ngoWallet ? (
+              <div className="mt-5 rounded-2xl bg-[var(--color-surface)] p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                      Carteira da organização
+                    </p>
+
+                    <p className="mt-2 text-sm font-medium text-[var(--color-text)]">
+                      {shortAddress(project.ngoWallet)}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void navigator.clipboard.writeText(project.ngoWallet)
+                    }
+                    className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-2 text-xs font-semibold text-[var(--color-primary)] transition hover:border-[var(--color-primary)]"
+                  >
+                    <span className="material-symbols-outlined text-base">
+                      content_copy
+                    </span>
+                    Copiar
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
       </main>
     </div>
   );
+}
+
+function formatDocument(value: string, type: DonorType) {
+  const digits = value.replace(/\D/g, "");
+
+  if (type === "PF") {
+    return digits
+      .slice(0, 11)
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+
+  return digits
+    .slice(0, 14)
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+}
+
+function isValidCPF(value: string) {
+  const cpf = value.replace(/\D/g, "");
+
+  if (cpf.length !== 11) return false;
+  if (/^(\d)\1+$/.test(cpf)) return false;
+
+  let sum = 0;
+
+  for (let i = 0; i < 9; i += 1) {
+    sum += Number(cpf[i]) * (10 - i);
+  }
+
+  let firstDigit = (sum * 10) % 11;
+  if (firstDigit === 10) firstDigit = 0;
+  if (firstDigit !== Number(cpf[9])) return false;
+
+  sum = 0;
+
+  for (let i = 0; i < 10; i += 1) {
+    sum += Number(cpf[i]) * (11 - i);
+  }
+
+  let secondDigit = (sum * 10) % 11;
+  if (secondDigit === 10) secondDigit = 0;
+
+  return secondDigit === Number(cpf[10]);
+}
+
+function isValidCNPJ(value: string) {
+  const cnpj = value.replace(/\D/g, "");
+
+  if (cnpj.length !== 14) return false;
+  if (/^(\d)\1+$/.test(cnpj)) return false;
+
+  const calculateDigit = (base: string, weights: number[]) => {
+    const sum = weights.reduce((acc, weight, index) => {
+      return acc + Number(base[index]) * weight;
+    }, 0);
+
+    const remainder = sum % 11;
+
+    return remainder < 2 ? 0 : 11 - remainder;
+  };
+
+  const firstWeights = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+  const secondWeights = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
+  const firstDigit = calculateDigit(cnpj.slice(0, 12), firstWeights);
+  const secondDigit = calculateDigit(cnpj.slice(0, 13), secondWeights);
+
+  return firstDigit === Number(cnpj[12]) && secondDigit === Number(cnpj[13]);
 }
 
 async function hashStringHex(value: string): Promise<string> {
@@ -486,28 +757,33 @@ async function hashStringHex(value: string): Promise<string> {
   ) as ArrayBuffer;
   const digest = await crypto.subtle.digest("SHA-256", buffer);
   const bytes = Array.from(new Uint8Array(digest));
+
   return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 function shortAddress(value: string): string {
   if (value.length <= 14) return value;
+
   return `${value.slice(0, 6)}...${value.slice(-6)}`;
 }
 
 async function executeOnChainDonation(input: {
   walletAddress: string;
   projectId: number;
-  donorType: "PF" | "PJ";
+  donorType: DonorType;
   donorDocHash: string;
   amountXlm: number;
-  signTransaction: ReturnType<typeof useWallet>["signTransaction"];
+  signTransaction: DonationSignTransaction;
 }) {
-  const client = createCrowdfundingClient(input.walletAddress);
+  const client = createCrowdfundingClient(
+    input.walletAddress,
+  ) as CrowdfundingClientLike;
+
   try {
     await client.get_project({ project_id: BigInt(input.projectId) });
   } catch {
     throw new Error(
-      "Projeto ainda nao sincronizado no contrato local. Rode o sync on-chain dos projetos e tente novamente.",
+      "Projeto ainda não sincronizado no contrato local. Rode o sync on-chain dos projetos e tente novamente.",
     );
   }
 
@@ -519,22 +795,19 @@ async function executeOnChainDonation(input: {
     amount_stroops: BigInt(Math.round(input.amountXlm * 10_000_000)),
   });
 
-  const sent = await assembled.signAndSend({
+  const sent = (await assembled.signAndSend({
     signTransaction: input.signTransaction,
-  });
+  })) as SentDonationTransaction;
 
-  const sentTx = sent as {
-    result?: unknown;
-    sendTransactionResponse?: { hash?: string };
-    getTransactionResponse?: { txHash?: string };
-  };
   const txHash =
-    sentTx.getTransactionResponse?.txHash ??
-    sentTx.sendTransactionResponse?.hash ??
+    sent.getTransactionResponse?.txHash ??
+    sent.sendTransactionResponse?.hash ??
     "";
-  const txResult = sentTx.result;
+
+  const txResult = sent.result;
+
   if (!txHash || !Array.isArray(txResult) || txResult.length < 2) {
-    throw new Error("Falha ao confirmar transacao on-chain.");
+    throw new Error("Falha ao confirmar transação on-chain.");
   }
 
   return {

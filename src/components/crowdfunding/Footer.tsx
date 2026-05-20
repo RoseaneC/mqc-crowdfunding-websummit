@@ -54,7 +54,7 @@ export default function Footer() {
                 {
                   Icon: Mail,
                   label: "E-mail",
-                  href: "mailto:contato@mulheresquecodam.org",
+                  href: "mailto:mulheresquecodam@gmail.com",
                 },
               ].map(({ Icon, label, href }) => (
                 <a
