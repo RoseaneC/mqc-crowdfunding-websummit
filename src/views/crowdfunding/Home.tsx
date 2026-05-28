@@ -351,6 +351,7 @@ export default function Home() {
       </section>
       {/* FAIXA DE PARCEIROS */}
       <section
+        id="parceiros"
         aria-label="Nossos parceiros"
         className="relative w-full overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-white)]"
       >
@@ -499,7 +500,7 @@ export default function Home() {
               {
                 question: "O que é a plataforma?",
                 answer:
-                  "Uma plataforma de crowdfunding baseada na blockchain Stellar conectando doadores a projetos de impacto social voltados para mulheres.",
+                  "É uma plataforma de financiamento coletivo baseada na rede Stellar, criada para conectar pessoas apoiadoras a projetos de impacto social liderados por mulheres.",
               },
               {
                 question: "Preciso entender blockchain para doar?",
@@ -509,7 +510,7 @@ export default function Home() {
               {
                 question: "Minha doação pode ser deduzida?",
                 answer:
-                  "Sim. Dependendo da categoria fiscal do projeto e do seu tipo de declaração, informamos os percentuais durante o fluxo de doação.",
+                  "Quando aplicável, a plataforma informa os percentuais estimados de incentivo fiscal durante o fluxo de contribuição. A validação final deve ser feita com orientação contábil ou tributária.",
               },
               {
                 question: "O que é o Certificado Digital de Impacto?",
@@ -519,7 +520,7 @@ export default function Home() {
               {
                 question: "Empresas podem doar?",
                 answer:
-                  "Sim. Aceitamos doações de Pessoas Jurídicas com taxas reduzidas e possibilidade de abatimento via Lucro Real.",
+                  "Sim. A plataforma está preparada para contribuições de pessoas jurídicas, com informações específicas sobre incentivos e prestação de contas quando aplicáveis.",
               },
               {
                 question: "Como funciona dedução PF e PJ?",
@@ -529,7 +530,7 @@ export default function Home() {
               {
                 question: "Como ONGs enviam projetos?",
                 answer:
-                  "Representantes devem acessar a rota de cadastro, preencher os dados do projeto, definir a carteira Stellar e submeter para revisão administrativa.",
+                  "Representantes devem cadastrar a iniciativa, informar os dados da organização, definir a carteira Stellar e submeter o projeto para revisão administrativa.",
               },
               {
                 question: "Quais documentos são necessários?",

@@ -80,7 +80,7 @@ export default function Dashboard() {
               <br /> <span className="text-orange-500 not-italic">Impacto</span>
             </h1>
             <p className="text-[11px] font-black uppercase tracking-[0.5em] text-slate-400">
-              On-Chain Sync • Protocolo 2026
+              Sincronização on-chain • Protocolo 2026
             </p>
           </div>
         </div>
@@ -96,13 +96,13 @@ export default function Dashboard() {
                   favorite_border
                 </span>
                 <h3 className="text-2xl font-black uppercase tracking-tight text-slate-400">
-                  Nenhuma doacao confirmada
+                  Nenhuma doação confirmada
                 </h3>
                 <Link
                   to="/contribuir"
                   className="inline-block bg-orange-500 text-white font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-[0.3em]"
                 >
-                  Fazer Doacao
+                  Fazer doação
                 </Link>
               </div>
             ) : (
@@ -153,7 +153,7 @@ export default function Dashboard() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[#002B99] hover:underline inline-flex items-center gap-1"
-                                title={`Abrir transacao no ${explorerLabel}`}
+                                title={`Abrir transação no ${explorerLabel}`}
                               >
                                 TX
                                 <span className="material-icons text-xs">
@@ -189,16 +189,16 @@ export default function Dashboard() {
             <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl space-y-8">
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-white">
-                  Impact NFTs
+                  NFTs de Impacto
                 </h2>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">
-                  Inventory
+                  Inventário
                 </p>
                 <p className="text-xs font-black text-orange-400 uppercase tracking-wider">
                   NFTs recebidos: {ownedNftCount}
                 </p>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Gerados ao confirmar sua doacao on-chain
+                  Gerados ao confirmar sua doação on-chain
                 </p>
               </div>
 
@@ -233,7 +233,7 @@ export default function Dashboard() {
               <div className="h-3 w-full bg-slate-800 rounded-full shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
               {ownedNftCount === 0 ? (
                 <p className="text-xs text-slate-400 text-center font-bold uppercase tracking-wider">
-                  Voce ainda nao recebeu NFTs de impacto.
+                  Você ainda não recebeu NFTs de impacto.
                 </p>
               ) : null}
             </div>
@@ -302,7 +302,7 @@ export default function Dashboard() {
                     </a>
                   ) : (
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                      NFT indisponivel no explorer
+                      NFT indisponível no explorer
                     </p>
                   )}
                 </div>

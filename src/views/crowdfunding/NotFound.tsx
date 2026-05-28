@@ -8,16 +8,16 @@ export default function NotFound() {
           Erro 404
         </p>
         <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-slate-900 mt-3">
-          Pagina nao encontrada
+          Página não encontrada
         </h1>
         <p className="mt-4 text-slate-600">
-          O caminho acessado nao existe nesta versao da plataforma.
+          O caminho acessado não existe nesta versão da plataforma.
         </p>
         <Link
           to="/"
           className="inline-flex mt-8 rounded-xl bg-[#002B99] hover:bg-blue-800 text-white font-black px-6 py-3 text-sm uppercase tracking-wider"
         >
-          Voltar para inicio
+          Voltar para início
         </Link>
       </main>
     </div>

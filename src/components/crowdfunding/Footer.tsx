@@ -49,7 +49,7 @@ export default function Footer() {
                 {
                   Icon: Twitter,
                   label: "X (Twitter)",
-                  href: "https://x.com/SEU_PERFIL",
+                  href: "https://x.com/mulheresqcodam",
                 },
                 {
                   Icon: Mail,
@@ -87,7 +87,7 @@ export default function Footer() {
                   href="/projetos"
                   className="text-sm text-gray-400 transition hover:text-white"
                 >
-                  Projetos Ativos
+                  Projetos ativos
                 </a>
               </li>
 
@@ -96,7 +96,7 @@ export default function Footer() {
                   href="/#sobre"
                   className="text-sm text-gray-400 transition hover:text-white"
                 >
-                  Como Funciona
+                  Como funciona
                 </a>
               </li>
 
@@ -177,9 +177,9 @@ export default function Footer() {
           <div className="flex items-center gap-4 text-xs text-gray-500">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-green-400" />
-              Plataforma Online
+              Plataforma online
             </span>
-            <span>Powered by Stellar Network</span>
+            <span>Com tecnologia Stellar</span>
           </div>
         </div>
       </div>

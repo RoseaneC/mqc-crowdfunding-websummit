@@ -76,7 +76,7 @@ export default function Success() {
               Impacto Confirmado
             </h1>
             <p className="text-slate-500 font-bold uppercase text-[10px] tracking-[0.3em]">
-              Sua contribuicao para {projetoNome} foi registrada
+              Sua contribuição para {projetoNome} foi registrada
             </p>
           </div>
 
@@ -98,7 +98,7 @@ export default function Success() {
 
             <div className="space-y-4 text-xs font-black uppercase tracking-widest">
               <div className="flex justify-between gap-4">
-                <span className="text-slate-400">Hash Transaction</span>
+                <span className="text-slate-400">Hash da transação</span>
                 {txExplorerUrl ? (
                   <a
                     href={txExplorerUrl}
@@ -134,7 +134,7 @@ export default function Success() {
                 </span>
               </div>
               <div className="pt-4 border-t border-slate-200 flex justify-between gap-4">
-                <span className="text-slate-400">Valor Liquido no Projeto</span>
+                <span className="text-slate-400">Valor líquido no projeto</span>
                 <span className="text-emerald-600 text-xl">
                   R${" "}
                   {valorLiquido.toLocaleString("pt-BR", {
@@ -148,7 +148,7 @@ export default function Success() {
               to="/dashboard"
               className="block w-full bg-[#002B99] hover:bg-blue-800 text-white font-black py-4 rounded-2xl text-center text-[11px] uppercase tracking-[0.3em]"
             >
-              Acessar Meu Dashboard
+              Acessar meu painel
             </Link>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function Success() {
             <div className="relative h-full flex flex-col items-center justify-center p-10 text-center space-y-5 z-10">
               <div className="absolute top-8 right-8 bg-white text-slate-900 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center gap-2">
                 <span className="material-icons text-sm">stars</span>
-                NFT Mintado
+                NFT emitido
               </div>
 
               <div className="w-28 h-28 bg-white/10 backdrop-blur-xl rounded-[1.5rem] border border-white/25 flex items-center justify-center">
@@ -179,26 +179,26 @@ export default function Success() {
               <h4 className="text-2xl font-black uppercase tracking-[0.2em] opacity-80">
                 {nftData
                   ? `ID #${nftId.toString().padStart(2, "0")}`
-                  : "Aguardando indexacao"}
+                  : "Aguardando indexação"}
               </h4>
               <p className="text-[11px] font-black tracking-[0.35em] uppercase opacity-95">
-                DOACAO: {valorDoadoXLM.toFixed(2)} XLM
+                DOAÇÃO: {valorDoadoXLM.toFixed(2)} XLM
               </p>
             </div>
           </div>
 
           <div className="p-10 space-y-7 text-center">
             <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">
-              Seu Impact NFT
+              Seu NFT de Impacto
             </h3>
             <p className="text-[10px] text-slate-500 leading-relaxed font-black uppercase tracking-[0.3em]">
-              Este colecionavel digital intransferivel prova que voce ajudou a
-              transformar {projetoNome} em realidade.
+              Este colecionável digital intransferível comprova que você ajudou
+              a transformar {projetoNome} em realidade.
             </p>
             <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 text-left space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-[0.3em]">
-                  COLECAO DO PROJETO
+                  COLEÇÃO DO PROJETO
                 </span>
                 <span className="text-[10px] font-black uppercase text-orange-500 tracking-[0.3em]">
                   {nftData

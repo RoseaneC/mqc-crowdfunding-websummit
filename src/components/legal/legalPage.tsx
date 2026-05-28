@@ -2,9 +2,7 @@
 
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
-import LogoImg from "../../images/home-page/logo1_mqc.png";
 import Footer from "../../components/crowdfunding/Footer";
 
 type LegalSection = {
@@ -21,9 +19,9 @@ type LegalPageProps = {
 };
 
 const navLinks = [
-  { label: "Sobre nós", href: "/sobre" },
+  { label: "Sobre nós", href: "/#sobreNos" },
   { label: "Projetos", href: "/projetos" },
-  { label: "Parceiros", href: "/parceiros" },
+  { label: "Parceiros", href: "/#parceiros" },
   { label: "Contato", href: "/contato" },
 ];
 
@@ -44,14 +42,14 @@ export default function LegalPage({
             className="inline-flex items-center"
             onClick={() => setIsMenuOpen(false)}
           >
-            <Image
-              src={LogoImg}
-              alt="Mulheres Que Codam"
-              width={180}
-              height={50}
-              className="h-8 w-auto origin-left scale-[2.4] object-contain sm:h-9 sm:scale-[2.7]"
-              priority
-            />
+            <span className="flex flex-col leading-none">
+              <span className="font-[var(--font-heading)] text-xs font-black uppercase tracking-[0.08em] text-[var(--color-white)] sm:text-sm">
+                Mulheres
+              </span>
+              <span className="font-[var(--font-heading)] text-base font-black uppercase tracking-[0.04em] text-[var(--color-white)] sm:text-lg">
+                Que <span className="text-[var(--color-accent)]">Codam</span>
+              </span>
+            </span>
           </Link>
 
           <div className="hidden items-center gap-9 text-sm font-medium text-[var(--color-white)] md:flex">

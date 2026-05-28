@@ -3,8 +3,9 @@ import "../index.css";
 import "@stellar/design-system/build/styles.min.css";
 
 export const metadata: Metadata = {
-  title: "MQC Platform",
-  description: "MQC crowdfunding and admin platform",
+  title: "Mulheres Que Codam | Plataforma de Impacto",
+  description:
+    "Plataforma de financiamento coletivo para projetos liderados por mulheres.",
 };
 
 export default function RootLayout({
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body>{children}</body>
     </html>
   );

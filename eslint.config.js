@@ -11,6 +11,7 @@ import { globalIgnores } from "eslint/config";
 export default tseslint.config(
   globalIgnores([
     "dist",
+    ".next",
     "packages",
     "target/packages",
     "next-env.d.ts",
