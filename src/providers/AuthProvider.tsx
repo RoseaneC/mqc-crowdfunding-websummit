@@ -1,6 +1,6 @@
 import {
   createContext,
-  useContext,
+  use,
   useEffect,
   useMemo,
   useState,
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void refresh();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const login = async (email: string, password: string) => {
     const session = await loginUser({ email, password });
@@ -69,7 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     walletAddress?: string,
   ) => {
-    const session = await registerUser({ name, email, password, walletAddress });
+    const session = await registerUser({
+      name,
+      email,
+      password,
+      walletAddress,
+    });
     setAuthToken(session.token);
     await refresh();
   };
@@ -98,11 +103,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user, isLoading],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <AuthContext value={value}>{children}</AuthContext>;
 }
 
 export function useAuth() {
-  const ctx = useContext(AuthContext);
+  const ctx = use(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }

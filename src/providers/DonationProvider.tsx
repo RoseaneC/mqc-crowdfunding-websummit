@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, use, useEffect, useState } from "react";
 import { useWallet } from "../hooks/useWallet";
 import {
   listWalletDonations,
@@ -27,7 +27,7 @@ interface DonationContextType {
 }
 
 const DonationContext = createContext<DonationContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export function DonationProvider({ children }: { children: React.ReactNode }) {
@@ -64,16 +64,16 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <DonationContext.Provider
+    <DonationContext
       value={{ donations, addDonation, getDonationById, refreshDonations }}
     >
       {children}
-    </DonationContext.Provider>
+    </DonationContext>
   );
 }
 
 export function useDonations() {
-  const context = useContext(DonationContext);
+  const context = use(DonationContext);
   if (!context) {
     throw new Error("useDonations must be used within DonationProvider");
   }
@@ -84,7 +84,9 @@ function normalizeApiDonation(item: DonationReceiptDTO): Donation {
   const amount = Number(item.amountXlm);
   const projectId = Number(item.projectId);
   const nftId =
-    item.nftId === null || item.nftId === undefined ? undefined : Number(item.nftId);
+    item.nftId === null || item.nftId === undefined
+      ? undefined
+      : Number(item.nftId);
   return {
     id: Number(item.id),
     projectId: Number.isFinite(projectId) ? projectId : item.projectId,

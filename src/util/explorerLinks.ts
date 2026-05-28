@@ -1,7 +1,4 @@
-import {
-  impactSbtContractId,
-  stellarNetwork,
-} from "../contracts/util";
+import { impactSbtContractId, stellarNetwork } from "../contracts/util";
 
 const LOCAL_IMPACT_SBT_CONTRACT_ID =
   "CB4VREIALJOPIIUX6RGX2WF7GWXD3VWGMRSDDW2V5GCBJ4N2DNXYMXC6";
@@ -53,7 +50,9 @@ export function buildTransactionExplorerUrl(txHash: string | null | undefined) {
   return `${expertBase}/tx/${hash}`;
 }
 
-export function buildContractExplorerUrl(contractId: string | null | undefined) {
+export function buildContractExplorerUrl(
+  contractId: string | null | undefined,
+) {
   if (!isValidContractId(contractId)) return null;
   const id = contractId!.trim();
   const expertBase = getExpertBaseUrl();

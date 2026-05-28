@@ -9,9 +9,21 @@ export default function AdminLayout() {
 
   const navItems = [
     { name: "Visão Geral", path: "/admin", icon: "dashboard" },
-    { name: "Aprovação de Projetos", path: "/admin/projetos", icon: "folder_open" },
-    { name: "Conformidade MROSC", path: "/admin/mrosc", icon: "assignment_turned_in" },
-    { name: "Relatórios e Analítico", path: "/admin/relatorios", icon: "bar_chart" },
+    {
+      name: "Aprovação de Projetos",
+      path: "/admin/projetos",
+      icon: "folder_open",
+    },
+    {
+      name: "Conformidade MROSC",
+      path: "/admin/mrosc",
+      icon: "assignment_turned_in",
+    },
+    {
+      name: "Relatórios e Analítico",
+      path: "/admin/relatorios",
+      icon: "bar_chart",
+    },
   ];
   const visibleNavItems = hasRole("SUPERADMIN")
     ? navItems
@@ -21,13 +33,16 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
-
       {/* Barra Lateral Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 fixed h-full z-10">
         <div className="h-20 flex items-center px-6 border-b border-slate-100">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#002B99] rounded text-white flex items-center justify-center font-black">{"</>"}</div>
-            <span className="font-bold text-[#002B99] text-sm uppercase tracking-wide">Admin MQC</span>
+            <div className="w-8 h-8 bg-[#002B99] rounded text-white flex items-center justify-center font-black">
+              {"</>"}
+            </div>
+            <span className="font-bold text-[#002B99] text-sm uppercase tracking-wide">
+              Admin MQC
+            </span>
           </div>
         </div>
 
@@ -35,7 +50,11 @@ export default function AdminLayout() {
           {visibleNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
-              <Link key={item.path} to={item.path} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${isActive ? "bg-blue-50 text-[#002B99]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}>
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm ${isActive ? "bg-blue-50 text-[#002B99]" : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"}`}
+              >
                 <span className="material-icons text-[20px]">{item.icon}</span>
                 {item.name}
               </Link>
@@ -57,12 +76,17 @@ export default function AdminLayout() {
 
       {/* Fundo escuro mobile */}
       {menuOpen && (
-        <div className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden" onClick={() => setMenuOpen(false)}></div>
+        <div
+          className="fixed inset-0 bg-slate-900/50 z-40 lg:hidden"
+          onClick={() => setMenuOpen(false)}
+        ></div>
       )}
 
       {/* Menu Mobile */}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-white z-50 transform transition-transform lg:hidden ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-         <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100">
+      <aside
+        className={`fixed top-0 left-0 h-full w-64 bg-white z-50 transform transition-transform lg:hidden ${menuOpen ? "translate-x-0" : "-translate-x-full"}`}
+      >
+        <div className="h-20 flex items-center justify-between px-6 border-b border-slate-100">
           <span className="font-bold text-[#002B99]">Admin MQC</span>
           <button onClick={() => setMenuOpen(false)}>
             <span className="material-icons text-slate-600">close</span>
@@ -70,7 +94,12 @@ export default function AdminLayout() {
         </div>
         <nav className="p-4 space-y-2">
           {visibleNavItems.map((item) => (
-            <Link key={item.path} to={item.path} onClick={() => setMenuOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm ${location.pathname === item.path ? "bg-blue-50 text-[#002B99]" : "text-slate-500"}`}>
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setMenuOpen(false)}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm ${location.pathname === item.path ? "bg-blue-50 text-[#002B99]" : "text-slate-500"}`}
+            >
               <span className="material-icons text-[20px]">{item.icon}</span>
               {item.name}
             </Link>
@@ -93,7 +122,10 @@ export default function AdminLayout() {
         {/* Cabeçalho Superior */}
         <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button className="lg:hidden p-2 text-slate-500" onClick={() => setMenuOpen(true)}>
+            <button
+              className="lg:hidden p-2 text-slate-500"
+              onClick={() => setMenuOpen(true)}
+            >
               <span className="material-icons">menu</span>
             </button>
             <p className="hidden sm:block text-sm font-semibold text-slate-500">
