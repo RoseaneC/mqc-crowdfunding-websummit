@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Search } from "lucide-react";
 import type { ProjectDTO } from "../../util/crowdfundingApi";
 import HeroProjectsImg from "../../images/projects-page/foto_ideiathon1.jpg";
 
@@ -75,6 +76,10 @@ function normalizeText(value: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+}
+
+function formatResultsCount(count: number) {
+  return count === 1 ? "1 projeto encontrado" : `${count} projetos encontrados`;
 }
 
 function getProjectAxis(project: ProjectDTO): ProjectAxis {
@@ -201,6 +206,8 @@ export default function Projects() {
     });
   }, [approvedProjects, query, selectedAxis]);
 
+  const hasActiveFilters = query.trim().length > 0 || selectedAxis !== "Todos";
+
   return (
     <div className="min-h-screen bg-[#fbfcff] font-[var(--font-body)] text-[var(--color-text)]">
       <header className="relative min-h-[520px] overflow-hidden bg-[var(--color-primary)]">
@@ -226,8 +233,9 @@ export default function Projects() {
             </h1>
 
             <p className="max-w-2xl text-base font-normal leading-8 text-white/80 sm:text-lg">
-              Apoie projetos feitos mulheres de comunidades periféricas através
-              da educação tecnológica.
+              Apoie projetos feitos por mulheres de comunidades periféricas por
+              meio da educação tecnológica, da inovação e de redes de
+              colaboração.
             </p>
           </div>
         </div>
@@ -245,21 +253,21 @@ export default function Projects() {
 
               <p className="text-sm text-[var(--color-text-muted)]">
                 <span className="font-medium text-[var(--color-text)]">
-                  {filtered.length}
-                </span>{" "}
-                projeto{filtered.length === 1 ? "" : "s"} encontrado
-                {filtered.length === 1 ? "" : "s"}
+                  {formatResultsCount(filtered.length)}
+                </span>
               </p>
             </div>
 
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="relative w-full lg:max-w-md">
-                <span className="material-symbols-outlined pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[20px] text-[var(--color-text-soft)]">
-                  search
-                </span>
+              <div className="relative w-full lg:max-w-lg">
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-soft)]"
+                  strokeWidth={2}
+                />
 
                 <input
-                  className="block w-full rounded-full bg-[var(--color-white)] py-3 pl-12 pr-4 text-sm font-medium text-[var(--color-text)] placeholder:text-[var(--color-text-soft)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
+                  className="block h-12 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-white)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--color-text)] shadow-sm transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
                   placeholder="Buscar por projeto, eixo ou descrição..."
                   type="text"
                   value={query}
@@ -267,7 +275,7 @@ export default function Projects() {
                 />
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:justify-end">
                 {axisFilters.map((axis) => {
                   const isActive = selectedAxis === axis;
 
@@ -305,8 +313,21 @@ export default function Projects() {
 
         <section className="mt-12">
           {loading ? (
-            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)]">
-              Carregando projetos...
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_18px_50px_rgba(15,0,161,0.05)]">
+              <p className="text-sm font-semibold text-[var(--color-text)]">
+                Carregando projetos aprovados...
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                Estamos buscando as iniciativas disponíveis para apoio.
+              </p>
+              <div className="mt-6 grid gap-4 md:grid-cols-3">
+                {[0, 1, 2].map((item) => (
+                  <div
+                    key={item}
+                    className="h-44 animate-pulse rounded-2xl bg-[var(--color-surface-alt)]"
+                  />
+                ))}
+              </div>
             </div>
           ) : error ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8">
@@ -316,8 +337,30 @@ export default function Projects() {
               <p className="mt-2 break-all text-xs text-rose-600">{error}</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)]">
-              Nenhum projeto encontrado.
+            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_18px_50px_rgba(15,0,161,0.05)]">
+              <h3 className="font-[var(--font-body)] text-xl font-medium tracking-tight text-[var(--color-text)]">
+                {approvedProjects.length === 0
+                  ? "Ainda não há projetos aprovados disponíveis."
+                  : "Nenhum projeto corresponde à busca."}
+              </h3>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--color-text-muted)]">
+                {approvedProjects.length === 0
+                  ? "A equipe está preparando novas iniciativas para publicação. Volte em breve para conhecer os próximos projetos."
+                  : "Tente ajustar o termo pesquisado ou remover filtros para visualizar outras iniciativas."}
+              </p>
+
+              {hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuery("");
+                    setSelectedAxis("Todos");
+                  }}
+                  className="mt-6 rounded-full border border-[var(--color-border)] px-5 py-2 text-sm font-semibold text-[var(--color-primary)] transition hover:border-[var(--color-primary)]"
+                >
+                  Limpar filtros
+                </button>
+              ) : null}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">

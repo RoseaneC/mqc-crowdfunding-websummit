@@ -57,7 +57,7 @@ export default function Transparency() {
             value={`${summary.totalXlm.toLocaleString("pt-BR")} XLM`}
           />
           <MetricCard
-            label="Liquido em Projetos"
+            label="Líquido em projetos"
             value={`${summary.projectXlm.toLocaleString("pt-BR")} XLM`}
           />
           <MetricCard
@@ -69,7 +69,7 @@ export default function Transparency() {
             value={summary.approvedProjects.toLocaleString("pt-BR")}
           />
           <MetricCard
-            label="Doadores Unicos"
+            label="Doadores únicos"
             value={summary.uniqueDonors.toLocaleString("pt-BR")}
           />
         </div>
@@ -136,7 +136,7 @@ export default function Transparency() {
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed font-bold">
                 Como comprovante imutável do seu impacto social, você recebe um
-                "Impact NFT" exclusivo em sua carteira digital Stellar.
+                NFT de Impacto exclusivo em sua carteira digital Stellar.
               </p>
             </div>
           </div>
@@ -235,9 +235,9 @@ export default function Transparency() {
               Preciso entender de criptomoedas para doar?
             </h4>
             <p className="text-slate-500 font-medium">
-              Absolutamente não! Nossa interface aceita PIX e Cartão de Crédito.
-              A tecnologia blockchain roda "nos bastidores" apenas para garantir
-              a segurança e a transparência do processo.
+              Não. A interface reduz a complexidade técnica e orienta cada etapa
+              do apoio. A tecnologia blockchain roda nos bastidores para
+              reforçar a segurança e a transparência do processo.
             </p>
           </div>
 
@@ -275,7 +275,7 @@ export default function Transparency() {
               to="/projetos"
               className="border-2 border-white text-white font-black px-12 py-5 rounded-2xl uppercase tracking-widest hover:bg-white hover:text-[#002B99] transition-all active:scale-95"
             >
-              Conheça os Projetos
+              Conheça os projetos
             </Link>
           </div>
         </div>

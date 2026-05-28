@@ -111,7 +111,7 @@ export default function Dashboard() {
         <MetricCard
           title="Total Arrecadado"
           value={`${summary.totalXlm.toLocaleString("pt-BR")} XLM`}
-          subtitle={`Liquido projetos: ${summary.projectXlm.toLocaleString("pt-BR")} XLM`}
+          subtitle={`Líquido projetos: ${summary.projectXlm.toLocaleString("pt-BR")} XLM`}
         />
         <MetricCard
           title="Doadores Ativos"

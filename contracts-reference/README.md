@@ -20,6 +20,7 @@ The main working contract (`guess-the-number`) remains in the `contracts/` direc
 **Status:** Contains compilation errors that need fixing before it can be built.
 
 **Key Features:**
+
 - Implements `FungibleToken` trait
 - Uses `AccessControl` for role-based permissions
 - Supports burnable tokens via `FungibleBurnable`
@@ -39,6 +40,7 @@ The contract has incorrect macro usage that causes compilation failures:
 **Status:** Builds without errors but doesn't produce release WASM artifacts.
 
 **Key Features:**
+
 - Implements enumerable NFT functionality
 - Supports metadata storage
 - Tracks token ownership
@@ -98,11 +100,13 @@ use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env, String};
 Once fixed, to re-enable these contracts:
 
 1. **Move contract back to active directory:**
+
    ```bash
    mv contracts-reference/[contract-name] contracts/
    ```
 
 2. **Add to environments.toml** (if you want client generation):
+
    ```toml
    [development.contracts]
    fungible_allowlist_example = {
@@ -133,6 +137,7 @@ members = ["contracts/*"]
 ```
 
 This wildcard pattern means:
+
 - All contracts in `contracts/` are automatically built
 - Contracts outside `contracts/` are excluded
 - No workspace configuration changes needed to archive/restore
@@ -140,11 +145,13 @@ This wildcard pattern means:
 ### OpenZeppelin Stellar Contracts
 
 These examples are based on OpenZeppelin stellar-contracts v0.5.1, which provides:
+
 - Reusable trait implementations for common token standards
 - Access control patterns
 - Security best practices for Stellar smart contracts
 
 The macro syntax issues stem from version-specific requirements where:
+
 - `#[default_impl]` must precede `#[contractimpl]` for trait implementations
 - The old `#[contractimpl(contracttrait)]` syntax is no longer supported
 

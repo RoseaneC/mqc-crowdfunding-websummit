@@ -203,6 +203,10 @@ export type MyMroscReportDTO = AdminMroscReportDTO;
 export interface ContactMessageResponseDTO {
   id: number;
   createdAt: string;
+  ok?: boolean;
+  delivery?: "api" | "demo";
+  message?: string;
+  warning?: string;
 }
 
 export interface AuthSessionDTO {
@@ -527,7 +531,7 @@ export function submitContactMessage(payload: {
   message: string;
   source?: string;
 }) {
-  return apiRequest<ContactMessageResponseDTO>("/contact-messages", {
+  return apiRequest<ContactMessageResponseDTO>("/contact", {
     method: "POST",
     body: JSON.stringify(payload),
   });

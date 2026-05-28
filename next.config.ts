@@ -22,14 +22,16 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["fastify", "pg", "@stellar/stellar-sdk"],
   outputFileTracingRoot: __dirname,
   rewrites() {
-    return process.env.NEXT_PUBLIC_STELLAR_NETWORK === "LOCAL"
-      ? [
-          {
-            source: "/friendbot",
-            destination: "http://localhost:8000/friendbot",
-          },
-        ]
-      : [];
+    return Promise.resolve(
+      process.env.NEXT_PUBLIC_STELLAR_NETWORK === "LOCAL"
+        ? [
+            {
+              source: "/friendbot",
+              destination: "http://localhost:8000/friendbot",
+            },
+          ]
+        : [],
+    );
   },
 };
 

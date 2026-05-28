@@ -1,3 +1,5 @@
+import { demoProjects } from "./demoProjects";
+
 type HttpMethod =
   | "GET"
   | "POST"
@@ -15,7 +17,7 @@ type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-function json(data: JsonValue, status = 200) {
+function json(data: unknown, status = 200) {
   return Response.json(data, {
     status,
     headers: {
@@ -57,15 +59,22 @@ function getFallbackResponse(method: HttpMethod, path: string) {
     return json(
       {
         ok: true,
-        message: "Mensagem recebida em ambiente local.",
-        source: "local-fallback",
+        id: Date.now(),
+        createdAt: new Date().toISOString(),
+        delivery: "demo",
+        message:
+          "Mensagem recebida em ambiente de demonstração. Configure API_BASE_URL ou um serviço de e-mail para envio real.",
+        source: "local-demo-fallback",
       },
       201,
     );
   }
 
   if (path === "/projects" && method === "GET") {
-    return json([]);
+    return json({
+      data: demoProjects,
+      source: "local-demo-fallback",
+    });
   }
 
   if (path === "/projects" && method === "POST") {
@@ -92,14 +101,19 @@ function getFallbackResponse(method: HttpMethod, path: string) {
   }
 
   if (path === "/transparency/summary" && method === "GET") {
+    const totalXlm = demoProjects.reduce(
+      (total, project) => total + project.raisedXlm,
+      0,
+    );
+
     return json({
-      totalXlm: 0,
-      projectXlm: 0,
-      feeXlm: 0,
-      approvedProjects: 0,
-      uniqueDonors: 0,
+      totalXlm,
+      projectXlm: Math.round(totalXlm * 0.94),
+      feeXlm: Math.round(totalXlm * 0.06),
+      approvedProjects: demoProjects.length,
+      uniqueDonors: 42,
       recentImpacts: [],
-      source: "local-fallback",
+      source: "local-demo-fallback",
     });
   }
 
@@ -187,6 +201,15 @@ export async function proxyToFastify(
 
     return json(data, response.status);
   } catch (error) {
+    if (targetPath === "/projects" && method === "GET") {
+      return json({
+        data: demoProjects,
+        source: "local-demo-fallback",
+        warning:
+          "API externa indisponível; exibindo dados de demonstração para manter a navegação pública.",
+      });
+    }
+
     return json(
       {
         ok: false,

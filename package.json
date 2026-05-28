@@ -10,7 +10,7 @@
     "start": "next start",
     "dev:full": "npm run init:local && concurrently --kill-others-on-fail --names api,stellar,next -c blue,gray,green --pad-prefix \"npm --workspace packages/api run dev\" \"stellar scaffold watch --build-clients\" \"next dev\"",
     "build": "next build",
-    "install:contracts": "npm install --workspace=packages && npm run build --workspace=packages",
+    "install:contracts": "node scripts/install-contracts.mjs",
     "preview": "next start",
     "lint": "eslint .",
     "format": "prettier . --write",

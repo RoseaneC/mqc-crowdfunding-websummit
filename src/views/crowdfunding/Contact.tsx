@@ -2,11 +2,16 @@ import { FormEvent, ReactNode, useState } from "react";
 import { Instagram, Linkedin, Mail } from "lucide-react";
 import { submitContactMessage } from "../../util/crowdfundingApi";
 
+type Feedback = {
+  tone: "success" | "demo" | "error";
+  message: string;
+};
+
 export default function Contact() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
@@ -27,7 +32,9 @@ export default function Contact() {
       nextErrors.email = "Informe um e-mail válido.";
     }
 
-    if (!message.trim()) nextErrors.message = "Digite sua mensagem.";
+    if (!message.trim() || message.trim().length < 10) {
+      nextErrors.message = "Digite uma mensagem com pelo menos 10 caracteres.";
+    }
 
     setErrors(nextErrors);
 
@@ -39,21 +46,34 @@ export default function Contact() {
     setIsSubmitting(true);
 
     try {
-      await submitContactMessage({
+      const response = await submitContactMessage({
         name: name.trim(),
         email: email.trim(),
         message: message.trim(),
         source: "contato-page",
       });
 
-      setFeedback("Mensagem enviada com sucesso. Obrigada pelo contato!");
+      setFeedback(
+        response.delivery === "demo"
+          ? {
+              tone: "demo",
+              message:
+                "Mensagem recebida para a demonstração. O envio automático de e-mail ainda não está configurado, então use também os canais oficiais se precisar de retorno imediato.",
+            }
+          : {
+              tone: "success",
+              message: "Mensagem enviada com sucesso. Obrigada pelo contato!",
+            },
+      );
       setName("");
       setEmail("");
       setMessage("");
     } catch {
-      setFeedback(
-        "Não foi possível enviar agora. Tente novamente em alguns instantes.",
-      );
+      setFeedback({
+        tone: "error",
+        message:
+          "Não foi possível enviar agora. Tente novamente em alguns instantes ou use um dos canais oficiais.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -189,8 +209,18 @@ export default function Contact() {
           </p>
 
           {feedback ? (
-            <p className="mt-4 rounded-2xl bg-[var(--color-primary-light)] px-4 py-3 text-sm font-medium text-[var(--color-primary)]">
-              {feedback}
+            <p
+              aria-live="polite"
+              className={[
+                "mt-4 rounded-2xl px-4 py-3 text-sm font-medium",
+                feedback.tone === "error"
+                  ? "bg-rose-50 text-rose-700"
+                  : feedback.tone === "demo"
+                    ? "bg-[var(--color-accent-light)] text-[var(--color-primary-dark)]"
+                    : "bg-[var(--color-primary-light)] text-[var(--color-primary)]",
+              ].join(" ")}
+            >
+              {feedback.message}
             </p>
           ) : null}
         </section>

@@ -4,17 +4,16 @@ import { ArrowRight, Menu, X } from "lucide-react";
 import { useWallet } from "../../hooks/useWallet";
 import { connectWallet, disconnectWallet } from "../../util/wallet";
 
-import Image from "next/image";
-import LogoImg from "../../images/home-page/logo1_mqc.png";
-
 type NavItem = {
   label: string;
   href: string;
 };
 
+const WALLET_PENDING_TIMEOUT_MS = 12000;
+
 export default function Navbar() {
   const location = useLocation();
-  const { address, isPending } = useWallet();
+  const { address } = useWallet();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [walletActionPending, setWalletActionPending] = useState(false);
 
@@ -22,7 +21,7 @@ export default function Navbar() {
     () => [
       { label: "Sobre nós", href: "/#sobreNos" },
       { label: "Projetos", href: "/projetos" },
-      { label: "Parceiros", href: "#" },
+      { label: "Parceiros", href: "/#parceiros" },
       { label: "Contato", href: "/contato" },
     ],
     [],
@@ -39,54 +38,64 @@ export default function Navbar() {
     : null;
 
   const handleConnect = async () => {
+    if (walletActionPending) return;
+
     setWalletActionPending(true);
+    const timeout = window.setTimeout(() => {
+      setWalletActionPending(false);
+    }, WALLET_PENDING_TIMEOUT_MS);
 
     try {
       await connectWallet();
     } finally {
+      window.clearTimeout(timeout);
       setTimeout(() => setWalletActionPending(false), 400);
     }
   };
 
   const handleDisconnect = async () => {
+    if (walletActionPending) return;
+
     setWalletActionPending(true);
+    const timeout = window.setTimeout(() => {
+      setWalletActionPending(false);
+    }, WALLET_PENDING_TIMEOUT_MS);
 
     try {
       await disconnectWallet();
     } finally {
+      window.clearTimeout(timeout);
       setWalletActionPending(false);
     }
   };
 
   return (
     <nav className="z-50 bg-[var(--color-primary)] py-3 font-[var(--font-body)]">
-      <div className="relative mx-auto flex max-w-[92rem] items-center justify-between px-6 lg:px-10">
+      <div className="mx-auto grid max-w-[92rem] grid-cols-[auto_1fr_auto] items-center gap-6 px-6 lg:px-10">
         {/* Logo */}
         <Link
           to="/"
-          className="group inline-flex items-center"
+          className="group inline-flex min-w-fit items-center"
           aria-label="Voltar para a Home"
         >
-          <div className="hidden lg:block">
-            <Image
-              src={LogoImg}
-              alt="Mulheres Que Codam"
-              width={180}
-              height={50}
-              className="h-9 w-auto origin-left scale-[3] object-contain"
-              priority
-            />
-          </div>
+          <span className="hidden flex-col leading-none lg:flex">
+            <span className="font-[var(--font-heading)] text-sm font-black uppercase tracking-[0.08em] text-[var(--color-white)]">
+              Mulheres
+            </span>
+            <span className="font-[var(--font-heading)] text-lg font-black uppercase tracking-[0.04em] text-[var(--color-white)]">
+              Que <span className="text-[var(--color-accent)]">Codam</span>
+            </span>
+          </span>
 
-          <div className="flex items-center lg:hidden">
-            <span className="font-[var(--font-heading)] text-2xl font-black uppercase tracking-tighter text-[var(--color-white)]">
+          <span className="flex items-center lg:hidden">
+            <span className="font-[var(--font-heading)] text-2xl font-black uppercase text-[var(--color-white)]">
               MQ<span className="text-[var(--color-accent)]">C</span>
             </span>
-          </div>
+          </span>
         </Link>
 
         {/* Menu centralizado */}
-        <div className="absolute left-1/2 hidden -translate-x-1/2 lg:flex">
+        <div className="hidden justify-center lg:flex">
           <div className="flex items-center gap-10">
             {navItems.map((item) => (
               <Link
@@ -105,17 +114,15 @@ export default function Navbar() {
         </div>
 
         {/* Ações desktop */}
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden min-w-fit items-center gap-3 lg:flex">
           {!address ? (
             <button
               type="button"
               onClick={() => void handleConnect()}
               disabled={walletActionPending}
-              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-transparent px-5 py-2 text-sm font-medium text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-white/25 bg-transparent px-5 py-2 text-sm font-medium text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
             >
-              {walletActionPending || isPending
-                ? "Conectando..."
-                : "Conectar carteira"}
+              {walletActionPending ? "Conectando..." : "Conectar carteira"}
             </button>
           ) : (
             <div className="flex items-center gap-3">
@@ -138,7 +145,7 @@ export default function Navbar() {
 
           <Link
             to="/contato"
-            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-white)] px-5 py-2 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--color-white)] px-5 py-2 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
           >
             Faça parte
             <ArrowRight size={16} strokeWidth={2} />
@@ -184,9 +191,7 @@ export default function Navbar() {
               disabled={walletActionPending}
               className="w-full rounded-full border border-white/25 py-4 font-semibold text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
             >
-              {walletActionPending || isPending
-                ? "Conectando..."
-                : "Conectar carteira"}
+              {walletActionPending ? "Conectando..." : "Conectar carteira"}
             </button>
           ) : (
             <button
