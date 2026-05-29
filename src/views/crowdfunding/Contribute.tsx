@@ -13,6 +13,11 @@ import {
   type ProjectDTO,
   type ProjectMediaItemDTO,
 } from "../../util/crowdfundingApi";
+import {
+  formatDemoCurrencyLabel,
+  webSummitDemoCurrencyNote,
+  type DemoCurrencyCode,
+} from "../../util/projectDemoMetadata";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
 import EloMeCardImg from "../../images/projects-page/cards/elo-me.png";
@@ -23,7 +28,7 @@ import Web3CardImg from "../../images/projects-page/cards/web3-lideranca.jpeg";
 import FormacaoCardImg from "../../images/projects-page/cards/formacaoMulheres.jpeg";
 
 type DonorType = "PF" | "PJ";
-type CurrencyCode = "XLM" | "USDC" | "BRZ";
+type CurrencyCode = DemoCurrencyCode;
 
 type CurrencyOption = {
   code: CurrencyCode;
@@ -36,28 +41,28 @@ type CurrencyOption = {
 
 const currencyOptions: CurrencyOption[] = [
   {
-    code: "XLM",
-    name: "Stellar Lumens",
-    description: "Disponível para doações em Testnet",
-    brlRate: 0.5432,
-    xlmRate: 1,
-    status: "active",
-  },
-  {
     code: "USDC",
     name: "USDC",
-    description: "Preparado para stablecoin em dólar",
+    description: "Moeda principal de contribuição da demonstração",
     brlRate: 5.2,
     xlmRate: 5.2 / 0.5432,
-    status: "soon",
+    status: "active",
   },
   {
     code: "BRZ",
     name: "BRZ",
-    description: "Preparado para real tokenizado",
+    description: "Stablecoin de real para o contexto Web Summit",
     brlRate: 1,
     xlmRate: 1 / 0.5432,
-    status: "soon",
+    status: "active",
+  },
+  {
+    code: "XLM",
+    name: "XLM Testnet",
+    description: "Apenas para teste na rede de teste Stellar",
+    brlRate: 0.5432,
+    xlmRate: 1,
+    status: "active",
   },
 ];
 
@@ -115,7 +120,8 @@ export default function Contribute() {
   );
 
   const [tipoDoador, setTipoDoador] = useState<DonorType>("PF");
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyCode>("XLM");
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<CurrencyCode>("USDC");
   const [contributionValue, setContributionValue] = useState("100");
   const [identificacao, setIdentificacao] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,6 +138,8 @@ export default function Contribute() {
       currencyOptions[0]
     );
   }, [selectedCurrency]);
+  const projectCurrency = project?.moedaPrincipal ?? "USDC";
+  const projectCurrencyLabel = formatDemoCurrencyLabel(projectCurrency);
 
   const numericContribution = Number(contributionValue || 0);
   const amountBRL = numericContribution * currency.brlRate;
@@ -317,7 +325,7 @@ export default function Contribute() {
                     </span>
 
                     <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur">
-                      Doação via Stellar
+                      Demonstração Stellar
                     </span>
                   </div>
 
@@ -356,7 +364,7 @@ export default function Contribute() {
                       })}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                      XLM captados
+                      {projectCurrencyLabel} captados
                     </p>
                   </div>
 
@@ -367,7 +375,7 @@ export default function Contribute() {
                       })}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                      XLM meta
+                      {projectCurrencyLabel} meta
                     </p>
                   </div>
                 </div>
@@ -458,7 +466,7 @@ export default function Contribute() {
                       Valor
                     </label>
 
-                    <div className="mt-3 grid grid-cols-[1fr_118px] gap-3">
+                    <div className="mt-3 grid grid-cols-[1fr_142px] gap-3">
                       <div className="flex items-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 focus-within:border-[var(--color-primary)] focus-within:bg-[var(--color-white)] focus-within:ring-4 focus-within:ring-[var(--color-primary)]/10">
                         <input
                           type="number"
@@ -482,11 +490,15 @@ export default function Contribute() {
                       >
                         {currencyOptions.map((option) => (
                           <option key={option.code} value={option.code}>
-                            {option.code}
+                            {option.name}
                           </option>
                         ))}
                       </select>
                     </div>
+
+                    <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
+                      {currency.description}
+                    </p>
 
                     <div className="mt-3 rounded-2xl bg-[var(--color-surface)] p-4">
                       <div className="flex items-center justify-between gap-4 text-sm">
@@ -505,21 +517,17 @@ export default function Contribute() {
 
                       <div className="mt-2 flex items-center justify-between gap-4 text-xs">
                         <span className="text-[var(--color-text-soft)]">
-                          Equivalente para contrato atual
+                          Equivalente técnico na Testnet
                         </span>
 
                         <span className="font-medium text-[var(--color-primary)]">
-                          {amountXlm.toFixed(4)} XLM
+                          {amountXlm.toFixed(4)} XLM Testnet
                         </span>
                       </div>
 
-                      {currency.status === "soon" ? (
-                        <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
-                          {currency.code} está preparado na interface para
-                          futura integração com ativos reais. Nesta versão, a
-                          liquidação segue em equivalente XLM.
-                        </p>
-                      ) : null}
+                      <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+                        {webSummitDemoCurrencyNote}
+                      </p>
                     </div>
                   </div>
 
@@ -554,7 +562,7 @@ export default function Contribute() {
                       </p>
 
                       <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                        {balances?.xlm?.balance ?? "-"} XLM
+                        {balances?.xlm?.balance ?? "-"} XLM Testnet
                         {network ? ` • ${network}` : ""}
                       </p>
                     </div>

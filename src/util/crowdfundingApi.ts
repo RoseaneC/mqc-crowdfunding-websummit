@@ -1,4 +1,9 @@
 import { apiRequest } from "./api";
+import type {
+  DemoCurrencyCode,
+  OdsNumber,
+  ProjectTheme,
+} from "./projectDemoMetadata";
 
 export interface ProjectDTO {
   id: number;
@@ -12,6 +17,11 @@ export interface ProjectDTO {
   status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
   metadataUri: string;
   createdAt: string;
+  eixoTematico?: ProjectTheme;
+  ods?: OdsNumber[];
+  odsNames?: string[];
+  moedaPrincipal?: DemoCurrencyCode;
+  moedasAceitas?: DemoCurrencyCode[];
 }
 
 export interface DonationPrepareResponse {
