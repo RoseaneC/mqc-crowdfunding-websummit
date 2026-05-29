@@ -53,16 +53,16 @@ export default function Transparency() {
       <section className="max-w-7xl mx-auto px-4 -mt-10 relative z-20">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <MetricCard
-            label="Total Doado"
-            value={`${summary.totalXlm.toLocaleString("pt-BR")} XLM`}
+            label="Total Simulado"
+            value={`${summary.totalXlm.toLocaleString("pt-BR")} USDC`}
           />
           <MetricCard
             label="Líquido em projetos"
-            value={`${summary.projectXlm.toLocaleString("pt-BR")} XLM`}
+            value={`${summary.projectXlm.toLocaleString("pt-BR")} USDC`}
           />
           <MetricCard
             label="Taxa da Plataforma"
-            value={`${summary.feeXlm.toLocaleString("pt-BR")} XLM`}
+            value={`${summary.feeXlm.toLocaleString("pt-BR")} USDC`}
           />
           <MetricCard
             label="Projetos Aprovados"
@@ -97,9 +97,9 @@ export default function Transparency() {
                 1. Você Contribui
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed font-bold">
-                Faça sua doação em Reais ou XLM. Nossa plataforma converte
-                automaticamente o valor para um ativo digital seguro na rede
-                Stellar.
+                Faça sua contribuição simulada em USDC, BRZ ou XLM Testnet. A
+                liquidação real depende da integração final com carteira e
+                contratos Stellar.
               </p>
             </div>
           </div>

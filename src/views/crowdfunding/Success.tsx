@@ -11,6 +11,10 @@ import {
   buildTransactionExplorerUrl,
   getExplorerLabel,
 } from "../../util/explorerLinks";
+import {
+  formatDemoCurrencyLabel,
+  type DemoCurrencyCode,
+} from "../../util/projectDemoMetadata";
 
 export default function Success() {
   const [searchParams] = useSearchParams();
@@ -24,6 +28,9 @@ export default function Success() {
 
   const donationId = Number(searchParams.get("donationId") ?? "0");
   const valorDoadoXLM = Number(searchParams.get("xlm")) || 0;
+  const moeda = parseDemoCurrency(searchParams.get("moeda"));
+  const valorSimulado = Number(searchParams.get("valor")) || valorDoadoXLM;
+  const moedaLabel = formatDemoCurrencyLabel(moeda);
   const tipo = searchParams.get("tipo") || "PF";
   const nftId = Number(searchParams.get("nftId")) || 0;
   const projetoNome =
@@ -83,16 +90,16 @@ export default function Success() {
           <div className="p-12 space-y-8">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">
-                VALOR TOTAL DOADO
+                VALOR TOTAL SIMULADO
               </p>
               <h2 className="text-5xl font-black text-[#002B99] tracking-tighter mt-2">
-                R${" "}
-                {valorTotalBRL.toLocaleString("pt-BR", {
+                {valorSimulado.toLocaleString("pt-BR", {
                   minimumFractionDigits: 2,
-                })}
+                })}{" "}
+                {moedaLabel}
               </h2>
               <p className="text-xs font-black text-slate-400 mt-2">
-                ~ {valorDoadoXLM.toFixed(2)} XLM
+                Equivalente técnico: {valorDoadoXLM.toFixed(2)} XLM Testnet
               </p>
             </div>
 
@@ -182,7 +189,7 @@ export default function Success() {
                   : "Aguardando indexação"}
               </h4>
               <p className="text-[11px] font-black tracking-[0.35em] uppercase opacity-95">
-                DOAÇÃO: {valorDoadoXLM.toFixed(2)} XLM
+                CONTRIBUIÇÃO: {valorSimulado.toFixed(2)} {moedaLabel}
               </p>
             </div>
           </div>
@@ -233,6 +240,11 @@ export default function Success() {
       </main>
     </div>
   );
+}
+
+function parseDemoCurrency(value: string | null): DemoCurrencyCode {
+  if (value === "BRZ" || value === "XLM") return value;
+  return "USDC";
 }
 
 function shortHash(hash: string) {

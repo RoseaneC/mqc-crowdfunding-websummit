@@ -2,6 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import type { ProjectDTO } from "../../util/crowdfundingApi";
+import {
+  allowedOdsNumbers,
+  defaultAcceptedDemoCurrencies,
+  demoCurrencyLabels,
+  formatDemoCurrencyLabel,
+  odsNameByNumber,
+  projectThemeFilters,
+  webSummitDemoCurrencyNote,
+  type DemoCurrencyCode,
+  type OdsNumber,
+  type ProjectTheme,
+  type ProjectThemeFilter,
+} from "../../util/projectDemoMetadata";
 import HeroProjectsImg from "../../images/projects-page/foto_ideiathon1.jpg";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
@@ -22,22 +35,13 @@ type ProjectsApiResponse =
       Count?: number;
     };
 
-type ProjectAxis =
-  | "Todos"
-  | "Educação"
-  | "Saúde"
-  | "Tokenização"
-  | "DeFi"
-  | "Social";
-
-const axisFilters: ProjectAxis[] = [
-  "Todos",
-  "Educação",
-  "Saúde",
-  "Tokenização",
-  "DeFi",
-  "Social",
-];
+const fallbackOdsByTheme: Record<ProjectTheme, OdsNumber[]> = {
+  "Transição energética justa": [7],
+  "Equidade de gênero": [5, 8, 10],
+  "Segurança alimentar": [2],
+  "Inclusão produtiva": [8, 9, 10],
+  "Educação de qualidade": [4],
+};
 
 const projectImages: Record<string, string> = {
   "1": MqcCardImg.src,
@@ -64,7 +68,7 @@ function percent(raised: number, target: number) {
   return Math.min(100, Math.round((raised / target) * 100));
 }
 
-function formatXlm(value: number | string) {
+function formatProjectAmount(value: number | string) {
   return Number(value).toLocaleString("pt-BR", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
@@ -82,52 +86,100 @@ function formatResultsCount(count: number) {
   return count === 1 ? "1 projeto encontrado" : `${count} projetos encontrados`;
 }
 
-function getProjectAxis(project: ProjectDTO): ProjectAxis {
+function isAllowedOds(value: number): value is OdsNumber {
+  return allowedOdsNumbers.includes(value as OdsNumber);
+}
+
+function isDemoCurrencyCode(value: string): value is DemoCurrencyCode {
+  return Object.prototype.hasOwnProperty.call(demoCurrencyLabels, value);
+}
+
+function inferProjectTheme(project: ProjectDTO): ProjectTheme {
   const content = normalizeText(
     `${project.title} ${project.description} ${project.taxCategory} ${project.metadataUri}`,
   );
 
   if (
-    content.includes("saude") ||
-    content.includes("health") ||
-    content.includes("clinico")
+    content.includes("energia") ||
+    content.includes("sustentabilidade") ||
+    content.includes("energetic")
   ) {
-    return "Saúde";
+    return "Transição energética justa";
   }
 
   if (
-    content.includes("token") ||
-    content.includes("nft") ||
-    content.includes("sbt") ||
-    content.includes("recibo")
+    content.includes("alimentar") ||
+    content.includes("alimento") ||
+    content.includes("fome") ||
+    content.includes("soberania")
   ) {
-    return "Tokenização";
+    return "Segurança alimentar";
   }
 
   if (
-    content.includes("defi") ||
-    content.includes("financa") ||
-    content.includes("financeiro")
+    content.includes("genero") ||
+    content.includes("protecao") ||
+    content.includes("autonomia economica")
   ) {
-    return "DeFi";
+    return "Equidade de gênero";
   }
 
   if (
-    content.includes("social") ||
-    content.includes("comunidade") ||
-    content.includes("cuidadora") ||
+    content.includes("empregabilidade") ||
+    content.includes("renda") ||
+    content.includes("inovacao") ||
+    content.includes("capacitacao") ||
+    content.includes("empreendedorismo") ||
     content.includes("inclusao")
   ) {
-    return "Social";
+    return "Inclusão produtiva";
   }
 
-  return "Educação";
+  return "Educação de qualidade";
+}
+
+function getProjectTheme(project: ProjectDTO): ProjectTheme {
+  return project.eixoTematico ?? inferProjectTheme(project);
+}
+
+function getProjectOds(project: ProjectDTO): OdsNumber[] {
+  const odsFromProject = project.ods?.filter(isAllowedOds) ?? [];
+
+  if (odsFromProject.length > 0) {
+    return odsFromProject;
+  }
+
+  return fallbackOdsByTheme[getProjectTheme(project)];
+}
+
+function getProjectOdsNames(project: ProjectDTO): string[] {
+  if (project.odsNames && project.odsNames.length > 0) {
+    return project.odsNames;
+  }
+
+  return getProjectOds(project).map((ods) => odsNameByNumber[ods]);
+}
+
+function getProjectPrimaryCurrency(project: ProjectDTO): DemoCurrencyCode {
+  return project.moedaPrincipal ?? "USDC";
+}
+
+function getProjectAcceptedCurrencies(project: ProjectDTO): DemoCurrencyCode[] {
+  const acceptedCurrencies =
+    project.moedasAceitas?.filter(isDemoCurrencyCode) ?? [];
+
+  if (acceptedCurrencies.length > 0) {
+    return acceptedCurrencies;
+  }
+
+  return defaultAcceptedDemoCurrencies;
 }
 
 export default function Projects() {
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [query, setQuery] = useState("");
-  const [selectedAxis, setSelectedAxis] = useState<ProjectAxis>("Todos");
+  const [selectedTheme, setSelectedTheme] =
+    useState<ProjectThemeFilter>("Todos");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -172,15 +224,15 @@ export default function Projects() {
     return projects.filter((project) => project.status === "APPROVED");
   }, [projects]);
 
-  const axisCounts = useMemo(() => {
-    const counts = new Map<ProjectAxis, number>();
+  const themeCounts = useMemo(() => {
+    const counts = new Map<ProjectThemeFilter, number>();
 
-    axisFilters.forEach((axis) => counts.set(axis, 0));
+    projectThemeFilters.forEach((theme) => counts.set(theme, 0));
     counts.set("Todos", approvedProjects.length);
 
     approvedProjects.forEach((project) => {
-      const axis = getProjectAxis(project);
-      counts.set(axis, (counts.get(axis) ?? 0) + 1);
+      const theme = getProjectTheme(project);
+      counts.set(theme, (counts.get(theme) ?? 0) + 1);
     });
 
     return counts;
@@ -190,23 +242,36 @@ export default function Projects() {
     const normalized = normalizeText(query.trim());
 
     return approvedProjects.filter((project) => {
-      const axis = getProjectAxis(project);
+      const theme = getProjectTheme(project);
+      const ods = getProjectOds(project);
+      const odsNames = getProjectOdsNames(project);
+      const primaryCurrency = getProjectPrimaryCurrency(project);
+      const acceptedCurrencies = getProjectAcceptedCurrencies(project);
 
-      const matchesAxis = selectedAxis === "Todos" || axis === selectedAxis;
+      const matchesTheme = selectedTheme === "Todos" || theme === selectedTheme;
+
+      const searchableContent = normalizeText(
+        [
+          project.title,
+          project.description,
+          project.taxCategory,
+          project.metadataUri,
+          theme,
+          ...ods.map((item) => `ODS ${item}`),
+          ...odsNames,
+          formatDemoCurrencyLabel(primaryCurrency),
+          ...acceptedCurrencies.map(formatDemoCurrencyLabel),
+        ].join(" "),
+      );
 
       const matchesSearch =
-        !normalized ||
-        normalizeText(project.title).includes(normalized) ||
-        normalizeText(project.description).includes(normalized) ||
-        normalizeText(project.taxCategory).includes(normalized) ||
-        normalizeText(project.metadataUri).includes(normalized) ||
-        normalizeText(axis).includes(normalized);
+        !normalized || searchableContent.includes(normalized);
 
-      return matchesAxis && matchesSearch;
+      return matchesTheme && matchesSearch;
     });
-  }, [approvedProjects, query, selectedAxis]);
+  }, [approvedProjects, query, selectedTheme]);
 
-  const hasActiveFilters = query.trim().length > 0 || selectedAxis !== "Todos";
+  const hasActiveFilters = query.trim().length > 0 || selectedTheme !== "Todos";
 
   return (
     <div className="min-h-screen bg-[#fbfcff] font-[var(--font-body)] text-[var(--color-text)]">
@@ -233,9 +298,9 @@ export default function Projects() {
             </h1>
 
             <p className="max-w-2xl text-base font-normal leading-8 text-white/80 sm:text-lg">
-              Apoie projetos feitos por mulheres de comunidades periféricas por
-              meio da educação tecnológica, da inovação e de redes de
-              colaboração.
+              Apoie projetos liderados por mulheres em eixos de impacto
+              conectados às ODS, com foco em educação, inclusão produtiva,
+              equidade, segurança alimentar e transição energética justa.
             </p>
           </div>
         </div>
@@ -258,7 +323,7 @@ export default function Projects() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="relative w-full lg:max-w-lg">
                 <Search
                   aria-hidden="true"
@@ -268,30 +333,30 @@ export default function Projects() {
 
                 <input
                   className="block h-12 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-white)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--color-text)] shadow-sm transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
-                  placeholder="Buscar por projeto, eixo ou descrição..."
+                  placeholder="Buscar por projeto, eixo, ODS ou descrição..."
                   type="text"
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                 />
               </div>
 
-              <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:justify-end">
-                {axisFilters.map((axis) => {
-                  const isActive = selectedAxis === axis;
+              <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:max-w-3xl lg:justify-end">
+                {projectThemeFilters.map((theme) => {
+                  const isActive = selectedTheme === theme;
 
                   return (
                     <button
-                      key={axis}
+                      key={theme}
                       type="button"
-                      onClick={() => setSelectedAxis(axis)}
+                      onClick={() => setSelectedTheme(theme)}
                       className={[
-                        "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition",
+                        "inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition",
                         isActive
                           ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-white)]"
                           : "border-[var(--color-border)] bg-transparent text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
                       ].join(" ")}
                     >
-                      <span>{axis}</span>
+                      <span>{theme}</span>
 
                       <span
                         className={[
@@ -301,13 +366,17 @@ export default function Projects() {
                             : "text-[var(--color-text-soft)]",
                         ].join(" ")}
                       >
-                        {axisCounts.get(axis) ?? 0}
+                        {themeCounts.get(theme) ?? 0}
                       </span>
                     </button>
                   );
                 })}
               </div>
             </div>
+
+            <p className="rounded-2xl bg-[var(--color-surface)] px-4 py-3 text-xs leading-6 text-[var(--color-text-muted)]">
+              {webSummitDemoCurrencyNote}
+            </p>
           </div>
         </section>
 
@@ -346,7 +415,7 @@ export default function Projects() {
               <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--color-text-muted)]">
                 {approvedProjects.length === 0
                   ? "A equipe está preparando novas iniciativas para publicação. Volte em breve para conhecer os próximos projetos."
-                  : "Tente ajustar o termo pesquisado ou remover filtros para visualizar outras iniciativas."}
+                  : "Tente buscar por nome, eixo temático, ODS ou descrição para visualizar outras iniciativas."}
               </p>
 
               {hasActiveFilters ? (
@@ -354,7 +423,7 @@ export default function Projects() {
                   type="button"
                   onClick={() => {
                     setQuery("");
-                    setSelectedAxis("Todos");
+                    setSelectedTheme("Todos");
                   }}
                   className="mt-6 rounded-full border border-[var(--color-border)] px-5 py-2 text-sm font-semibold text-[var(--color-primary)] transition hover:border-[var(--color-primary)]"
                 >
@@ -370,13 +439,18 @@ export default function Projects() {
                   Number(project.targetXlm),
                 );
 
+                const theme = getProjectTheme(project);
+                const odsNames = getProjectOdsNames(project);
+                const primaryCurrency = getProjectPrimaryCurrency(project);
+                const acceptedCurrencies =
+                  getProjectAcceptedCurrencies(project);
                 const projectImage =
                   projectImages[String(project.id)] ?? HeroProjectsImg.src;
 
                 return (
                   <article
                     key={project.id}
-                    className="group flex min-h-[520px] flex-col overflow-hidden rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_50px_rgba(15,0,161,0.06)] transition-shadow duration-300 hover:shadow-[0_24px_70px_rgba(15,0,161,0.12)]"
+                    className="group flex min-h-[600px] flex-col overflow-hidden rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_50px_rgba(15,0,161,0.06)] transition-shadow duration-300 hover:shadow-[0_24px_70px_rgba(15,0,161,0.12)]"
                   >
                     <div className="relative h-48 overflow-hidden bg-[var(--color-primary)]">
                       <img
@@ -391,7 +465,7 @@ export default function Projects() {
                     <div className="flex flex-1 flex-col justify-between p-6">
                       <div>
                         <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
-                          {project.taxCategory}
+                          {theme}
                         </p>
 
                         <h3 className="mt-4 font-[var(--font-body)] text-xl font-medium leading-tight tracking-tight text-[var(--color-text)]">
@@ -401,6 +475,34 @@ export default function Projects() {
                         <p className="mt-5 text-sm leading-7 text-[var(--color-text-muted)]">
                           {project.description}
                         </p>
+
+                        <div className="mt-5 flex flex-wrap gap-2">
+                          {odsNames.map((odsName) => (
+                            <span
+                              key={odsName}
+                              className="max-w-full rounded-full bg-[var(--color-primary-light)] px-3 py-1 text-[10px] font-semibold leading-4 text-[var(--color-primary)]"
+                            >
+                              {odsName}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="mt-5 space-y-2 text-xs leading-5 text-[var(--color-text-muted)]">
+                          <p>
+                            <span className="font-semibold text-[var(--color-text)]">
+                              Moeda principal:
+                            </span>{" "}
+                            {formatDemoCurrencyLabel(primaryCurrency)}
+                          </p>
+                          <p>
+                            <span className="font-semibold text-[var(--color-text)]">
+                              Moedas aceitas na demo:
+                            </span>{" "}
+                            {acceptedCurrencies
+                              .map(formatDemoCurrencyLabel)
+                              .join(", ")}
+                          </p>
+                        </div>
                       </div>
 
                       <div className="mt-8">
@@ -411,7 +513,8 @@ export default function Projects() {
                             </p>
 
                             <p className="mt-1 text-lg font-semibold text-[var(--color-text)]">
-                              {formatXlm(project.raisedXlm)} XLM
+                              {formatProjectAmount(project.raisedXlm)}{" "}
+                              {formatDemoCurrencyLabel(primaryCurrency)}
                             </p>
                           </div>
 
