@@ -54,16 +54,24 @@ export default function Contact() {
       });
 
       setFeedback(
-        response.delivery === "demo"
+        response.sent === true
           ? {
-              tone: "demo",
-              message:
-                "Mensagem recebida para a demonstração. O envio automático de e-mail ainda não está configurado, então use também os canais oficiais se precisar de retorno imediato.",
-            }
-          : {
               tone: "success",
-              message: "Mensagem enviada com sucesso. Obrigada pelo contato!",
-            },
+              message:
+                "Mensagem enviada com sucesso! Nossa equipe recebeu seu contato.",
+            }
+          : response.demo === true || response.delivery === "demo"
+            ? {
+                tone: "demo",
+                message:
+                  "Mensagem recebida para a demonstração. O envio automático de e-mail ainda não está configurado, então use também os canais oficiais se precisar de retorno imediato.",
+              }
+            : {
+                tone: "success",
+                message:
+                  response.message ??
+                  "Mensagem enviada com sucesso. Obrigada pelo contato!",
+              },
       );
       setName("");
       setEmail("");
@@ -72,7 +80,7 @@ export default function Contact() {
       setFeedback({
         tone: "error",
         message:
-          "Não foi possível enviar agora. Tente novamente em alguns instantes ou use um dos canais oficiais.",
+          "Não foi possível enviar sua mensagem agora. Tente novamente em alguns minutos.",
       });
     } finally {
       setIsSubmitting(false);

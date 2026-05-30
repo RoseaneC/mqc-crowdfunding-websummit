@@ -214,7 +214,9 @@ export interface ContactMessageResponseDTO {
   id: number;
   createdAt: string;
   ok?: boolean;
-  delivery?: "api" | "demo";
+  sent?: boolean;
+  demo?: boolean;
+  delivery?: "api" | "demo" | "smtp";
   message?: string;
   warning?: string;
 }
