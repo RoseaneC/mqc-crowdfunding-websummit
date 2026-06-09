@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, Menu, X } from "lucide-react";
 import { useWallet } from "../../hooks/useWallet";
+import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
 import { connectWallet, disconnectWallet } from "../../util/wallet";
 
 type NavItem = {
@@ -14,6 +15,7 @@ const WALLET_PENDING_TIMEOUT_MS = 12000;
 export default function Navbar() {
   const location = useLocation();
   const { address } = useWallet();
+  const privyWallet = usePrivyWalletAbstraction();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [walletActionPending, setWalletActionPending] = useState(false);
 
@@ -36,6 +38,25 @@ export default function Navbar() {
   const shortAddress = address
     ? `${address.slice(0, 6)}...${address.slice(-4)}`
     : null;
+  const usesPrivyWallet = privyWallet.isUsingPrivy;
+  const hasConnectedWallet = usesPrivyWallet
+    ? privyWallet.authenticated
+    : Boolean(address);
+  const connectedWalletLabel = usesPrivyWallet
+    ? (privyWallet.shortWalletAddress ?? "Conta conectada")
+    : shortAddress;
+  const isWalletButtonDisabled =
+    walletActionPending || (usesPrivyWallet && !privyWallet.ready);
+  const connectWalletLabel = usesPrivyWallet
+    ? walletActionPending
+      ? "Abrindo..."
+      : "Entrar / Conectar carteira"
+    : walletActionPending
+      ? "Conectando..."
+      : "Conectar carteira";
+  const disconnectWalletLabel = usesPrivyWallet
+    ? "Sair da conta"
+    : "Sair da carteira";
 
   const handleConnect = async () => {
     if (walletActionPending) return;
@@ -46,7 +67,11 @@ export default function Navbar() {
     }, WALLET_PENDING_TIMEOUT_MS);
 
     try {
-      await connectWallet();
+      if (usesPrivyWallet) {
+        await Promise.resolve(privyWallet.login());
+      } else {
+        await connectWallet();
+      }
     } finally {
       window.clearTimeout(timeout);
       setTimeout(() => setWalletActionPending(false), 400);
@@ -62,7 +87,11 @@ export default function Navbar() {
     }, WALLET_PENDING_TIMEOUT_MS);
 
     try {
-      await disconnectWallet();
+      if (usesPrivyWallet) {
+        await Promise.resolve(privyWallet.logout());
+      } else {
+        await disconnectWallet();
+      }
     } finally {
       window.clearTimeout(timeout);
       setWalletActionPending(false);
@@ -115,21 +144,21 @@ export default function Navbar() {
 
         {/* Ações desktop */}
         <div className="hidden min-w-fit items-center gap-3 lg:flex">
-          {!address ? (
+          {!hasConnectedWallet ? (
             <button
               type="button"
               onClick={() => void handleConnect()}
-              disabled={walletActionPending}
+              disabled={isWalletButtonDisabled}
               className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-white/25 bg-transparent px-5 py-2 text-sm font-medium text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
             >
-              {walletActionPending ? "Conectando..." : "Conectar carteira"}
+              {connectWalletLabel}
             </button>
           ) : (
             <div className="flex items-center gap-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2">
                 <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
                 <span className="text-xs font-bold text-[var(--color-white)]">
-                  {shortAddress}
+                  {connectedWalletLabel}
                 </span>
               </div>
 
@@ -184,14 +213,14 @@ export default function Navbar() {
             </Link>
           ))}
 
-          {!address ? (
+          {!hasConnectedWallet ? (
             <button
               type="button"
               onClick={() => void handleConnect()}
-              disabled={walletActionPending}
+              disabled={isWalletButtonDisabled}
               className="w-full rounded-full border border-white/25 py-4 font-semibold text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
             >
-              {walletActionPending ? "Conectando..." : "Conectar carteira"}
+              {connectWalletLabel}
             </button>
           ) : (
             <button
@@ -200,7 +229,7 @@ export default function Navbar() {
               disabled={walletActionPending}
               className="w-full rounded-full border border-white/20 py-4 font-semibold text-[var(--color-white)] transition hover:bg-white/10 disabled:opacity-60"
             >
-              Sair da carteira
+              {disconnectWalletLabel}
             </button>
           )}
 

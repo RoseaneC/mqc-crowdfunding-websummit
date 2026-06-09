@@ -3,6 +3,7 @@
 import { StrictMode } from "react";
 import App from "./App";
 import { WalletProvider } from "./providers/WalletProvider";
+import { PrivyWalletProvider } from "./providers/PrivyWalletProvider";
 import { NotificationProvider } from "./providers/NotificationProvider";
 import { DonationProvider } from "./providers/DonationProvider";
 import { AuthProvider } from "./providers/AuthProvider";
@@ -24,13 +25,15 @@ export default function RootApp() {
       <NotificationProvider>
         <QueryClientProvider client={queryClient}>
           <WalletProvider>
-            <AuthProvider>
-              <DonationProvider>
-                <BrowserRouter>
-                  <App />
-                </BrowserRouter>
-              </DonationProvider>
-            </AuthProvider>
+            <PrivyWalletProvider>
+              <AuthProvider>
+                <DonationProvider>
+                  <BrowserRouter>
+                    <App />
+                  </BrowserRouter>
+                </DonationProvider>
+              </AuthProvider>
+            </PrivyWalletProvider>
           </WalletProvider>
         </QueryClientProvider>
       </NotificationProvider>

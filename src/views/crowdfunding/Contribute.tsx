@@ -3,6 +3,7 @@ import { Buffer } from "buffer";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDonations } from "../../providers/DonationProvider";
 import { useWallet } from "../../hooks/useWallet";
+import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
 import { connectWallet } from "../../util/wallet";
 import { createCrowdfundingClient } from "../../contracts/crowdfunding_core";
 import {
@@ -110,6 +111,7 @@ export default function Contribute() {
   const navigate = useNavigate();
   const { addDonation } = useDonations();
   const { address, balances, network, signTransaction } = useWallet();
+  const privyWallet = usePrivyWalletAbstraction();
 
   const projetoId = searchParams.get("projeto") || "1";
   const projetoNomeParam = searchParams.get("nome")?.trim() ?? "";
@@ -174,6 +176,12 @@ export default function Contribute() {
 
   const handleIdentificacaoChange = (event: ChangeEvent<HTMLInputElement>) => {
     setIdentificacao(formatDocument(event.target.value, tipoDoador));
+  };
+
+  const handlePrivyLogin = () => {
+    void Promise.resolve()
+      .then(() => privyWallet.login())
+      .catch(() => undefined);
   };
 
   const handleConfirmarDoacao = async () => {
@@ -542,6 +550,42 @@ export default function Contribute() {
                       <span className="font-semibold">R$ {fiscalBenefit}</span>.
                     </p>
                   </div>
+
+                  {privyWallet.isUsingPrivy ? (
+                    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+                            Carteira via Privy
+                          </p>
+
+                          <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                            Privy facilita login e carteira EVM.
+                            Stellar/Freighter permanece separado para XLM
+                            Testnet e futuras integrações Stellar.
+                          </p>
+                        </div>
+
+                        {!privyWallet.authenticated ? (
+                          <button
+                            type="button"
+                            onClick={handlePrivyLogin}
+                            disabled={!privyWallet.ready}
+                            className="inline-flex w-full items-center justify-center rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60 sm:w-fit"
+                          >
+                            Entrar com Privy
+                          </button>
+                        ) : null}
+                      </div>
+
+                      {privyWallet.authenticated ? (
+                        <p className="mt-3 rounded-xl bg-[var(--color-surface)] px-3 py-2 text-xs font-semibold text-[var(--color-text)]">
+                          Endereço EVM:{" "}
+                          {privyWallet.shortWalletAddress ?? "Conta conectada"}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {!address ? (
                     <button
