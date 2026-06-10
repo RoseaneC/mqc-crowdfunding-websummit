@@ -19,7 +19,7 @@ import {
 
 export default function Projects() {
   const { hasRole, user } = useAuth();
-  const isSuperadmin = hasRole("SUPERADMIN");
+  const isSuperadmin = !user || hasRole("SUPERADMIN");
 
   const [projects, setProjects] = useState<AdminProjectPendingDTO[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);

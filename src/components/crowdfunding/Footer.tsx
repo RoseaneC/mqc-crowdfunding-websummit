@@ -1,6 +1,69 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
 import { Twitter, Instagram, Linkedin, Mail } from "lucide-react";
 
+type NewsletterResponse = {
+  ok?: boolean;
+  sent?: boolean;
+  demo?: boolean;
+  message?: string;
+  error?: string;
+};
+
 export default function Footer() {
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterStatus, setNewsletterStatus] = useState<
+    "idle" | "loading" | "success" | "demo" | "error"
+  >("idle");
+  const [newsletterMessage, setNewsletterMessage] = useState<string | null>(
+    null,
+  );
+
+  const handleNewsletterSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const email = newsletterEmail.trim();
+    if (!email) {
+      setNewsletterStatus("error");
+      setNewsletterMessage("Informe um e-mail válido.");
+      return;
+    }
+
+    setNewsletterStatus("loading");
+    setNewsletterMessage(null);
+
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+      const data = (await response.json()) as NewsletterResponse;
+
+      if (!response.ok || !data.ok) {
+        throw new Error(data.error || data.message || "Cadastro inválido.");
+      }
+
+      setNewsletterEmail("");
+      setNewsletterStatus(data.demo ? "demo" : "success");
+      setNewsletterMessage(
+        data.demo
+          ? "Recebemos seu e-mail para a demonstração."
+          : "Cadastro realizado com sucesso!",
+      );
+    } catch (error) {
+      setNewsletterStatus("error");
+      setNewsletterMessage(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível registrar seu cadastro agora.",
+      );
+    }
+  };
+
   return (
     <footer
       style={{ backgroundColor: "#1D1E27" }}
@@ -93,7 +156,7 @@ export default function Footer() {
 
               <li>
                 <a
-                  href="/#sobre"
+                  href="/#sobreNos"
                   className="text-sm text-gray-400 transition hover:text-white"
                 >
                   Como funciona
@@ -115,6 +178,15 @@ export default function Footer() {
                   className="text-sm text-gray-400 transition hover:text-white"
                 >
                   Contato
+                </a>
+              </li>
+
+              <li>
+                <a
+                  href="/admin"
+                  className="text-sm text-gray-400 transition hover:text-white"
+                >
+                  Admin demo
                 </a>
               </li>
             </ul>
@@ -155,16 +227,42 @@ export default function Footer() {
               Receba atualizações de impacto:
             </p>
 
-            <div className="flex">
+            <form
+              className="flex"
+              onSubmit={(event) => {
+                void handleNewsletterSubmit(event);
+              }}
+            >
               <input
                 type="email"
+                value={newsletterEmail}
+                onChange={(event) => setNewsletterEmail(event.target.value)}
                 placeholder="seu@email.com"
+                aria-label="E-mail para newsletter"
                 className="flex-1 bg-white/10  rounded-l-lg px-3 py-2 text-white text-xs placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <button className="px-3 py-2 rounded-r-lg text-white text-xs font-bold bg-[var(--color-accent)] hover:opacity-90 transition-opacity">
-                OK
+              <button
+                type="submit"
+                disabled={newsletterStatus === "loading"}
+                className="px-3 py-2 rounded-r-lg text-white text-xs font-bold bg-[var(--color-accent)] hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {newsletterStatus === "loading" ? "..." : "OK"}
               </button>
-            </div>
+            </form>
+
+            {newsletterMessage ? (
+              <p
+                className={`mt-2 text-xs leading-5 ${
+                  newsletterStatus === "error"
+                    ? "text-red-300"
+                    : newsletterStatus === "demo"
+                      ? "text-blue-200"
+                      : "text-green-300"
+                }`}
+              >
+                {newsletterMessage}
+              </p>
+            ) : null}
           </div>
         </div>
 

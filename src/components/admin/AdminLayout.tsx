@@ -2,10 +2,14 @@ import { Link, Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "../../providers/AuthProvider";
 
+const ADMIN_DEMO_NOTICE =
+  "Ambiente de demonstração: ações administrativas simuladas até conexão com banco de dados de produção.";
+
 export default function AdminLayout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, logout, hasRole } = useAuth();
+  const isDemoAdmin = !user;
 
   const navItems = [
     { name: "Visão Geral", path: "/admin", icon: "dashboard" },
@@ -25,11 +29,12 @@ export default function AdminLayout() {
       icon: "bar_chart",
     },
   ];
-  const visibleNavItems = hasRole("SUPERADMIN")
-    ? navItems
-    : navItems.filter((item) =>
-        ["/admin", "/admin/projetos"].includes(item.path),
-      );
+  const visibleNavItems =
+    isDemoAdmin || hasRole("SUPERADMIN")
+      ? navItems
+      : navItems.filter((item) =>
+          ["/admin", "/admin/projetos"].includes(item.path),
+        );
 
   return (
     <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900">
@@ -147,7 +152,11 @@ export default function AdminLayout() {
                   {user?.name ?? "Admin"}
                 </p>
                 <p className="text-[10px] text-slate-500 uppercase tracking-wider mt-1">
-                  {hasRole("SUPERADMIN") ? "Super Admin" : "Usuária"}
+                  {isDemoAdmin
+                    ? "Admin demo"
+                    : hasRole("SUPERADMIN")
+                      ? "Super Admin"
+                      : "Usuária"}
                 </p>
               </div>
             </div>
@@ -156,6 +165,12 @@ export default function AdminLayout() {
 
         {/* Conteúdo Dinâmico */}
         <div className="p-4 sm:p-8 flex-1">
+          {isDemoAdmin ? (
+            <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4 text-sm font-semibold leading-6 text-blue-900">
+              {ADMIN_DEMO_NOTICE}
+            </div>
+          ) : null}
+
           <Outlet />
         </div>
       </main>
