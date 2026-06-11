@@ -19,6 +19,11 @@ import {
   webSummitDemoCurrencyNote,
   type DemoCurrencyCode,
 } from "../../util/projectDemoMetadata";
+import {
+  getStellarUsdcMainnetConfig,
+  prepareStellarUsdcMainnetPayment,
+  submitStellarUsdcMainnetPayment,
+} from "../../util/stellarUsdcMainnet";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
 import EloMeCardImg from "../../images/projects-page/cards/elo-me.png";
@@ -142,11 +147,33 @@ export default function Contribute() {
   }, [selectedCurrency]);
   const projectCurrency = project?.moedaPrincipal ?? "USDC";
   const projectCurrencyLabel = formatDemoCurrencyLabel(projectCurrency);
+  const stellarUsdcConfig = useMemo(() => getStellarUsdcMainnetConfig(), []);
 
   const numericContribution = Number(contributionValue || 0);
   const amountBRL = numericContribution * currency.brlRate;
   const amountXlm = numericContribution * currency.xlmRate;
   const valorBRL = amountBRL.toFixed(2);
+  const isStellarUsdcMainnetConfigured =
+    selectedCurrency === "USDC" &&
+    stellarUsdcConfig.enabled &&
+    privyWallet.isUsingPrivy;
+  const hasValidPrivyStellarAddress = Boolean(
+    privyWallet.stellarAddress?.startsWith("G"),
+  );
+  const canUseStellarUsdcMainnet =
+    isStellarUsdcMainnetConfigured &&
+    privyWallet.authenticated &&
+    hasValidPrivyStellarAddress &&
+    privyWallet.canSignStellarHash;
+  const isStellarUsdcMainnetBlocked =
+    isStellarUsdcMainnetConfigured && !canUseStellarUsdcMainnet;
+  const showStellarUsdcMainnetInfo =
+    selectedCurrency === "USDC" && privyWallet.isUsingPrivy;
+  const submitButtonLabel = isSubmitting
+    ? "Processando..."
+    : isStellarUsdcMainnetBlocked
+      ? "Carteira Stellar necessária para USDC Stellar"
+      : "Confirmar doação";
 
   const progressPercent = project
     ? Math.min(
@@ -184,8 +211,20 @@ export default function Contribute() {
       .catch(() => undefined);
   };
 
+  const handlePrivyCreateStellarWallet = () => {
+    void Promise.resolve()
+      .then(() => privyWallet.createStellarWallet())
+      .catch((error: unknown) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Não foi possível preparar a carteira Stellar via Privy.";
+        alert(message);
+      });
+  };
+
   const handleConfirmarDoacao = async () => {
-    if (!address) {
+    if (!canUseStellarUsdcMainnet && !address) {
       alert("Conecte sua carteira antes de continuar.");
       return;
     }
@@ -205,12 +244,68 @@ export default function Contribute() {
       return;
     }
 
+    if (isStellarUsdcMainnetBlocked) {
+      alert("Carteira Stellar necessária para USDC Stellar.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const donorDocHash = await hashStringHex(
         identificacao.replace(/\D/g, ""),
       );
+
+      if (canUseStellarUsdcMainnet) {
+        const stellarAddress = privyWallet.stellarAddress;
+
+        if (!stellarAddress?.startsWith("G")) {
+          throw new Error(
+            "Crie uma carteira Stellar via Privy antes de contribuir com USDC Stellar.",
+          );
+        }
+
+        const preparedPayment = await prepareStellarUsdcMainnetPayment({
+          sourcePublicKey: stellarAddress,
+          amount: numericContribution,
+          projectId: Number(projetoId),
+          donorType: tipoDoador,
+        });
+        const rawSignature = await privyWallet.signStellarHash(
+          preparedPayment.hashHex,
+          stellarAddress,
+        );
+        const paymentResult = await submitStellarUsdcMainnetPayment({
+          preparedPayment,
+          signerPublicKey: stellarAddress,
+          rawSignature,
+        });
+        const donationId = Date.now();
+
+        await addDonation({
+          id: donationId,
+          projectId: projetoId,
+          projectName: displayProjectName,
+          amount: paymentResult.amount,
+          amountBRL: valorBRL,
+          timestamp: donationId,
+          nftId: 0,
+          donorType: tipoDoador,
+          walletAddress: stellarAddress,
+          txHash: paymentResult.txHash,
+        });
+
+        void navigate(
+          `/sucesso?donationId=${donationId}&txHash=${paymentResult.txHash}&nftId=0&xlm=0&moeda=USDC&valor=${numericContribution}&tipo=${tipoDoador}&rede=stellar-mainnet&projeto=${encodeURIComponent(
+            displayProjectName,
+          )}`,
+        );
+        return;
+      }
+
+      if (!address) {
+        throw new Error("Conecte sua carteira antes de continuar.");
+      }
 
       const prepared = await prepareDonation({
         projectId: Number(projetoId),
@@ -525,16 +620,22 @@ export default function Contribute() {
 
                       <div className="mt-2 flex items-center justify-between gap-4 text-xs">
                         <span className="text-[var(--color-text-soft)]">
-                          Equivalente técnico na Testnet
+                          {isStellarUsdcMainnetConfigured
+                            ? "Valor a enviar na Mainnet"
+                            : "Equivalente técnico na Testnet"}
                         </span>
 
                         <span className="font-medium text-[var(--color-primary)]">
-                          {amountXlm.toFixed(4)} XLM Testnet
+                          {isStellarUsdcMainnetConfigured
+                            ? `${numericContribution.toFixed(7)} USDC`
+                            : `${amountXlm.toFixed(4)} XLM Testnet`}
                         </span>
                       </div>
 
                       <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
-                        {webSummitDemoCurrencyNote}
+                        {isStellarUsdcMainnetConfigured
+                          ? "Pagamentos em USDC Mainnet são assinados pela carteira Stellar do Privy. BRZ segue informativo e XLM permanece como teste/Testnet."
+                          : webSummitDemoCurrencyNote}
                       </p>
                     </div>
                   </div>
@@ -579,15 +680,81 @@ export default function Contribute() {
                       </div>
 
                       {privyWallet.authenticated ? (
-                        <p className="mt-3 rounded-xl bg-[var(--color-surface)] px-3 py-2 text-xs font-semibold text-[var(--color-text)]">
-                          Endereço EVM:{" "}
-                          {privyWallet.shortWalletAddress ?? "Conta conectada"}
-                        </p>
+                        <div className="mt-3 rounded-xl bg-[var(--color-surface)] px-3 py-2">
+                          <p className="text-xs font-semibold text-[var(--color-text-soft)]">
+                            Carteira EVM conectada
+                          </p>
+
+                          <p className="mt-1 text-xs font-semibold text-[var(--color-text)]">
+                            EVM{" "}
+                            {privyWallet.shortEvmAddress ?? "Conta conectada"}
+                          </p>
+                        </div>
+                      ) : null}
+
+                      {showStellarUsdcMainnetInfo ? (
+                        <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
+                            USDC Stellar Mainnet
+                          </p>
+
+                          <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
+                            {isStellarUsdcMainnetConfigured
+                              ? "Fluxo real preparado para USDC na Stellar Mainnet via assinatura raw_sign do Privy."
+                              : "USDC permanece em modo demonstração/Testnet até a configuração pública de Mainnet estar completa."}
+                          </p>
+
+                          {privyWallet.authenticated ? (
+                            hasValidPrivyStellarAddress ? (
+                              <div className="mt-3 rounded-xl bg-[var(--color-white)] px-3 py-2">
+                                <p className="text-xs font-semibold text-[var(--color-success)]">
+                                  Carteira Stellar conectada
+                                </p>
+
+                                <p className="mt-1 text-xs font-semibold text-[var(--color-text)]">
+                                  Stellar {privyWallet.shortStellarAddress}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="mt-3 rounded-xl border border-[var(--color-accent)]/45 bg-[var(--color-accent-light)] px-3 py-3">
+                                <p className="text-xs font-semibold text-[var(--color-primary)]">
+                                  Carteira Stellar necessária para USDC Stellar
+                                </p>
+
+                                <p className="mt-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+                                  Você está conectado com uma carteira EVM. Para
+                                  contribuir com USDC na Stellar, crie ou
+                                  conecte uma carteira Stellar.
+                                </p>
+
+                                <button
+                                  type="button"
+                                  onClick={handlePrivyCreateStellarWallet}
+                                  className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-[var(--color-primary)] bg-[var(--color-white)] px-4 py-2 text-xs font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-primary-light)]"
+                                >
+                                  Criar carteira Stellar
+                                </button>
+                              </div>
+                            )
+                          ) : null}
+                        </div>
                       ) : null}
                     </div>
                   ) : null}
 
-                  {!address ? (
+                  {canUseStellarUsdcMainnet ? (
+                    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                        Stellar/Freighter separado
+                      </p>
+
+                      <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                        Para USDC Mainnet, a assinatura usa a carteira Stellar
+                        via Privy. Freighter permanece disponível para XLM
+                        Testnet e testes Stellar.
+                      </p>
+                    </div>
+                  ) : !address ? (
                     <button
                       type="button"
                       onClick={() => void connectWallet()}
@@ -617,10 +784,10 @@ export default function Contribute() {
                     onClick={() => {
                       void handleConfirmarDoacao();
                     }}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isStellarUsdcMainnetBlocked}
                     className="w-full rounded-full bg-[var(--color-primary)] px-6 py-4 text-sm font-semibold text-[var(--color-white)] shadow-[0_12px_34px_rgba(15,0,161,0.25)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isSubmitting ? "Processando..." : "Confirmar doação"}
+                    {submitButtonLabel}
                   </button>
 
                   <p className="text-center text-[11px] leading-5 text-[var(--color-text-soft)]">

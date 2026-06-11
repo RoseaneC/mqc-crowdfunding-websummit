@@ -10,6 +10,7 @@ import {
   buildNftTokenExplorerUrl,
   buildTransactionExplorerUrl,
   getExplorerLabel,
+  isValidTxHash,
 } from "../../util/explorerLinks";
 import {
   formatDemoCurrencyLabel,
@@ -31,6 +32,8 @@ export default function Success() {
   const moeda = parseDemoCurrency(searchParams.get("moeda"));
   const valorSimulado = Number(searchParams.get("valor")) || valorDoadoXLM;
   const moedaLabel = formatDemoCurrencyLabel(moeda);
+  const isStellarMainnetPayment =
+    moeda === "USDC" && searchParams.get("rede") === "stellar-mainnet";
   const tipo = searchParams.get("tipo") || "PF";
   const nftId = Number(searchParams.get("nftId")) || 0;
   const projetoNome =
@@ -38,7 +41,9 @@ export default function Success() {
     (donationId ? `Campanha #${donationId}` : "Campanha apoiada");
 
   const cotacaoXLM = 0.5432;
-  const valorTotalBRL = valorDoadoXLM * cotacaoXLM;
+  const valorTotalBRL = isStellarMainnetPayment
+    ? valorSimulado * 5.2
+    : valorDoadoXLM * cotacaoXLM;
 
   const taxaAdminPct = tipo === "PF" ? 0.07 : 0.05;
   const valorTaxa = valorTotalBRL * taxaAdminPct;
@@ -51,9 +56,17 @@ export default function Success() {
   const nftGradient = nftData
     ? resolveNftGradient(nftData.gradient)
     : "from-slate-700 to-slate-900";
-  const txExplorerUrl = buildTransactionExplorerUrl(receiptTxHash);
+  const mainnetTxHash =
+    isStellarMainnetPayment && isValidTxHash(receiptTxHash)
+      ? receiptTxHash?.trim()
+      : null;
+  const txExplorerUrl = mainnetTxHash
+    ? `https://stellar.expert/explorer/public/tx/${mainnetTxHash}`
+    : buildTransactionExplorerUrl(receiptTxHash);
   const nftExplorerUrl = buildNftTokenExplorerUrl(nftId);
-  const explorerLabel = getExplorerLabel();
+  const explorerLabel = isStellarMainnetPayment
+    ? "Stellar Expert"
+    : getExplorerLabel();
 
   useEffect(() => {
     void listNftCatalog()
@@ -90,7 +103,9 @@ export default function Success() {
           <div className="p-12 space-y-8">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">
-                VALOR TOTAL SIMULADO
+                {isStellarMainnetPayment
+                  ? "VALOR TOTAL CONFIRMADO"
+                  : "VALOR TOTAL SIMULADO"}
               </p>
               <h2 className="text-5xl font-black text-[#002B99] tracking-tighter mt-2">
                 {valorSimulado.toLocaleString("pt-BR", {
@@ -98,9 +113,15 @@ export default function Success() {
                 })}{" "}
                 {moedaLabel}
               </h2>
-              <p className="text-xs font-black text-slate-400 mt-2">
-                Equivalente técnico: {valorDoadoXLM.toFixed(2)} XLM Testnet
-              </p>
+              {isStellarMainnetPayment ? (
+                <p className="text-xs font-black text-slate-400 mt-2">
+                  Liquidação: USDC na Stellar Mainnet
+                </p>
+              ) : (
+                <p className="text-xs font-black text-slate-400 mt-2">
+                  Equivalente técnico: {valorDoadoXLM.toFixed(2)} XLM Testnet
+                </p>
+              )}
             </div>
 
             <div className="space-y-4 text-xs font-black uppercase tracking-widest">

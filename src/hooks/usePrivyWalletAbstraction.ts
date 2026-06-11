@@ -8,8 +8,20 @@ import {
   type ReactNode,
 } from "react";
 import { usePrivy, useWallets, type User } from "@privy-io/react-auth";
+import {
+  useCreateWallet,
+  useSignRawHash,
+} from "@privy-io/react-auth/extended-chains";
 
 type WalletAction = () => void | Promise<void>;
+type CreateStellarWalletAction = () => Promise<string | null>;
+type SignStellarHashAction = (
+  hash: `0x${string}`,
+  addressOverride?: string,
+) => Promise<`0x${string}`>;
+export type PrivyActiveWalletType = "evm" | "stellar" | "none";
+type LinkedAccount = User["linkedAccounts"][number];
+type LinkedWalletAccount = Extract<LinkedAccount, { type: "wallet" }>;
 
 export type PrivyWalletAbstraction = {
   hasPrivyConfigured: boolean;
@@ -17,8 +29,19 @@ export type PrivyWalletAbstraction = {
   ready: boolean;
   authenticated: boolean;
   user: User | null;
+  evmAddress: string | null;
+  shortEvmAddress: string | null;
+  stellarAddress: string | null;
+  shortStellarAddress: string | null;
+  activeWalletType: PrivyActiveWalletType;
+  hasStellarWallet: boolean;
+  canSignStellarHash: boolean;
+  createStellarWallet: CreateStellarWalletAction;
+  signStellarHash: SignStellarHashAction;
   walletAddress: string | null;
   shortWalletAddress: string | null;
+  stellarWalletAddress: string | null;
+  shortStellarWalletAddress: string | null;
   login: WalletAction;
   logout: WalletAction;
   connectWallet: WalletAction;
@@ -31,6 +54,12 @@ export type PrivyWalletEnv = {
 };
 
 const noopWalletAction: WalletAction = () => undefined;
+const noopCreateStellarWallet: CreateStellarWalletAction = () =>
+  Promise.resolve(null);
+const noopSignStellarHash: SignStellarHashAction = () =>
+  Promise.reject(
+    new Error("Privy não está configurado para assinatura Stellar."),
+  );
 
 export const disabledPrivyWalletAbstraction: PrivyWalletAbstraction = {
   hasPrivyConfigured: false,
@@ -38,8 +67,19 @@ export const disabledPrivyWalletAbstraction: PrivyWalletAbstraction = {
   ready: true,
   authenticated: false,
   user: null,
+  evmAddress: null,
+  shortEvmAddress: null,
+  stellarAddress: null,
+  shortStellarAddress: null,
+  activeWalletType: "none",
+  hasStellarWallet: false,
+  canSignStellarHash: false,
+  createStellarWallet: noopCreateStellarWallet,
+  signStellarHash: noopSignStellarHash,
   walletAddress: null,
   shortWalletAddress: null,
+  stellarWalletAddress: null,
+  shortStellarWalletAddress: null,
   login: noopWalletAction,
   logout: noopWalletAction,
   connectWallet: noopWalletAction,
@@ -70,11 +110,26 @@ export function PrivyWalletAbstractionBridge({
 }) {
   const privy = usePrivy();
   const privyWallets = useWallets();
+  const { createWallet } = useCreateWallet();
+  const { signRawHash } = useSignRawHash();
   const { hasPrivyConfigured, isUsingPrivy } = getPrivyWalletEnv();
-  const walletAddress = privyWallets.wallets[0]?.address ?? null;
-  const shortWalletAddress = walletAddress
-    ? formatShortWalletAddress(walletAddress)
+  const evmAddress =
+    privyWallets.wallets.find((wallet) => wallet.type === "ethereum")
+      ?.address ??
+    findLinkedWalletAddress(privy.user, "ethereum") ??
+    null;
+  const stellarAddress = findLinkedWalletAddress(privy.user, "stellar");
+  const shortEvmAddress = evmAddress
+    ? formatShortWalletAddress(evmAddress)
     : null;
+  const shortStellarAddress = stellarAddress
+    ? formatShortWalletAddress(stellarAddress)
+    : null;
+  const activeWalletType: PrivyActiveWalletType = stellarAddress
+    ? "stellar"
+    : evmAddress
+      ? "evm"
+      : "none";
 
   const value = useMemo<PrivyWalletAbstraction>(
     () => ({
@@ -83,8 +138,47 @@ export function PrivyWalletAbstractionBridge({
       ready: privy.ready && privyWallets.ready,
       authenticated: privy.authenticated,
       user: privy.user,
-      walletAddress,
-      shortWalletAddress,
+      evmAddress,
+      shortEvmAddress,
+      stellarAddress,
+      shortStellarAddress,
+      activeWalletType,
+      hasStellarWallet: Boolean(stellarAddress),
+      canSignStellarHash: Boolean(stellarAddress && isUsingPrivy),
+      walletAddress: evmAddress,
+      shortWalletAddress: shortEvmAddress,
+      stellarWalletAddress: stellarAddress,
+      shortStellarWalletAddress: shortStellarAddress,
+      createStellarWallet: async () => {
+        if (!hasPrivyConfigured || !isUsingPrivy) return null;
+        if (!privy.authenticated) {
+          privy.login();
+          return null;
+        }
+
+        const existingAddress = findLinkedWalletAddress(privy.user, "stellar");
+        if (existingAddress) return existingAddress;
+
+        const created = await createWallet({ chainType: "stellar" });
+        return created.wallet.address;
+      },
+      signStellarHash: async (hash, addressOverride) => {
+        const address =
+          addressOverride ?? findLinkedWalletAddress(privy.user, "stellar");
+        if (!address) {
+          throw new Error(
+            "Crie uma carteira Stellar via Privy antes de assinar.",
+          );
+        }
+
+        const signed = await signRawHash({
+          address,
+          chainType: "stellar",
+          hash,
+        });
+
+        return signed.signature;
+      },
       login: () => privy.login(),
       logout: () => privy.logout(),
       connectWallet: () => {
@@ -101,8 +195,13 @@ export function PrivyWalletAbstractionBridge({
       isUsingPrivy,
       privy,
       privyWallets.ready,
-      shortWalletAddress,
-      walletAddress,
+      createWallet,
+      signRawHash,
+      activeWalletType,
+      evmAddress,
+      shortEvmAddress,
+      shortStellarAddress,
+      stellarAddress,
     ],
   );
 
@@ -121,4 +220,16 @@ function formatShortWalletAddress(value: string): string {
   if (value.length <= 14) return value;
 
   return `${value.slice(0, 6)}...${value.slice(-6)}`;
+}
+
+function findLinkedWalletAddress(
+  user: User | null,
+  chainType: LinkedWalletAccount["chainType"],
+): string | null {
+  const wallet = user?.linkedAccounts.find(
+    (account): account is LinkedWalletAccount =>
+      account.type === "wallet" && account.chainType === chainType,
+  );
+
+  return wallet?.address ?? null;
 }
