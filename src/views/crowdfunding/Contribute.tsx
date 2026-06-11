@@ -24,6 +24,12 @@ import {
   prepareStellarUsdcMainnetPayment,
   submitStellarUsdcMainnetSignedXdr,
 } from "../../util/stellarUsdcMainnet";
+import {
+  buildXlmPaymentTransaction,
+  getStellarXlmMainnetConfig,
+  isPaymentWalletOnStellarMainnet,
+  submitSignedXlmTransaction,
+} from "../../util/stellarXlmMainnet";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
 import EloMeCardImg from "../../images/projects-page/cards/elo-me.png";
@@ -64,8 +70,8 @@ const currencyOptions: CurrencyOption[] = [
   },
   {
     code: "XLM",
-    name: "XLM Testnet",
-    description: "Apenas para teste na rede de teste Stellar",
+    name: "XLM",
+    description: "Ativo nativo da Stellar; Mainnet quando habilitado",
     brlRate: 0.5432,
     xlmRate: 1,
     status: "active",
@@ -115,7 +121,8 @@ export default function Contribute() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addDonation } = useDonations();
-  const { address, balances, network, signTransaction } = useWallet();
+  const { address, balances, network, networkPassphrase, signTransaction } =
+    useWallet();
   const privyWallet = usePrivyWalletAbstraction();
 
   const projetoId = searchParams.get("projeto") || "1";
@@ -148,6 +155,7 @@ export default function Contribute() {
   const projectCurrency = project?.moedaPrincipal ?? "USDC";
   const projectCurrencyLabel = formatDemoCurrencyLabel(projectCurrency);
   const stellarUsdcConfig = useMemo(() => getStellarUsdcMainnetConfig(), []);
+  const stellarXlmConfig = useMemo(() => getStellarXlmMainnetConfig(), []);
 
   const numericContribution = Number(contributionValue || 0);
   const amountBRL = numericContribution * currency.brlRate;
@@ -163,12 +171,33 @@ export default function Contribute() {
     isStellarUsdcMainnetConfigured && hasPaymentStellarAddress;
   const isStellarUsdcMainnetBlocked =
     isStellarUsdcMainnetConfigured && !canUseStellarUsdcMainnet;
+  const isStellarXlmMainnetConfigured =
+    selectedCurrency === "XLM" && stellarXlmConfig.enabled;
+  const isStellarXlmMainnetRequestedButInvalid =
+    selectedCurrency === "XLM" &&
+    stellarXlmConfig.requested &&
+    !stellarXlmConfig.enabled;
+  const isPaymentWalletOnMainnet = isPaymentWalletOnStellarMainnet({
+    network,
+    networkPassphrase,
+    expectedNetworkPassphrase: stellarXlmConfig.networkPassphrase,
+  });
+  const canUseStellarXlmMainnet =
+    isStellarXlmMainnetConfigured &&
+    hasPaymentStellarAddress &&
+    isPaymentWalletOnMainnet;
+  const isStellarXlmMainnetBlocked =
+    isStellarXlmMainnetConfigured && !canUseStellarXlmMainnet;
+  const isRealMainnetPaymentConfigured =
+    isStellarUsdcMainnetConfigured || isStellarXlmMainnetConfigured;
   const showStellarUsdcMainnetInfo = selectedCurrency === "USDC";
   const submitButtonLabel = isSubmitting
     ? "Processando..."
-    : isStellarUsdcMainnetBlocked
-      ? "Conecte Freighter para USDC Stellar"
-      : "Confirmar doação";
+    : isStellarXlmMainnetBlocked
+      ? "Conecte Freighter Mainnet"
+      : isStellarUsdcMainnetBlocked
+        ? "Conecte Freighter para USDC Stellar"
+        : "Confirmar doação";
 
   const progressPercent = project
     ? Math.min(
@@ -207,6 +236,13 @@ export default function Contribute() {
   };
 
   const handleConfirmarDoacao = async () => {
+    if (isStellarXlmMainnetBlocked) {
+      alert(
+        "Para concluir a doação em XLM Stellar Mainnet, conecte sua carteira Freighter em Main Net/Public.",
+      );
+      return;
+    }
+
     if (isStellarUsdcMainnetBlocked) {
       alert(
         "Para concluir a doação em USDC Stellar, conecte sua carteira Freighter.",
@@ -240,6 +276,66 @@ export default function Contribute() {
       const donorDocHash = await hashStringHex(
         identificacao.replace(/\D/g, ""),
       );
+
+      if (canUseStellarXlmMainnet) {
+        const paymentStellarAddress = address;
+
+        if (!paymentStellarAddress?.startsWith("G")) {
+          throw new Error(
+            "Para concluir a doação em XLM Stellar Mainnet, conecte sua carteira Freighter.",
+          );
+        }
+
+        const preparedPayment = await buildXlmPaymentTransaction({
+          sourcePublicKey: paymentStellarAddress,
+          amount: numericContribution,
+          projectId: Number(projetoId),
+          donorType: tipoDoador,
+        });
+        const signedPayment = await signTransaction(
+          preparedPayment.transaction.toXDR(),
+          {
+            networkPassphrase: preparedPayment.networkPassphrase,
+            address: paymentStellarAddress,
+          },
+        );
+
+        if (
+          signedPayment.signerAddress &&
+          signedPayment.signerAddress !== paymentStellarAddress
+        ) {
+          throw new Error(
+            "A assinatura não corresponde à carteira de pagamento Stellar conectada.",
+          );
+        }
+
+        const paymentResult = await submitSignedXlmTransaction({
+          preparedPayment,
+          signerPublicKey: paymentStellarAddress,
+          signedTxXdr: signedPayment.signedTxXdr,
+        });
+        const donationId = Date.now();
+
+        await addDonation({
+          id: donationId,
+          projectId: projetoId,
+          projectName: displayProjectName,
+          amount: paymentResult.amount,
+          amountBRL: valorBRL,
+          timestamp: donationId,
+          nftId: 0,
+          donorType: tipoDoador,
+          walletAddress: paymentStellarAddress,
+          txHash: paymentResult.txHash,
+        });
+
+        void navigate(
+          `/sucesso?donationId=${donationId}&txHash=${paymentResult.txHash}&nftId=0&xlm=${paymentResult.amount}&moeda=XLM&valor=${numericContribution}&tipo=${tipoDoador}&rede=stellar-mainnet&asset=XLM&projeto=${encodeURIComponent(
+            displayProjectName,
+          )}`,
+        );
+        return;
+      }
 
       if (canUseStellarUsdcMainnet) {
         const paymentStellarAddress = address;
@@ -598,7 +694,9 @@ export default function Contribute() {
                     </div>
 
                     <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
-                      {currency.description}
+                      {isStellarXlmMainnetConfigured
+                        ? "XLM Stellar Mainnet ativo. XLM é ativo nativo da Stellar e não exige trustline."
+                        : currency.description}
                     </p>
 
                     <div className="mt-3 rounded-2xl bg-[var(--color-surface)] p-4">
@@ -618,7 +716,7 @@ export default function Contribute() {
 
                       <div className="mt-2 flex items-center justify-between gap-4 text-xs">
                         <span className="text-[var(--color-text-soft)]">
-                          {isStellarUsdcMainnetConfigured
+                          {isRealMainnetPaymentConfigured
                             ? "Valor a enviar na Mainnet"
                             : "Equivalente técnico na Testnet"}
                         </span>
@@ -626,14 +724,22 @@ export default function Contribute() {
                         <span className="font-medium text-[var(--color-primary)]">
                           {isStellarUsdcMainnetConfigured
                             ? `${numericContribution.toFixed(7)} USDC`
-                            : `${amountXlm.toFixed(4)} XLM Testnet`}
+                            : isStellarXlmMainnetConfigured
+                              ? `${numericContribution.toFixed(7)} XLM`
+                              : `${amountXlm.toFixed(4)} XLM Testnet`}
                         </span>
                       </div>
 
                       <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
                         {isStellarUsdcMainnetConfigured
                           ? "Pagamentos em USDC Mainnet usam a carteira de pagamento Stellar conectada. BRZ segue informativo e XLM permanece como teste/Testnet."
-                          : webSummitDemoCurrencyNote}
+                          : isStellarXlmMainnetConfigured
+                            ? "Transação real em XLM na Stellar Mainnet. Revise o valor e o destino antes de confirmar. Não envie valores altos no primeiro teste."
+                            : isStellarXlmMainnetRequestedButInvalid
+                              ? `XLM Mainnet solicitado, mas ainda sem configuração válida (${stellarXlmConfig.missing.join(
+                                  ", ",
+                                )}). O fluxo segue em demonstração.`
+                              : webSummitDemoCurrencyNote}
                       </p>
                     </div>
                   </div>
@@ -732,6 +838,40 @@ export default function Contribute() {
                       Carteira de pagamento Stellar
                     </p>
 
+                    {isStellarXlmMainnetConfigured ? (
+                      <div className="mt-3 rounded-xl border border-[var(--color-success)]/25 bg-[var(--color-white)] px-3 py-3">
+                        <p className="text-xs font-semibold text-[var(--color-success)]">
+                          XLM Stellar Mainnet ativo
+                        </p>
+
+                        <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
+                          XLM Mainnet usa a carteira de pagamento
+                          Stellar/Freighter. XLM é ativo nativo da Stellar e não
+                          exige trustline.
+                        </p>
+
+                        <p className="mt-2 text-xs font-semibold text-[var(--color-text)]">
+                          Destino:{" "}
+                          {stellarXlmConfig.destination
+                            ? shortAddress(stellarXlmConfig.destination)
+                            : "não configurado"}
+                        </p>
+
+                        <p className="mt-2 rounded-lg bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+                          Transação real em XLM na Stellar Mainnet. Revise o
+                          valor e o destino antes de confirmar.
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {isStellarXlmMainnetRequestedButInvalid ? (
+                      <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+                        XLM Mainnet solicitado, mas o destino real ainda não
+                        está configurado corretamente. O fluxo permanece em
+                        demonstração.
+                      </p>
+                    ) : null}
+
                     {address ? (
                       <>
                         <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-success)]">
@@ -743,30 +883,44 @@ export default function Contribute() {
                         </p>
 
                         <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                          {balances?.xlm?.balance ?? "-"} XLM Testnet
+                          {balances?.xlm?.balance ?? "-"}{" "}
+                          {isPaymentWalletOnMainnet
+                            ? "XLM Mainnet"
+                            : "XLM Testnet"}
                           {network ? ` • ${network}` : ""}
                         </p>
 
                         {!hasPaymentStellarAddress ? (
                           <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
-                            Para concluir a doação em USDC Stellar, conecte uma
-                            carteira Freighter com endereço Stellar válido.
+                            Para concluir a doação em Stellar Mainnet, conecte
+                            uma carteira Freighter com endereço Stellar válido.
+                          </p>
+                        ) : null}
+
+                        {isStellarXlmMainnetConfigured &&
+                        !isPaymentWalletOnMainnet ? (
+                          <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+                            Para pagar XLM real, altere a Freighter para Main
+                            Net/Public e reconecte a carteira.
                           </p>
                         ) : null}
                       </>
                     ) : (
                       <>
                         <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
-                          {isStellarUsdcMainnetConfigured
-                            ? "Conecte sua carteira Freighter para pagar com USDC na Stellar Mainnet."
-                            : "Conecte sua carteira Stellar para continuar no modo de demonstração/Testnet."}
+                          {isStellarXlmMainnetConfigured
+                            ? "Conecte sua carteira Freighter em Main Net/Public para pagar com XLM na Stellar Mainnet."
+                            : isStellarUsdcMainnetConfigured
+                              ? "Conecte sua carteira Freighter para pagar com USDC na Stellar Mainnet."
+                              : "Conecte sua carteira Stellar para continuar no modo de demonstração/Testnet."}
                         </p>
 
-                        {isStellarUsdcMainnetConfigured &&
+                        {(isStellarUsdcMainnetConfigured ||
+                          isStellarXlmMainnetConfigured) &&
                         privyWallet.authenticated ? (
                           <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
-                            Para concluir a doação em USDC Stellar, conecte sua
-                            carteira Freighter.
+                            Para concluir a doação em Stellar Mainnet, conecte
+                            sua carteira Freighter.
                           </p>
                         ) : null}
 
@@ -775,7 +929,8 @@ export default function Contribute() {
                           onClick={() => void connectWallet()}
                           className="mt-4 w-full rounded-full bg-[var(--color-black)] px-6 py-4 text-sm font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary)]"
                         >
-                          {isStellarUsdcMainnetConfigured
+                          {isStellarUsdcMainnetConfigured ||
+                          isStellarXlmMainnetConfigured
                             ? "Conectar Freighter"
                             : "Conectar carteira"}
                         </button>

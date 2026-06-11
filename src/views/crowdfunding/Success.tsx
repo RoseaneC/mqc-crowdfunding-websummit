@@ -32,8 +32,12 @@ export default function Success() {
   const moeda = parseDemoCurrency(searchParams.get("moeda"));
   const valorSimulado = Number(searchParams.get("valor")) || valorDoadoXLM;
   const moedaLabel = formatDemoCurrencyLabel(moeda);
+  const mainnetAsset = searchParams.get("asset")?.toUpperCase() ?? moeda;
   const isStellarMainnetPayment =
-    moeda === "USDC" && searchParams.get("rede") === "stellar-mainnet";
+    searchParams.get("rede") === "stellar-mainnet";
+  const isUsdcMainnetPayment =
+    isStellarMainnetPayment && mainnetAsset === "USDC";
+  const isXlmMainnetPayment = isStellarMainnetPayment && mainnetAsset === "XLM";
   const tipo = searchParams.get("tipo") || "PF";
   const nftId = Number(searchParams.get("nftId")) || 0;
   const projetoNome =
@@ -41,9 +45,11 @@ export default function Success() {
     (donationId ? `Campanha #${donationId}` : "Campanha apoiada");
 
   const cotacaoXLM = 0.5432;
-  const valorTotalBRL = isStellarMainnetPayment
+  const valorTotalBRL = isUsdcMainnetPayment
     ? valorSimulado * 5.2
-    : valorDoadoXLM * cotacaoXLM;
+    : isXlmMainnetPayment
+      ? valorSimulado * cotacaoXLM
+      : valorDoadoXLM * cotacaoXLM;
 
   const taxaAdminPct = tipo === "PF" ? 0.07 : 0.05;
   const valorTaxa = valorTotalBRL * taxaAdminPct;
@@ -115,7 +121,7 @@ export default function Success() {
               </h2>
               {isStellarMainnetPayment ? (
                 <p className="text-xs font-black text-slate-400 mt-2">
-                  Liquidação: USDC na Stellar Mainnet
+                  Liquidação: {mainnetAsset} na Stellar Mainnet
                 </p>
               ) : (
                 <p className="text-xs font-black text-slate-400 mt-2">
