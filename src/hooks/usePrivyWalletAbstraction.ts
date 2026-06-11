@@ -19,6 +19,7 @@ type SignStellarHashAction = (
   hash: `0x${string}`,
   addressOverride?: string,
 ) => Promise<`0x${string}`>;
+export type PrivyActiveWalletType = "evm" | "stellar" | "none";
 type LinkedAccount = User["linkedAccounts"][number];
 type LinkedWalletAccount = Extract<LinkedAccount, { type: "wallet" }>;
 
@@ -28,13 +29,19 @@ export type PrivyWalletAbstraction = {
   ready: boolean;
   authenticated: boolean;
   user: User | null;
+  evmAddress: string | null;
+  shortEvmAddress: string | null;
+  stellarAddress: string | null;
+  shortStellarAddress: string | null;
+  activeWalletType: PrivyActiveWalletType;
+  hasStellarWallet: boolean;
+  canSignStellarHash: boolean;
+  createStellarWallet: CreateStellarWalletAction;
+  signStellarHash: SignStellarHashAction;
   walletAddress: string | null;
   shortWalletAddress: string | null;
   stellarWalletAddress: string | null;
   shortStellarWalletAddress: string | null;
-  hasStellarWallet: boolean;
-  createStellarWallet: CreateStellarWalletAction;
-  signStellarHash: SignStellarHashAction;
   login: WalletAction;
   logout: WalletAction;
   connectWallet: WalletAction;
@@ -60,13 +67,19 @@ export const disabledPrivyWalletAbstraction: PrivyWalletAbstraction = {
   ready: true,
   authenticated: false,
   user: null,
+  evmAddress: null,
+  shortEvmAddress: null,
+  stellarAddress: null,
+  shortStellarAddress: null,
+  activeWalletType: "none",
+  hasStellarWallet: false,
+  canSignStellarHash: false,
+  createStellarWallet: noopCreateStellarWallet,
+  signStellarHash: noopSignStellarHash,
   walletAddress: null,
   shortWalletAddress: null,
   stellarWalletAddress: null,
   shortStellarWalletAddress: null,
-  hasStellarWallet: false,
-  createStellarWallet: noopCreateStellarWallet,
-  signStellarHash: noopSignStellarHash,
   login: noopWalletAction,
   logout: noopWalletAction,
   connectWallet: noopWalletAction,
@@ -100,14 +113,23 @@ export function PrivyWalletAbstractionBridge({
   const { createWallet } = useCreateWallet();
   const { signRawHash } = useSignRawHash();
   const { hasPrivyConfigured, isUsingPrivy } = getPrivyWalletEnv();
-  const walletAddress = privyWallets.wallets[0]?.address ?? null;
-  const stellarWalletAddress = findLinkedWalletAddress(privy.user, "stellar");
-  const shortWalletAddress = walletAddress
-    ? formatShortWalletAddress(walletAddress)
+  const evmAddress =
+    privyWallets.wallets.find((wallet) => wallet.type === "ethereum")
+      ?.address ??
+    findLinkedWalletAddress(privy.user, "ethereum") ??
+    null;
+  const stellarAddress = findLinkedWalletAddress(privy.user, "stellar");
+  const shortEvmAddress = evmAddress
+    ? formatShortWalletAddress(evmAddress)
     : null;
-  const shortStellarWalletAddress = stellarWalletAddress
-    ? formatShortWalletAddress(stellarWalletAddress)
+  const shortStellarAddress = stellarAddress
+    ? formatShortWalletAddress(stellarAddress)
     : null;
+  const activeWalletType: PrivyActiveWalletType = stellarAddress
+    ? "stellar"
+    : evmAddress
+      ? "evm"
+      : "none";
 
   const value = useMemo<PrivyWalletAbstraction>(
     () => ({
@@ -116,11 +138,17 @@ export function PrivyWalletAbstractionBridge({
       ready: privy.ready && privyWallets.ready,
       authenticated: privy.authenticated,
       user: privy.user,
-      walletAddress,
-      shortWalletAddress,
-      stellarWalletAddress,
-      shortStellarWalletAddress,
-      hasStellarWallet: Boolean(stellarWalletAddress),
+      evmAddress,
+      shortEvmAddress,
+      stellarAddress,
+      shortStellarAddress,
+      activeWalletType,
+      hasStellarWallet: Boolean(stellarAddress),
+      canSignStellarHash: Boolean(stellarAddress && isUsingPrivy),
+      walletAddress: evmAddress,
+      shortWalletAddress: shortEvmAddress,
+      stellarWalletAddress: stellarAddress,
+      shortStellarWalletAddress: shortStellarAddress,
       createStellarWallet: async () => {
         if (!hasPrivyConfigured || !isUsingPrivy) return null;
         if (!privy.authenticated) {
@@ -169,10 +197,11 @@ export function PrivyWalletAbstractionBridge({
       privyWallets.ready,
       createWallet,
       signRawHash,
-      shortWalletAddress,
-      shortStellarWalletAddress,
-      stellarWalletAddress,
-      walletAddress,
+      activeWalletType,
+      evmAddress,
+      shortEvmAddress,
+      shortStellarAddress,
+      stellarAddress,
     ],
   );
 
