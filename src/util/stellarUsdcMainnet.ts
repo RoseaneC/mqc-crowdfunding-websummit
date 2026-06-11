@@ -42,6 +42,7 @@ export type StellarUsdcPreparedPayment = {
   receiver: string;
   usdcIssuer: string;
   horizonUrl: string;
+  networkPassphrase: string;
 };
 
 export type StellarUsdcPaymentResult = {
@@ -105,7 +106,7 @@ export async function prepareStellarUsdcMainnetPayment(input: {
   }
 
   if (!isValidStellarPublicKey(input.sourcePublicKey)) {
-    throw new Error("Carteira Stellar do Privy inválida.");
+    throw new Error("Carteira de pagamento Stellar inválida.");
   }
 
   if (!isValidStellarPublicKey(config.receiver)) {
@@ -145,6 +146,7 @@ export async function prepareStellarUsdcMainnetPayment(input: {
     receiver: config.receiver,
     usdcIssuer: config.usdcIssuer,
     horizonUrl: config.horizonUrl,
+    networkPassphrase: config.networkPassphrase,
   };
 }
 
@@ -170,6 +172,41 @@ export async function submitStellarUsdcMainnetPayment(input: {
 
   const server = createMainnetHorizonServer(preparedPayment.horizonUrl);
   const response = await server.submitTransaction(preparedPayment.transaction, {
+    skipMemoRequiredCheck: true,
+  });
+
+  return {
+    txHash: response.hash,
+    ledger: response.ledger,
+    amount: preparedPayment.amount,
+    receiver: preparedPayment.receiver,
+  };
+}
+
+export async function submitStellarUsdcMainnetSignedXdr(input: {
+  preparedPayment: StellarUsdcPreparedPayment;
+  signerPublicKey: string;
+  signedTxXdr: string;
+}): Promise<StellarUsdcPaymentResult> {
+  const { preparedPayment } = input;
+
+  if (!isValidStellarPublicKey(input.signerPublicKey)) {
+    throw new Error("Carteira de pagamento Stellar inválida.");
+  }
+
+  const signedTransaction = TransactionBuilder.fromXDR(
+    input.signedTxXdr,
+    preparedPayment.networkPassphrase,
+  );
+
+  if (!signedTransaction.hash().equals(preparedPayment.transaction.hash())) {
+    throw new Error(
+      "A transação assinada não corresponde ao pagamento preparado.",
+    );
+  }
+
+  const server = createMainnetHorizonServer(preparedPayment.horizonUrl);
+  const response = await server.submitTransaction(signedTransaction, {
     skipMemoRequiredCheck: true,
   });
 
@@ -223,14 +260,16 @@ function ensureUsdcBalance(
 
   if (!usdcBalance) {
     throw new Error(
-      "A carteira Stellar do Privy precisa ter trustline e saldo em USDC Mainnet.",
+      "A carteira de pagamento Stellar precisa ter trustline e saldo em USDC Mainnet.",
     );
   }
 
   const available = Number(usdcBalance.balance);
 
   if (!Number.isFinite(available) || available < amount) {
-    throw new Error("Saldo insuficiente de USDC na carteira Stellar do Privy.");
+    throw new Error(
+      "Saldo insuficiente de USDC na carteira de pagamento Stellar.",
+    );
   }
 }
 
