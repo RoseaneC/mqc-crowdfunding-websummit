@@ -230,7 +230,7 @@ export default function Navbar() {
           )}
 
           <Link
-            to="/contato"
+            to="/contribuir"
             className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--color-white)] px-5 py-2 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
           >
             Faça parte
@@ -315,7 +315,7 @@ export default function Navbar() {
           )}
 
           <Link
-            to="/contato"
+            to="/contribuir"
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-white)] py-4 font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
           >
             Faça parte

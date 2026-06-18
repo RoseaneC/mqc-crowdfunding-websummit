@@ -127,7 +127,29 @@ export interface AdminProjectsDTO {
     approved: number;
     rejected: number;
     totalProjects: number;
+    total_projects?: number;
+    contactsReceived?: number;
+    newsletterSubscribers?: number;
+    totalRaisedDemo?: number;
   };
+  projects?: Array<{
+    id: number;
+    ngoName: string;
+    title: string;
+    taxCategory: string;
+    targetXlm: number;
+    raisedXlm: number;
+    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+    createdAt: string;
+    documents?: Array<{
+      name: string;
+      type: string;
+      status: string;
+      href: string;
+    }>;
+  }>;
+  demo?: boolean;
+  message?: string;
 }
 
 export interface AdminProjectPendingDTO {

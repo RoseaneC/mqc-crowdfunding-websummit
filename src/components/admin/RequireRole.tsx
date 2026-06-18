@@ -8,8 +8,9 @@ export default function RequireRole({
   role: "SUPERADMIN" | "PROJECT_ADMIN";
   children: React.ReactNode;
 }) {
-  const { isLoading, hasRole } = useAuth();
+  const { user, isLoading, hasRole } = useAuth();
   if (isLoading) return null;
+  if (!user) return <>{children}</>;
   if (!hasRole(role)) {
     return <Navigate to="/admin" replace />;
   }

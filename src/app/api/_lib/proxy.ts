@@ -1,3 +1,12 @@
+import {
+  adminDemoNotice,
+  getAdminDashboardDemo,
+  getAdminDemoSummary,
+  getAdminMroscDemo,
+  getAdminPendingProjectsDemo,
+  getAdminProjectsDemo,
+  getAdminReportsDemo,
+} from "./adminDemoData";
 import { demoProjects } from "./demoProjects";
 
 type HttpMethod =
@@ -114,6 +123,94 @@ function getFallbackResponse(method: HttpMethod, path: string) {
       uniqueDonors: 42,
       recentImpacts: [],
       source: "local-demo-fallback",
+    });
+  }
+
+  if (path === "/admin/dashboard" && method === "GET") {
+    return json(getAdminDashboardDemo());
+  }
+
+  if (path === "/admin/projects" && method === "GET") {
+    return json(getAdminProjectsDemo());
+  }
+
+  if (path === "/admin/projects/pending" && method === "GET") {
+    return json(getAdminPendingProjectsDemo());
+  }
+
+  if (path === "/admin/projects/summary" && method === "GET") {
+    return json(getAdminDemoSummary());
+  }
+
+  if (path === "/admin/projects/my" && method === "GET") {
+    return json(getAdminPendingProjectsDemo());
+  }
+
+  if (path === "/admin/reports/summary" && method === "GET") {
+    const summary = getAdminDemoSummary();
+
+    return json({
+      totalXlm: summary.totalRaisedDemo,
+      projectXlm: Math.round(summary.totalRaisedDemo * 0.94),
+      feeXlm: Math.round(summary.totalRaisedDemo * 0.06),
+      totalProjects: summary.totalProjects,
+      uniqueDonors: 86,
+      demo: true,
+      message: adminDemoNotice,
+    });
+  }
+
+  if (path === "/admin/reports" && method === "GET") {
+    return json(getAdminReportsDemo());
+  }
+
+  if (path === "/admin/mrosc" && method === "GET") {
+    return json(getAdminMroscDemo());
+  }
+
+  if (path === "/admin/tax/transfer-budget" && method === "GET") {
+    const summary = getAdminDemoSummary();
+
+    return json({
+      totalProjectXlm: Math.round(summary.totalRaisedDemo * 0.94),
+      totalFeeXlm: Math.round(summary.totalRaisedDemo * 0.06),
+      transferredXlm: 0,
+      availableXlm: Math.round(summary.totalRaisedDemo * 0.06),
+      demo: true,
+      message: adminDemoNotice,
+    });
+  }
+
+  if (path === "/admin/tax/transfers" && method === "GET") {
+    return json([]);
+  }
+
+  if (path === "/admin/tax/transfers" && method === "POST") {
+    return json({
+      id: Date.now(),
+      ok: true,
+      txHash: null,
+      demo: true,
+      message: adminDemoNotice,
+    });
+  }
+
+  if (/^\/projects\/\d+\/status$/.test(path) && method === "PATCH") {
+    return json({
+      ok: true,
+      demo: true,
+      message: adminDemoNotice,
+    });
+  }
+
+  if (
+    /^\/admin\/mrosc\/reports\/\d+\/status$/.test(path) &&
+    method === "PATCH"
+  ) {
+    return json({
+      ok: true,
+      demo: true,
+      message: adminDemoNotice,
     });
   }
 

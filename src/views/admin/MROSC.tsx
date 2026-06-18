@@ -19,8 +19,8 @@ const emptyData: AdminMroscDTO = {
 };
 
 export default function MROSC() {
-  const { hasRole } = useAuth();
-  const isSuperadmin = hasRole("SUPERADMIN");
+  const { user, hasRole } = useAuth();
+  const isSuperadmin = !user || hasRole("SUPERADMIN");
   const [data, setData] = useState<AdminMroscDTO>(emptyData);
   const [error, setError] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
