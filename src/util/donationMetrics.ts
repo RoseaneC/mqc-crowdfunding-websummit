@@ -13,6 +13,7 @@ export type DonationMetricProject = {
   ngoName?: string;
   targetXlm?: number | string | null;
   raisedXlm?: number | string | null;
+  raisedAsset?: string | null;
   status?: DonationStatus;
   moedaPrincipal?: string | null;
 };
@@ -22,6 +23,7 @@ export type DonationMetricRecord = {
   projectId: number | string;
   amountXlm?: number | string | null;
   amount?: number | string | null;
+  asset?: string | null;
   status?: DonationStatus;
   walletAddress?: string | null;
   isDemo?: boolean;
@@ -67,6 +69,13 @@ export function calculateProjectDonationMetrics(
         0,
       )
     : normalizeAmount(project.raisedXlm);
+  const donationAssets = [
+    ...new Set(
+      matchingDonations
+        ?.map((donation) => donation.asset?.trim().toUpperCase())
+        .filter((asset): asset is string => Boolean(asset)) ?? [],
+    ),
+  ];
 
   const targetAmount = normalizeAmount(project.targetXlm);
   const progressPercent =
@@ -82,7 +91,12 @@ export function calculateProjectDonationMetrics(
     donationCount: matchingDonations?.length ?? 0,
     targetAmount,
     progressPercent,
-    currency: project.moedaPrincipal ?? "USDC",
+    currency:
+      donationAssets.length === 1
+        ? donationAssets[0]
+        : project.raisedAsset?.trim().toUpperCase() ||
+          project.moedaPrincipal ||
+          "USDC",
     status: getCampaignStatus(project.status, totalRaised, targetAmount),
   };
 }
@@ -163,7 +177,8 @@ function isDemoDonation(donation: DonationMetricRecord) {
     donation.isDemo === true ||
     donation.source === "demo" ||
     donation.source === "test" ||
-    donation.source === "homologation"
+    donation.source === "homologation" ||
+    donation.source === "stellar-testnet"
   );
 }
 

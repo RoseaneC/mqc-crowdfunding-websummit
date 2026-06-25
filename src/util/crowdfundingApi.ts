@@ -14,6 +14,8 @@ export interface ProjectDTO {
   taxCategory: string;
   targetXlm: number;
   raisedXlm: number;
+  raisedAsset?: DemoCurrencyCode;
+  donationCount?: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
   metadataUri: string;
   createdAt: string;
@@ -45,6 +47,10 @@ export interface DonationReceiptDTO {
   nftId: number | null;
   createdAt: string;
   confirmedAt: string | null;
+  asset?: "XLM" | "USDC" | "BRZ";
+  network?: "stellar-mainnet" | "stellar-testnet" | "demo";
+  amount?: number | string;
+  destinationAddress?: string | null;
 }
 
 export interface AdminReportSummaryDTO {
@@ -140,6 +146,18 @@ export interface AdminDonationSummaryDTO {
     progressPercent: number;
     currency: string;
     status: string;
+  }>;
+  recentDonations?: Array<{
+    id: number;
+    projectId: number;
+    projectName: string;
+    amount: number;
+    asset: "XLM" | "USDC" | "BRZ";
+    network: "stellar-mainnet" | "stellar-testnet" | "demo";
+    txHash: string | null;
+    status: "confirmed" | "pending" | "failed";
+    createdAt: string;
+    walletAddress: string;
   }>;
 }
 
@@ -405,15 +423,28 @@ export function prepareDonation(payload: {
 }
 
 export function submitDonation(payload: {
-  donationId: number;
+  donationId?: number;
+  projectId?: number;
+  projectName?: string;
+  donorType?: "PF" | "PJ";
+  document?: string;
+  amount?: number | string;
+  asset?: "XLM" | "USDC" | "BRZ";
+  network?: "stellar-mainnet" | "stellar-testnet" | "demo";
   txHash: string;
+  status?: "confirmed" | "pending" | "failed";
+  walletAddress?: string;
+  destinationAddress?: string;
   contractDonationId?: string;
-  nftId: number;
+  nftId?: number;
 }) {
-  return apiRequest<{ ok: boolean }>("/donations/submit", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+  return apiRequest<{ ok: boolean; donation?: DonationReceiptDTO }>(
+    "/donations/submit",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
 }
 
 export function getDonationReceipt(donationId: number) {

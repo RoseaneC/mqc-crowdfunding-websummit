@@ -1,8 +1,6 @@
 import { demoProjects } from "./demoProjects";
-import {
-  calculateDonationPortfolioMetrics,
-  calculateProjectDonationMetrics,
-} from "../../../util/donationMetrics";
+import { getConfirmedDonationMetrics, listDonations } from "./donationStore";
+import { calculateProjectDonationMetrics } from "../../../util/donationMetrics";
 
 type HttpMethod =
   | "GET"
@@ -51,7 +49,24 @@ export function getApiBaseUrl() {
 }
 
 function getDemoDonationMetrics() {
-  return calculateDonationPortfolioMetrics([...demoProjects]);
+  return getConfirmedDonationMetrics();
+}
+
+function getProjectsWithDonationMetrics() {
+  const metrics = getDemoDonationMetrics();
+
+  return demoProjects.map((project) => {
+    const projectMetrics = metrics.projects.find(
+      (item) => String(item.projectId) === String(project.id),
+    );
+
+    return {
+      ...project,
+      raisedXlm: projectMetrics?.totalRaised ?? 0,
+      raisedAsset: projectMetrics?.currency ?? project.moedaPrincipal,
+      donationCount: projectMetrics?.donationCount ?? 0,
+    };
+  });
 }
 
 function getFallbackResponse(method: HttpMethod, path: string) {
@@ -80,7 +95,7 @@ function getFallbackResponse(method: HttpMethod, path: string) {
 
   if (path === "/projects" && method === "GET") {
     return json({
-      data: demoProjects,
+      data: getProjectsWithDonationMetrics(),
       source: "local-demo-fallback",
     });
   }
@@ -117,7 +132,19 @@ function getFallbackResponse(method: HttpMethod, path: string) {
       feeXlm: Math.round(metrics.totalRaised * 0.06),
       approvedProjects: demoProjects.length,
       uniqueDonors: metrics.uniqueDonors,
-      recentImpacts: [],
+      recentImpacts: listDonations()
+        .filter((donation) => donation.status === "confirmed")
+        .slice(-5)
+        .reverse()
+        .map((donation) => ({
+          id: donation.id,
+          projectId: donation.projectId,
+          projectName: donation.projectName,
+          amountXlm: donation.asset === "XLM" ? donation.amount : 0,
+          nftId: donation.nftId,
+          walletAddress: donation.walletAddress,
+          confirmedAt: donation.confirmedAt,
+        })),
       source: "local-demo-fallback",
     });
   }
@@ -138,17 +165,17 @@ function getFallbackResponse(method: HttpMethod, path: string) {
   if (path === "/admin/dashboard" && method === "GET") {
     return json({
       activity: [],
-      featuredProjects: demoProjects.map((project) => {
-        const metrics = calculateProjectDonationMetrics(project);
+      featuredProjects: getProjectsWithDonationMetrics().map((project) => {
+        const projectMetrics = calculateProjectDonationMetrics(project);
 
         return {
           projectId: Number(project.id),
           title: project.title,
           ngoName: project.ngoName,
           status: project.status,
-          raisedXlm: metrics.totalRaised,
-          targetXlm: metrics.targetAmount,
-          donors: metrics.donationCount,
+          raisedXlm: projectMetrics.totalRaised,
+          targetXlm: projectMetrics.targetAmount,
+          donors: projectMetrics.donationCount,
           createdAt: project.createdAt,
         };
       }),
@@ -179,7 +206,21 @@ function getFallbackResponse(method: HttpMethod, path: string) {
         incentive: project.status,
         totalProjectXlm: project.totalRaised,
       })),
-      recentDonations: [],
+      recentDonations: listDonations()
+        .filter((donation) => donation.status === "confirmed")
+        .slice(-20)
+        .reverse()
+        .map((donation) => ({
+          id: donation.id,
+          donorWallet: donation.walletAddress,
+          project: donation.projectName,
+          incentive: donation.network,
+          confirmedAt: donation.confirmedAt ?? donation.createdAt,
+          amountXlm: donation.asset === "XLM" ? donation.amount : 0,
+          status: "CONFIRMED" as const,
+          txHash: donation.txHash,
+          nftId: donation.nftId,
+        })),
       source: "local-demo-fallback",
     });
   }
@@ -288,7 +329,7 @@ export async function proxyToFastify(
   } catch (error) {
     if (targetPath === "/projects" && method === "GET") {
       return json({
-        data: demoProjects,
+        data: getProjectsWithDonationMetrics(),
         source: "local-demo-fallback",
         warning:
           "API externa indisponível; exibindo dados de demonstração para manter a navegação pública.",

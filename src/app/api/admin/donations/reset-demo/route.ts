@@ -1,6 +1,8 @@
-import { demoProjects } from "../../../_lib/demoProjects";
+import {
+  getConfirmedDonationMetrics,
+  resetDemoDonations,
+} from "../../../_lib/donationStore";
 import { getApiBaseUrl } from "../../../_lib/proxy";
-import { calculateDonationPortfolioMetrics } from "../../../../../util/donationMetrics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,16 +42,17 @@ export async function POST(request: Request) {
     });
   }
 
-  const before = calculateDonationPortfolioMetrics([...demoProjects]);
+  const before = getConfirmedDonationMetrics();
   const projectsAffected = before.projects.filter(
     (project) => project.totalRaised > 0 || project.donationCount > 0,
   );
+  const resetResult = resetDemoDonations();
 
   console.info(
     "[admin-reset-demo-donations] Local demo reset requested. Demo donation metrics are zeroed in source data.",
     {
       totalBeforeReset: before.totalRaised,
-      recordsRemovedOrZeroed: projectsAffected.length,
+      recordsRemovedOrZeroed: resetResult.removed,
     },
   );
 
@@ -66,7 +69,7 @@ export async function POST(request: Request) {
     })),
     totalBeforeReset: before.totalRaised,
     totalAfterReset: 0,
-    recordsRemovedOrZeroed: projectsAffected.length,
+    recordsRemovedOrZeroed: resetResult.removed,
     localStorageKeysToClear: ["donation", "donations", "doacao"],
     lastUpdated: new Date().toISOString(),
   });

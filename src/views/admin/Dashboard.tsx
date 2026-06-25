@@ -263,6 +263,48 @@ export default function Dashboard() {
           </table>
         </div>
 
+        <div className="mt-6 overflow-x-auto rounded-xl border border-slate-100">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+              <tr>
+                <th className="px-4 py-3">Doacao confirmada</th>
+                <th className="px-4 py-3">Valor</th>
+                <th className="px-4 py-3">Rede</th>
+                <th className="px-4 py-3">Hash</th>
+                <th className="px-4 py-3">Data</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(donationSummary?.recentDonations ?? []).map((donation) => (
+                <tr key={`${donation.id}-${donation.txHash ?? "sem-hash"}`}>
+                  <td className="px-4 py-3 font-medium text-slate-900">
+                    {donation.projectName}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {donation.amount.toLocaleString("pt-BR")} {donation.asset}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {donation.network}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-[#002B99]">
+                    {donation.txHash ? shortHash(donation.txHash) : "-"}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {new Date(donation.createdAt).toLocaleString("pt-BR")}
+                  </td>
+                </tr>
+              ))}
+              {(donationSummary?.recentDonations?.length ?? 0) === 0 ? (
+                <tr>
+                  <td className="px-4 py-3 text-slate-500" colSpan={5}>
+                    Ainda nao ha doacoes confirmadas registradas.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+
         <div className="mt-6 rounded-xl bg-slate-50 p-4">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
@@ -415,6 +457,11 @@ function formatRelativeTime(isoDate: string) {
   if (diffHour < 24) return `há ${diffHour} h`;
   const diffDay = Math.floor(diffHour / 24);
   return `há ${diffDay} dia(s)`;
+}
+
+function shortHash(hash: string) {
+  if (hash.length <= 12) return hash;
+  return `${hash.slice(0, 6)}...${hash.slice(-6)}`;
 }
 
 function MetricCard(props: { title: string; value: string; subtitle: string }) {

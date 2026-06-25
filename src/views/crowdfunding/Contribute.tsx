@@ -209,6 +209,10 @@ export default function Contribute() {
     ? calculateProjectDonationMetrics(project)
     : null;
   const progressPercent = projectMetrics?.progressPercent ?? 0;
+  const raisedCurrencyLabel =
+    projectMetrics && projectMetrics.totalRaised > 0
+      ? formatMetricCurrencyLabel(projectMetrics.currency, projectCurrency)
+      : projectCurrencyLabel;
 
   const isDocumentValid = useMemo(() => {
     const digits = identificacao.replace(/\D/g, "");
@@ -317,6 +321,22 @@ export default function Contribute() {
           signedTxXdr: signedPayment.signedTxXdr,
         });
         const donationId = Date.now();
+
+        await submitDonation({
+          donationId,
+          projectId: Number(projetoId),
+          projectName: displayProjectName,
+          donorType: tipoDoador,
+          document: donorDocHash,
+          amount: paymentResult.amount,
+          asset: "XLM",
+          network: "stellar-mainnet",
+          txHash: paymentResult.txHash,
+          status: "confirmed",
+          walletAddress: paymentStellarAddress,
+          destinationAddress: paymentResult.destination,
+          nftId: 0,
+        });
 
         await addDonation({
           id: donationId,
@@ -561,7 +581,7 @@ export default function Contribute() {
                       {formatDonationAmount(projectMetrics?.totalRaised ?? 0)}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                      {projectCurrencyLabel} arrecadados
+                      {raisedCurrencyLabel} arrecadados
                     </p>
                   </div>
 
@@ -1147,6 +1167,20 @@ function shortAddress(value: string): string {
   if (value.length <= 14) return value;
 
   return `${value.slice(0, 6)}...${value.slice(-6)}`;
+}
+
+function formatMetricCurrencyLabel(
+  currency: string | undefined,
+  fallback: DemoCurrencyCode,
+) {
+  const normalized = currency?.trim().toUpperCase();
+
+  if (normalized === "XLM") return "XLM";
+  if (normalized === "USDC" || normalized === "BRZ") {
+    return formatDemoCurrencyLabel(normalized);
+  }
+
+  return formatDemoCurrencyLabel(fallback);
 }
 
 async function executeOnChainDonation(input: {

@@ -169,6 +169,20 @@ function getProjectAcceptedCurrencies(project: ProjectDTO): DemoCurrencyCode[] {
   return defaultAcceptedDemoCurrencies;
 }
 
+function formatMetricCurrencyLabel(
+  currency: string | undefined,
+  fallback: DemoCurrencyCode,
+) {
+  const normalized = currency?.trim().toUpperCase();
+
+  if (normalized === "XLM") return "XLM";
+  if (normalized === "USDC" || normalized === "BRZ") {
+    return formatDemoCurrencyLabel(normalized);
+  }
+
+  return formatDemoCurrencyLabel(fallback);
+}
+
 export default function Projects() {
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [query, setQuery] = useState("");
@@ -435,6 +449,13 @@ export default function Projects() {
                 const primaryCurrency = getProjectPrimaryCurrency(project);
                 const acceptedCurrencies =
                   getProjectAcceptedCurrencies(project);
+                const raisedCurrencyLabel =
+                  metrics.totalRaised > 0
+                    ? formatMetricCurrencyLabel(
+                        metrics.currency,
+                        primaryCurrency,
+                      )
+                    : formatDemoCurrencyLabel(primaryCurrency);
                 const projectImage =
                   projectImages[String(project.id)] ?? HeroProjectsImg.src;
 
@@ -505,8 +526,7 @@ export default function Projects() {
 
                             <p className="mt-1 text-lg font-semibold text-[var(--color-text)]">
                               {formatDonationAmount(metrics.totalRaised)}{" "}
-                              {formatDemoCurrencyLabel(primaryCurrency)}{" "}
-                              arrecadados
+                              {raisedCurrencyLabel} arrecadados
                             </p>
                           </div>
 

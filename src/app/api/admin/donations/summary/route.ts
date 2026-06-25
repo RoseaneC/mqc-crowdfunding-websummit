@@ -1,6 +1,8 @@
-import { demoProjects } from "../../../_lib/demoProjects";
+import {
+  getConfirmedDonationMetrics,
+  listDonations,
+} from "../../../_lib/donationStore";
 import { getApiBaseUrl } from "../../../_lib/proxy";
-import { calculateDonationPortfolioMetrics } from "../../../../../util/donationMetrics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,8 +38,9 @@ export async function GET(request: Request) {
     }
   }
 
-  const metrics = calculateDonationPortfolioMetrics([...demoProjects]);
+  const metrics = getConfirmedDonationMetrics();
   const resetEnabled = isAdminResetEnabled();
+  const donations = listDonations();
 
   return Response.json({
     ok: true,
@@ -50,7 +53,9 @@ export async function GET(request: Request) {
       : "Reset administrativo disponivel apenas em ambiente autorizado.",
     totalRaised: metrics.totalRaised,
     donationCount: metrics.donationCount,
-    demoDonationCount: metrics.donationCount,
+    demoDonationCount: donations.filter(
+      (donation) => donation.network !== "stellar-mainnet",
+    ).length,
     uniqueDonors: metrics.uniqueDonors,
     lastUpdated: metrics.lastUpdated,
     projects: metrics.projects.map((project) => ({
@@ -62,6 +67,22 @@ export async function GET(request: Request) {
       currency: project.currency,
       status: project.status,
     })),
+    recentDonations: donations
+      .filter((donation) => donation.status === "confirmed")
+      .slice(-20)
+      .reverse()
+      .map((donation) => ({
+        id: donation.id,
+        projectId: donation.projectId,
+        projectName: donation.projectName,
+        amount: donation.amount,
+        asset: donation.asset,
+        network: donation.network,
+        txHash: donation.txHash,
+        status: donation.status,
+        createdAt: donation.createdAt,
+        walletAddress: donation.walletAddress,
+      })),
   });
 }
 

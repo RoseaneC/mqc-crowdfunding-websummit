@@ -149,6 +149,16 @@ export default function Success() {
 
             <div className="space-y-4 text-xs font-black uppercase tracking-widest">
               <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Status</span>
+                <span
+                  className={
+                    receiptTxHash ? "text-emerald-600" : "text-orange-500"
+                  }
+                >
+                  {receiptTxHash ? "CONFIRMADA" : "PENDENTE"}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
                 <span className="text-slate-400">Hash da transação</span>
                 {txExplorerUrl ? (
                   <a
