@@ -186,6 +186,9 @@ export default function Dashboard() {
             <p className="text-sm text-slate-500 mt-1">
               Numeros calculados pela fonte unica de metricas de doacao.
             </p>
+            <p className="mt-2 text-xs font-bold text-emerald-700">
+              Dados de arrecadacao demo zerados.
+            </p>
           </div>
 
           <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase text-slate-600">

@@ -5,6 +5,8 @@ import type { ProjectDTO } from "../../util/crowdfundingApi";
 import {
   calculateProjectDonationMetrics,
   formatDonationAmount,
+  formatDonationProgress,
+  getDonationCampaignMessage,
 } from "../../util/donationMetrics";
 import {
   allowedOdsNumbers,
@@ -503,17 +505,18 @@ export default function Projects() {
 
                             <p className="mt-1 text-lg font-semibold text-[var(--color-text)]">
                               {formatDonationAmount(metrics.totalRaised)}{" "}
-                              {formatDemoCurrencyLabel(primaryCurrency)}
+                              {formatDemoCurrencyLabel(primaryCurrency)}{" "}
+                              arrecadados
                             </p>
                           </div>
 
                           <div className="text-right">
                             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
-                              Meta
+                              Captado
                             </p>
 
                             <p className="mt-1 text-sm font-semibold text-[var(--color-primary)]">
-                              {metrics.progressPercent}%
+                              {formatDonationProgress(metrics.progressPercent)}
                             </p>
                           </div>
                         </div>
@@ -527,7 +530,7 @@ export default function Projects() {
 
                         <div className="mt-6 flex items-center justify-between gap-4">
                           <p className="text-xs leading-5 text-[var(--color-text-soft)]">
-                            Apoie este projeto e acompanhe o impacto gerado.
+                            {getDonationCampaignMessage(metrics)}
                           </p>
 
                           <Link

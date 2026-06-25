@@ -17,6 +17,8 @@ import {
 import {
   calculateProjectDonationMetrics,
   formatDonationAmount,
+  formatDonationProgress,
+  getDonationCampaignMessage,
 } from "../../util/donationMetrics";
 import {
   formatDemoCurrencyLabel,
@@ -547,10 +549,10 @@ export default function Contribute() {
                 <div className="mt-5 grid grid-cols-3 gap-4">
                   <div>
                     <p className="text-2xl font-semibold text-[var(--color-text)]">
-                      {progressPercent}%
+                      {formatDonationProgress(progressPercent)}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                      alcançado
+                      captado
                     </p>
                   </div>
 
@@ -559,7 +561,7 @@ export default function Contribute() {
                       {formatDonationAmount(projectMetrics?.totalRaised ?? 0)}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-                      {projectCurrencyLabel} captados
+                      {projectCurrencyLabel} arrecadados
                     </p>
                   </div>
 
@@ -579,6 +581,12 @@ export default function Contribute() {
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
+
+                <p className="mt-4 rounded-2xl bg-[var(--color-white)] px-4 py-3 text-xs font-medium leading-5 text-[var(--color-text-muted)]">
+                  {projectMetrics
+                    ? getDonationCampaignMessage(projectMetrics)
+                    : "Ainda não há contribuições registradas"}
+                </p>
               </div>
 
               <div className="mt-6 rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-white)] p-6 shadow-[0_16px_45px_rgba(15,0,161,0.08)]">

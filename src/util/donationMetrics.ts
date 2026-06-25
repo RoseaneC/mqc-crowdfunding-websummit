@@ -130,6 +130,20 @@ export function formatDonationAmount(value: number | string) {
   });
 }
 
+export function formatDonationProgress(value: number | string) {
+  return `${Math.min(100, Math.max(0, Math.round(normalizeAmount(value))))}%`;
+}
+
+export function getDonationCampaignMessage(metrics: ProjectDonationMetrics) {
+  if (metrics.totalRaised <= 0 || metrics.donationCount <= 0) {
+    return "Campanha aberta para primeiras contribuições";
+  }
+
+  return `${metrics.donationCount.toLocaleString("pt-BR")} contribuição${
+    metrics.donationCount === 1 ? "" : "ões"
+  } registrada${metrics.donationCount === 1 ? "" : "s"}`;
+}
+
 export function normalizeAmount(value: number | string | null | undefined) {
   const amount = Number(value ?? 0);
 
