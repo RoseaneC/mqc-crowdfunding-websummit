@@ -31,13 +31,24 @@ export default function Success() {
   const valorDoadoXLM = Number(searchParams.get("xlm")) || 0;
   const moeda = parseDemoCurrency(searchParams.get("moeda"));
   const valorSimulado = Number(searchParams.get("valor")) || valorDoadoXLM;
-  const moedaLabel = formatDemoCurrencyLabel(moeda);
   const mainnetAsset = searchParams.get("asset")?.toUpperCase() ?? moeda;
-  const isStellarMainnetPayment =
-    searchParams.get("rede") === "stellar-mainnet";
+  const paymentNetwork = parsePaymentNetwork(searchParams.get("rede"));
+  const isStellarMainnetPayment = paymentNetwork === "stellar-mainnet";
+  const isStellarTestnetPayment =
+    paymentNetwork === "stellar-testnet" || paymentNetwork === "demo";
   const isUsdcMainnetPayment =
     isStellarMainnetPayment && mainnetAsset === "USDC";
   const isXlmMainnetPayment = isStellarMainnetPayment && mainnetAsset === "XLM";
+  const moedaLabel = getSuccessAssetLabel({
+    asset: mainnetAsset,
+    moeda,
+    paymentNetwork,
+  });
+  const technicalSettlementLabel = getTechnicalSettlementLabel({
+    asset: mainnetAsset,
+    moeda,
+    paymentNetwork,
+  });
   const tipo = searchParams.get("tipo") || "PF";
   const nftId = Number(searchParams.get("nftId")) || 0;
   const projetoNome =
@@ -62,15 +73,16 @@ export default function Success() {
   const nftGradient = nftData
     ? resolveNftGradient(nftData.gradient)
     : "from-slate-700 to-slate-900";
-  const mainnetTxHash =
-    isStellarMainnetPayment && isValidTxHash(receiptTxHash)
+  const stellarExpertSegment = getStellarExpertSegment(paymentNetwork);
+  const stellarTxHash =
+    stellarExpertSegment && isValidTxHash(receiptTxHash)
       ? receiptTxHash?.trim()
       : null;
-  const txExplorerUrl = mainnetTxHash
-    ? `https://stellar.expert/explorer/public/tx/${mainnetTxHash}`
+  const txExplorerUrl = stellarTxHash
+    ? `https://stellar.expert/explorer/${stellarExpertSegment}/tx/${stellarTxHash}`
     : buildTransactionExplorerUrl(receiptTxHash);
   const nftExplorerUrl = buildNftTokenExplorerUrl(nftId);
-  const explorerLabel = isStellarMainnetPayment
+  const explorerLabel = stellarExpertSegment
     ? "Stellar Expert"
     : getExplorerLabel();
 
@@ -123,9 +135,14 @@ export default function Success() {
                 <p className="text-xs font-black text-slate-400 mt-2">
                   Liquidação: {mainnetAsset} na Stellar Mainnet
                 </p>
+              ) : isStellarTestnetPayment ? (
+                <p className="text-xs font-black text-slate-400 mt-2">
+                  Equivalente técnico: {valorDoadoXLM.toFixed(2)}{" "}
+                  {technicalSettlementLabel}
+                </p>
               ) : (
                 <p className="text-xs font-black text-slate-400 mt-2">
-                  Equivalente técnico: {valorDoadoXLM.toFixed(2)} XLM Testnet
+                  Liquidação registrada em ambiente demonstrativo
                 </p>
               )}
             </div>
@@ -272,6 +289,51 @@ export default function Success() {
 function parseDemoCurrency(value: string | null): DemoCurrencyCode {
   if (value === "BRZ" || value === "XLM") return value;
   return "USDC";
+}
+
+type PaymentNetwork = "stellar-mainnet" | "stellar-testnet" | "demo";
+
+function parsePaymentNetwork(value: string | null): PaymentNetwork {
+  if (value === "stellar-mainnet" || value === "stellar-testnet") {
+    return value;
+  }
+
+  return "demo";
+}
+
+function getSuccessAssetLabel(input: {
+  asset: string;
+  moeda: DemoCurrencyCode;
+  paymentNetwork: PaymentNetwork;
+}) {
+  if (input.paymentNetwork === "stellar-mainnet") {
+    return input.asset === "XLM" ? "XLM Mainnet" : input.asset;
+  }
+
+  if (input.paymentNetwork === "stellar-testnet" || input.moeda === "XLM") {
+    return input.asset === "XLM" || input.moeda === "XLM"
+      ? "XLM Testnet"
+      : formatDemoCurrencyLabel(input.moeda);
+  }
+
+  return formatDemoCurrencyLabel(input.moeda);
+}
+
+function getTechnicalSettlementLabel(input: {
+  asset: string;
+  moeda: DemoCurrencyCode;
+  paymentNetwork: PaymentNetwork;
+}) {
+  if (input.paymentNetwork === "stellar-mainnet") {
+    return input.asset === "XLM" ? "XLM Mainnet" : input.asset;
+  }
+
+  return "XLM Testnet";
+}
+
+function getStellarExpertSegment(paymentNetwork: PaymentNetwork) {
+  if (paymentNetwork === "stellar-mainnet") return "public";
+  return "testnet";
 }
 
 function shortHash(hash: string) {
