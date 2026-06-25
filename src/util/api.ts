@@ -20,12 +20,13 @@ export async function apiRequest<T>(
   const token = getAuthToken();
 
   const response = await fetch(`/api${path}`, {
+    ...init,
+    cache: init?.cache ?? "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers ?? {}),
     },
-    ...init,
   });
 
   if (!response.ok) {

@@ -15,6 +15,10 @@ import {
   type ProjectMediaItemDTO,
 } from "../../util/crowdfundingApi";
 import {
+  calculateProjectDonationMetrics,
+  formatDonationAmount,
+} from "../../util/donationMetrics";
+import {
   formatDemoCurrencyLabel,
   webSummitDemoCurrencyNote,
   type DemoCurrencyCode,
@@ -199,14 +203,10 @@ export default function Contribute() {
         ? "Conecte Freighter para USDC Stellar"
         : "Confirmar doação";
 
-  const progressPercent = project
-    ? Math.min(
-        100,
-        Math.round(
-          (Number(project.raisedXlm) / Number(project.targetXlm)) * 100,
-        ),
-      )
-    : 0;
+  const projectMetrics = project
+    ? calculateProjectDonationMetrics(project)
+    : null;
+  const progressPercent = projectMetrics?.progressPercent ?? 0;
 
   const isDocumentValid = useMemo(() => {
     const digits = identificacao.replace(/\D/g, "");
@@ -556,9 +556,7 @@ export default function Contribute() {
 
                   <div>
                     <p className="text-2xl font-semibold text-[var(--color-text)]">
-                      {Number(project?.raisedXlm ?? 0).toLocaleString("pt-BR", {
-                        maximumFractionDigits: 0,
-                      })}
+                      {formatDonationAmount(projectMetrics?.totalRaised ?? 0)}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                       {projectCurrencyLabel} captados
@@ -567,9 +565,7 @@ export default function Contribute() {
 
                   <div>
                     <p className="text-2xl font-semibold text-[var(--color-text)]">
-                      {Number(project?.targetXlm ?? 0).toLocaleString("pt-BR", {
-                        maximumFractionDigits: 0,
-                      })}
+                      {formatDonationAmount(projectMetrics?.targetAmount ?? 0)}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-text-muted)]">
                       {projectCurrencyLabel} meta

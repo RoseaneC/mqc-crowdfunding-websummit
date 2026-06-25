@@ -16,6 +16,10 @@ import {
   buildTransactionExplorerUrl,
   getExplorerLabel,
 } from "../../util/explorerLinks";
+import {
+  calculateProjectDonationMetrics,
+  formatDonationAmount,
+} from "../../util/donationMetrics";
 
 export default function Projects() {
   const { hasRole, user } = useAuth();
@@ -388,27 +392,7 @@ export default function Projects() {
             </h3>
             <div className="space-y-3">
               {myProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="border border-slate-200 rounded-xl p-4 space-y-2"
-                >
-                  <div className="flex justify-between gap-3">
-                    <p className="font-bold text-slate-900">{project.title}</p>
-                    <span
-                      className={`text-[10px] font-black px-2 py-1 rounded ${badgeClass(project.status)}`}
-                    >
-                      {project.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    Meta: {Number(project.targetXlm).toLocaleString("pt-BR")}{" "}
-                    XLM
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Captado: {Number(project.raisedXlm).toLocaleString("pt-BR")}{" "}
-                    XLM
-                  </p>
-                </div>
+                <MyProjectCard key={project.id} project={project} />
               ))}
               {myProjects.length === 0 ? (
                 <p className="text-xs text-slate-500">
@@ -540,6 +524,40 @@ function SummaryCard(props: { title: string; value: number }) {
       <h2 className="text-3xl font-black text-slate-900">
         {props.value.toLocaleString("pt-BR")}
       </h2>
+    </div>
+  );
+}
+
+function MyProjectCard(props: {
+  project: {
+    id: number;
+    title: string;
+    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+    targetXlm: number;
+    raisedXlm: number;
+    createdAt: string;
+  };
+}) {
+  const metrics = calculateProjectDonationMetrics(props.project);
+
+  return (
+    <div className="border border-slate-200 rounded-xl p-4 space-y-2">
+      <div className="flex justify-between gap-3">
+        <p className="font-bold text-slate-900">{props.project.title}</p>
+        <span
+          className={`text-[10px] font-black px-2 py-1 rounded ${badgeClass(
+            props.project.status,
+          )}`}
+        >
+          {props.project.status}
+        </span>
+      </div>
+      <p className="text-xs text-slate-500">
+        Meta: {formatDonationAmount(metrics.targetAmount)} XLM
+      </p>
+      <p className="text-xs text-slate-500">
+        Captado: {formatDonationAmount(metrics.totalRaised)} XLM
+      </p>
     </div>
   );
 }

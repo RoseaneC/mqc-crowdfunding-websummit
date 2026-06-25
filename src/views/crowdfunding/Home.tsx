@@ -68,6 +68,7 @@ export default function Home() {
 
       try {
         const response = await fetch("/api/projects", {
+          cache: "no-store",
           headers: {
             "Content-Type": "application/json",
           },

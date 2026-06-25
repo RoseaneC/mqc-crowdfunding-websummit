@@ -1,4 +1,8 @@
 import { demoProjects } from "./demoProjects";
+import {
+  calculateDonationPortfolioMetrics,
+  calculateProjectDonationMetrics,
+} from "../../../util/donationMetrics";
 
 type HttpMethod =
   | "GET"
@@ -42,8 +46,12 @@ async function readRequestBody(request: Request) {
   }
 }
 
-function getApiBaseUrl() {
+export function getApiBaseUrl() {
   return (process.env.API_BASE_URL ?? "").replace(/\/$/, "");
+}
+
+function getDemoDonationMetrics() {
+  return calculateDonationPortfolioMetrics([...demoProjects]);
 }
 
 function getFallbackResponse(method: HttpMethod, path: string) {
@@ -101,20 +109,97 @@ function getFallbackResponse(method: HttpMethod, path: string) {
   }
 
   if (path === "/transparency/summary" && method === "GET") {
-    const totalXlm = demoProjects.reduce(
-      (total, project) => total + project.raisedXlm,
-      0,
-    );
+    const metrics = getDemoDonationMetrics();
 
     return json({
-      totalXlm,
-      projectXlm: Math.round(totalXlm * 0.94),
-      feeXlm: Math.round(totalXlm * 0.06),
+      totalXlm: metrics.totalRaised,
+      projectXlm: Math.round(metrics.totalRaised * 0.94),
+      feeXlm: Math.round(metrics.totalRaised * 0.06),
       approvedProjects: demoProjects.length,
-      uniqueDonors: 42,
+      uniqueDonors: metrics.uniqueDonors,
       recentImpacts: [],
       source: "local-demo-fallback",
     });
+  }
+
+  if (path === "/admin/reports/summary" && method === "GET") {
+    const metrics = getDemoDonationMetrics();
+
+    return json({
+      totalXlm: metrics.totalRaised,
+      projectXlm: Math.round(metrics.totalRaised * 0.94),
+      feeXlm: Math.round(metrics.totalRaised * 0.06),
+      totalProjects: demoProjects.length,
+      uniqueDonors: metrics.uniqueDonors,
+      source: "local-demo-fallback",
+    });
+  }
+
+  if (path === "/admin/dashboard" && method === "GET") {
+    return json({
+      activity: [],
+      featuredProjects: demoProjects.map((project) => {
+        const metrics = calculateProjectDonationMetrics(project);
+
+        return {
+          projectId: Number(project.id),
+          title: project.title,
+          ngoName: project.ngoName,
+          status: project.status,
+          raisedXlm: metrics.totalRaised,
+          targetXlm: metrics.targetAmount,
+          donors: metrics.donationCount,
+          createdAt: project.createdAt,
+        };
+      }),
+      source: "local-demo-fallback",
+    });
+  }
+
+  if (path === "/admin/reports" && method === "GET") {
+    const metrics = getDemoDonationMetrics();
+
+    return json({
+      kpis: {
+        totalCollectedXlm: metrics.totalRaised,
+        activeDonors: metrics.uniqueDonors,
+        fundedProjects: metrics.projects.filter(
+          (project) => project.status === "funded",
+        ).length,
+        avgTicketXlm:
+          metrics.donationCount > 0
+            ? metrics.totalRaised / metrics.donationCount
+            : 0,
+      },
+      distribution: [],
+      topProjects: metrics.projects.map((project, index) => ({
+        rank: index + 1,
+        projectId: Number(project.projectId),
+        name: project.projectTitle,
+        incentive: project.status,
+        totalProjectXlm: project.totalRaised,
+      })),
+      recentDonations: [],
+      source: "local-demo-fallback",
+    });
+  }
+
+  if (path === "/admin/projects/summary" && method === "GET") {
+    return json({
+      pending: 0,
+      approved: demoProjects.length,
+      rejected: 0,
+      total_projects: demoProjects.length,
+      source: "local-demo-fallback",
+    });
+  }
+
+  if (path === "/admin/projects/pending" && method === "GET") {
+    return json([]);
+  }
+
+  if (path === "/admin/projects/my" && method === "GET") {
+    return json([]);
   }
 
   return json(

@@ -121,6 +121,46 @@ export interface AdminDashboardDTO {
   }>;
 }
 
+export interface AdminDonationSummaryDTO {
+  ok: boolean;
+  source?: string;
+  environmentStatus: "demo" | "homologation" | "production" | (string & {});
+  resetEnabled: boolean;
+  resetMessage: string;
+  totalRaised: number;
+  donationCount: number;
+  demoDonationCount: number;
+  uniqueDonors: number;
+  lastUpdated: string;
+  projects: Array<{
+    projectId: number | string;
+    title: string;
+    totalRaised: number;
+    donationCount: number;
+    progressPercent: number;
+    currency: string;
+    status: string;
+  }>;
+}
+
+export interface AdminDonationResetResponseDTO {
+  ok: boolean;
+  source?: string;
+  message?: string;
+  error?: string;
+  projectsAffected?: Array<{
+    projectId: number | string;
+    title: string;
+    previousTotal: number;
+    afterTotal: number;
+  }>;
+  totalBeforeReset?: number;
+  totalAfterReset?: number;
+  recordsRemovedOrZeroed?: number;
+  localStorageKeysToClear?: string[];
+  lastUpdated?: string;
+}
+
 export interface AdminProjectsDTO {
   summary: {
     pending: number;
@@ -408,6 +448,20 @@ export function listProjectMedia() {
 
 export function getAdminDashboard() {
   return apiRequest<AdminDashboardDTO>("/admin/dashboard");
+}
+
+export function getAdminDonationSummary() {
+  return apiRequest<AdminDonationSummaryDTO>("/admin/donations/summary");
+}
+
+export function resetDemoDonations(confirm: "ZERAR_DOACOES_TESTE") {
+  return apiRequest<AdminDonationResetResponseDTO>(
+    "/admin/donations/reset-demo",
+    {
+      method: "POST",
+      body: JSON.stringify({ confirm }),
+    },
+  );
 }
 
 export function getAdminProjects() {

@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import {
   getAdminDashboard,
+  getAdminDonationSummary,
   getAdminProjectSummary,
   getAdminReportSummary,
   listMyAdminProjects,
+  resetDemoDonations,
   type AdminDashboardDTO,
+  type AdminDonationSummaryDTO,
 } from "../../util/crowdfundingApi";
+import { calculateProjectDonationMetrics } from "../../util/donationMetrics";
 import { useAuth } from "../../providers/AuthProvider";
 
 const emptyDashboard: AdminDashboardDTO = {
@@ -25,28 +29,41 @@ export default function Dashboard() {
     uniqueDonors: 0,
   });
   const [dashboard, setDashboard] = useState<AdminDashboardDTO>(emptyDashboard);
+  const [donationSummary, setDonationSummary] =
+    useState<AdminDonationSummaryDTO | null>(null);
   const [myProjectsCount, setMyProjectsCount] = useState(0);
   const [myPendingCount, setMyPendingCount] = useState(0);
   const [myApprovedCount, setMyApprovedCount] = useState(0);
   const [loadError, setLoadError] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState("");
+  const [resetFeedback, setResetFeedback] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const loadSuperadminDashboard = async () => {
+    setLoadError(false);
+    const [
+      summaryResponse,
+      projectSummaryResponse,
+      dashboardResponse,
+      donationSummaryResponse,
+    ] = await Promise.all([
+      getAdminReportSummary(),
+      getAdminProjectSummary(),
+      getAdminDashboard(),
+      getAdminDonationSummary(),
+    ]);
+    setSummary({
+      ...summaryResponse,
+      pendingProjects: projectSummaryResponse.pending,
+    });
+    setDashboard(dashboardResponse);
+    setDonationSummary(donationSummaryResponse);
+  };
 
   useEffect(() => {
     if (isSuperadmin) {
-      void Promise.all([
-        getAdminReportSummary(),
-        getAdminProjectSummary(),
-        getAdminDashboard(),
-      ])
-        .then(
-          ([summaryResponse, projectSummaryResponse, dashboardResponse]) => {
-            setSummary({
-              ...summaryResponse,
-              pendingProjects: projectSummaryResponse.pending,
-            });
-            setDashboard(dashboardResponse);
-          },
-        )
-        .catch(() => setLoadError(true));
+      void loadSuperadminDashboard().catch(() => setLoadError(true));
       return;
     }
     void listMyAdminProjects()
@@ -61,6 +78,41 @@ export default function Dashboard() {
       })
       .catch(() => setLoadError(true));
   }, [isSuperadmin]);
+
+  const handleResetDemoDonations = async () => {
+    if (resetConfirm !== "ZERAR_DOACOES_TESTE") {
+      setResetFeedback("Digite ZERAR_DOACOES_TESTE para confirmar.");
+      return;
+    }
+
+    setIsResetting(true);
+    setResetFeedback(null);
+
+    try {
+      const response = await resetDemoDonations("ZERAR_DOACOES_TESTE");
+
+      if (!response.ok) {
+        throw new Error(response.error ?? "Reset nao autorizado.");
+      }
+
+      clearDonationLocalStorage(response.localStorageKeysToClear);
+      setResetFeedback(
+        response.message ??
+          `Reset concluido. Registros zerados/removidos: ${
+            response.recordsRemovedOrZeroed ?? 0
+          }.`,
+      );
+      setResetConfirm("");
+      setShowResetConfirm(false);
+      await loadSuperadminDashboard();
+    } catch (error) {
+      setResetFeedback(
+        error instanceof Error ? error.message : "Falha ao resetar doacoes.",
+      );
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   if (!isSuperadmin) {
     return (
@@ -124,6 +176,138 @@ export default function Dashboard() {
           subtitle="Aguardando aprovacao"
         />
       </div>
+
+      <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 mb-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Gestao de Doacoes
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              Numeros calculados pela fonte unica de metricas de doacao.
+            </p>
+          </div>
+
+          <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase text-slate-600">
+            Base: {donationSummary?.environmentStatus ?? "indisponivel"}
+          </span>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <DonationMetric
+            title="Total arrecadado"
+            value={`${(donationSummary?.totalRaised ?? summary.totalXlm).toLocaleString("pt-BR")} XLM`}
+          />
+          <DonationMetric
+            title="Doacoes por projeto"
+            value={(donationSummary?.projects.length ?? 0).toLocaleString(
+              "pt-BR",
+            )}
+          />
+          <DonationMetric
+            title="Doacoes de teste"
+            value={(donationSummary?.demoDonationCount ?? 0).toLocaleString(
+              "pt-BR",
+            )}
+          />
+          <DonationMetric
+            title="Ultima atualizacao"
+            value={
+              donationSummary?.lastUpdated
+                ? new Date(donationSummary.lastUpdated).toLocaleString("pt-BR")
+                : "-"
+            }
+          />
+        </div>
+
+        <div className="mt-6 overflow-x-auto rounded-xl border border-slate-100">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold">
+              <tr>
+                <th className="px-4 py-3">Projeto</th>
+                <th className="px-4 py-3">Total</th>
+                <th className="px-4 py-3">Doacoes</th>
+                <th className="px-4 py-3">Progresso</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(donationSummary?.projects ?? []).map((project) => (
+                <tr key={project.projectId}>
+                  <td className="px-4 py-3 font-medium text-slate-900">
+                    {project.title}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {project.totalRaised.toLocaleString("pt-BR")}{" "}
+                    {project.currency}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {project.donationCount.toLocaleString("pt-BR")}
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {Math.min(100, project.progressPercent)}%
+                  </td>
+                </tr>
+              ))}
+              {donationSummary?.projects.length === 0 ||
+              donationSummary === null ? (
+                <tr>
+                  <td className="px-4 py-3 text-slate-500" colSpan={4}>
+                    Sem metricas de doacao disponiveis.
+                  </td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-6 rounded-xl bg-slate-50 p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-slate-900">
+                Resetar doacoes de teste
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                {donationSummary?.resetMessage ??
+                  "Reset administrativo disponivel apenas em ambiente autorizado."}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={!donationSummary?.resetEnabled || isResetting}
+              onClick={() => setShowResetConfirm((value) => !value)}
+              className="rounded-xl bg-[#002B99] px-4 py-3 text-xs font-black uppercase tracking-wider text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Resetar doacoes de teste
+            </button>
+          </div>
+
+          {showResetConfirm ? (
+            <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
+              <input
+                value={resetConfirm}
+                onChange={(event) => setResetConfirm(event.target.value)}
+                placeholder="Digite ZERAR_DOACOES_TESTE"
+                className="rounded-xl border border-slate-300 px-4 py-3 text-sm"
+              />
+              <button
+                type="button"
+                disabled={isResetting}
+                onClick={() => void handleResetDemoDonations()}
+                className="rounded-xl border border-red-300 px-4 py-3 text-xs font-black uppercase tracking-wider text-red-700 hover:bg-red-50 disabled:opacity-50"
+              >
+                {isResetting ? "Resetando..." : "Confirmar reset"}
+              </button>
+            </div>
+          ) : null}
+
+          {resetFeedback ? (
+            <p className="mt-3 text-xs font-bold text-slate-600 break-all">
+              {resetFeedback}
+            </p>
+          ) : null}
+        </div>
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
@@ -202,25 +386,7 @@ export default function Dashboard() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {dashboard.featuredProjects.map((project) => (
-                <tr className="hover:bg-slate-50" key={project.projectId}>
-                  <td className="px-6 py-4 font-medium text-slate-900">
-                    {project.title}
-                  </td>
-                  <td className="px-6 py-4 text-slate-500">
-                    {project.ngoName}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">
-                      {project.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[#002B99] font-bold text-xs">
-                      {project.raisedXlm.toLocaleString("pt-BR")} /{" "}
-                      {project.targetXlm.toLocaleString("pt-BR")} XLM
-                    </span>
-                  </td>
-                </tr>
+                <FeaturedProjectRow key={project.projectId} project={project} />
               ))}
               {dashboard.featuredProjects.length === 0 ? (
                 <tr>
@@ -256,4 +422,67 @@ function MetricCard(props: { title: string; value: string; subtitle: string }) {
       <p className="text-slate-400 text-xs mt-1">{props.subtitle}</p>
     </div>
   );
+}
+
+function DonationMetric(props: { title: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+        {props.title}
+      </p>
+      <p className="mt-2 text-lg font-black text-slate-900">{props.value}</p>
+    </div>
+  );
+}
+
+function FeaturedProjectRow(props: {
+  project: AdminDashboardDTO["featuredProjects"][number];
+}) {
+  const metrics = calculateProjectDonationMetrics({
+    id: props.project.projectId,
+    title: props.project.title,
+    ngoName: props.project.ngoName,
+    status: props.project.status,
+    raisedXlm: props.project.raisedXlm,
+    targetXlm: props.project.targetXlm,
+  });
+
+  return (
+    <tr className="hover:bg-slate-50">
+      <td className="px-6 py-4 font-medium text-slate-900">
+        {props.project.title}
+      </td>
+      <td className="px-6 py-4 text-slate-500">{props.project.ngoName}</td>
+      <td className="px-6 py-4">
+        <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-bold">
+          {props.project.status}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <span className="text-[#002B99] font-bold text-xs">
+          {metrics.totalRaised.toLocaleString("pt-BR")} /{" "}
+          {metrics.targetAmount.toLocaleString("pt-BR")} XLM
+        </span>
+      </td>
+    </tr>
+  );
+}
+
+function clearDonationLocalStorage(keysToClear?: string[]) {
+  if (typeof window === "undefined") return;
+
+  const matchers = keysToClear?.length
+    ? keysToClear
+    : ["donation", "donations", "doacao"];
+
+  for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+    const key = window.localStorage.key(index);
+
+    if (
+      key &&
+      matchers.some((matcher) => key.toLowerCase().includes(matcher))
+    ) {
+      window.localStorage.removeItem(key);
+    }
+  }
 }

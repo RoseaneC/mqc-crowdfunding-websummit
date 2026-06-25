@@ -3,6 +3,10 @@ import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import type { ProjectDTO } from "../../util/crowdfundingApi";
 import {
+  calculateProjectDonationMetrics,
+  formatDonationAmount,
+} from "../../util/donationMetrics";
+import {
   allowedOdsNumbers,
   defaultAcceptedDemoCurrencies,
   demoCurrencyLabels,
@@ -61,18 +65,6 @@ function unwrapProjects(response: ProjectsApiResponse): ProjectDTO[] {
   if (Array.isArray(response.items)) return response.items;
 
   return [];
-}
-
-function percent(raised: number, target: number) {
-  if (target <= 0) return 0;
-  return Math.min(100, Math.round((raised / target) * 100));
-}
-
-function formatProjectAmount(value: number | string) {
-  return Number(value).toLocaleString("pt-BR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
 }
 
 function normalizeText(value: string) {
@@ -190,6 +182,7 @@ export default function Projects() {
 
       try {
         const response = await fetch("/api/projects", {
+          cache: "no-store",
           headers: {
             "Content-Type": "application/json",
           },
@@ -434,11 +427,7 @@ export default function Projects() {
           ) : (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filtered.map((project) => {
-                const progress = percent(
-                  Number(project.raisedXlm),
-                  Number(project.targetXlm),
-                );
-
+                const metrics = calculateProjectDonationMetrics(project);
                 const theme = getProjectTheme(project);
                 const odsNames = getProjectOdsNames(project);
                 const primaryCurrency = getProjectPrimaryCurrency(project);
@@ -513,7 +502,7 @@ export default function Projects() {
                             </p>
 
                             <p className="mt-1 text-lg font-semibold text-[var(--color-text)]">
-                              {formatProjectAmount(project.raisedXlm)}{" "}
+                              {formatDonationAmount(metrics.totalRaised)}{" "}
                               {formatDemoCurrencyLabel(primaryCurrency)}
                             </p>
                           </div>
@@ -524,7 +513,7 @@ export default function Projects() {
                             </p>
 
                             <p className="mt-1 text-sm font-semibold text-[var(--color-primary)]">
-                              {progress}%
+                              {metrics.progressPercent}%
                             </p>
                           </div>
                         </div>
@@ -532,7 +521,7 @@ export default function Projects() {
                         <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[var(--color-surface-alt)]">
                           <div
                             className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-700"
-                            style={{ width: `${progress}%` }}
+                            style={{ width: `${metrics.progressPercent}%` }}
                           />
                         </div>
 
