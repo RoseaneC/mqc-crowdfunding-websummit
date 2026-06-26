@@ -103,6 +103,13 @@ export default function Home() {
     const approvedProjects = projects.filter(
       (project) => project.status === "APPROVED",
     );
+    const manuallyFeatured = approvedProjects.filter(
+      (project) => project.featured,
+    );
+
+    if (manuallyFeatured.length > 0) {
+      return manuallyFeatured.slice(0, 3);
+    }
 
     const selectedProjects = featuredProjectIds
       .map((id) =>

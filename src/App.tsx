@@ -8,9 +8,11 @@ import Debugger from "./views/Debugger.tsx";
 import CrowdfundingLayout from "./components/crowdfunding/CrowdfundingLayout";
 import Home from "./views/crowdfunding/Home";
 import Projects from "./views/crowdfunding/Projects";
+import ProjectOnboarding from "./views/crowdfunding/ProjectOnboarding";
 import Contribute from "./views/crowdfunding/Contribute";
 import Success from "./views/crowdfunding/Success";
 import Dashboard from "./views/crowdfunding/Dashboard";
+import ProjectEvidenceDashboard from "./views/crowdfunding/ProjectEvidenceDashboard";
 import Transparency from "./views/crowdfunding/Transparency";
 import Login from "./views/crowdfunding/Login";
 import Doar from "./views/crowdfunding/Doar";
@@ -83,9 +85,14 @@ function App() {
       <Route element={<CrowdfundingLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/projetos" element={<Projects />} />
+        <Route path="/projetos/cadastrar" element={<ProjectOnboarding />} />
         <Route path="/contribuir" element={<Contribute />} />
         <Route path="/sucesso" element={<Success />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/dashboard/projeto"
+          element={<ProjectEvidenceDashboard />}
+        />
         <Route path="/transparencia" element={<Transparency />} />
         <Route path="/contato" element={<Contact />} />
         <Route path="/login" element={<Login />} />
@@ -106,6 +113,10 @@ function App() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="projetos" element={<AdminProjects />} />
+        <Route
+          path="projetos/:id/evidencias"
+          element={<ProjectEvidenceDashboard />}
+        />
         <Route
           path="relatorios"
           element={

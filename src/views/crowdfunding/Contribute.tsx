@@ -12,6 +12,7 @@ import {
   prepareDonation,
   submitDonation,
   type ProjectDTO,
+  type ProjectFundingAsset,
   type ProjectMediaItemDTO,
 } from "../../util/crowdfundingApi";
 import {
@@ -30,6 +31,8 @@ import {
   prepareStellarUsdcMainnetPayment,
   submitStellarUsdcMainnetSignedXdr,
 } from "../../util/stellarUsdcMainnet";
+import { isCeloUsdgloEnabled } from "../../util/celoConfig";
+import { validateCeloWallet } from "../../util/usdgloCelo";
 import {
   buildXlmPaymentTransaction,
   getStellarXlmMainnetConfig,
@@ -46,7 +49,7 @@ import Web3CardImg from "../../images/projects-page/cards/web3-lideranca.jpeg";
 import FormacaoCardImg from "../../images/projects-page/cards/formacaoMulheres.jpeg";
 
 type DonorType = "PF" | "PJ";
-type CurrencyCode = DemoCurrencyCode;
+type CurrencyCode = DemoCurrencyCode | "USDGLO";
 
 type CurrencyOption = {
   code: CurrencyCode;
@@ -58,6 +61,14 @@ type CurrencyOption = {
 };
 
 const currencyOptions: CurrencyOption[] = [
+  {
+    code: "USDGLO",
+    name: "USDGLO",
+    description: "Stablecoin de impacto preparada para Celo Mainnet",
+    brlRate: 5.2,
+    xlmRate: 5.2 / 0.5432,
+    status: "active",
+  },
   {
     code: "USDC",
     name: "USDC",
@@ -159,7 +170,7 @@ export default function Contribute() {
     );
   }, [selectedCurrency]);
   const projectCurrency = project?.moedaPrincipal ?? "USDC";
-  const projectCurrencyLabel = formatDemoCurrencyLabel(projectCurrency);
+  const projectCurrencyLabel = formatProjectFundingAssetLabel(projectCurrency);
   const stellarUsdcConfig = useMemo(() => getStellarUsdcMainnetConfig(), []);
   const stellarXlmConfig = useMemo(() => getStellarXlmMainnetConfig(), []);
 
@@ -194,16 +205,24 @@ export default function Contribute() {
     isPaymentWalletOnMainnet;
   const isStellarXlmMainnetBlocked =
     isStellarXlmMainnetConfigured && !canUseStellarXlmMainnet;
+  const isUsdGloCeloSelected = selectedCurrency === "USDGLO";
+  const canPrepareUsdGloCelo =
+    isUsdGloCeloSelected &&
+    isCeloUsdgloEnabled() &&
+    validateCeloWallet(privyWallet.evmAddress) &&
+    validateCeloWallet(project?.walletAddress);
   const isRealMainnetPaymentConfigured =
     isStellarUsdcMainnetConfigured || isStellarXlmMainnetConfigured;
   const showStellarUsdcMainnetInfo = selectedCurrency === "USDC";
   const submitButtonLabel = isSubmitting
     ? "Processando..."
-    : isStellarXlmMainnetBlocked
-      ? "Conecte Freighter Mainnet"
-      : isStellarUsdcMainnetBlocked
-        ? "Conecte Freighter para USDC Stellar"
-        : "Confirmar doação";
+    : isUsdGloCeloSelected && !canPrepareUsdGloCelo
+      ? "Preparar wallet Celo"
+      : isStellarXlmMainnetBlocked
+        ? "Conecte Freighter Mainnet"
+        : isStellarUsdcMainnetBlocked
+          ? "Conecte Freighter para USDC Stellar"
+          : "Confirmar doação";
 
   const projectMetrics = project
     ? calculateProjectDonationMetrics(project)
@@ -245,6 +264,32 @@ export default function Contribute() {
     if (isStellarXlmMainnetBlocked) {
       alert(
         "Para concluir a doação em XLM Stellar Mainnet, conecte sua carteira Freighter em Main Net/Public.",
+      );
+      return;
+    }
+
+    if (isUsdGloCeloSelected) {
+      if (!isCeloUsdgloEnabled()) {
+        alert(
+          "USDGLO Celo Mainnet ainda nao esta habilitado neste ambiente. Configure NEXT_PUBLIC_ENABLE_CELO_USDGLO=true, chainId 42220, RPC Forno e contrato USDGLO oficial.",
+        );
+        return;
+      }
+
+      if (!validateCeloWallet(privyWallet.evmAddress)) {
+        alert("Conecte uma carteira EVM via Privy para doar em USDGLO.");
+        return;
+      }
+
+      if (!validateCeloWallet(project?.walletAddress)) {
+        alert(
+          "Este projeto ainda nao tem wallet EVM 0x aprovada para receber USDGLO.",
+        );
+        return;
+      }
+
+      alert(
+        "Fluxo USDGLO Celo preparado. A assinatura EVM real sera conectada na proxima etapa; nenhuma doacao foi registrada sem txHash.",
       );
       return;
     }
@@ -1072,6 +1117,43 @@ export default function Contribute() {
                 </div>
               </div>
             ) : null}
+
+            {project?.pixKey || project?.pixQrCodeUrl ? (
+              <div className="mt-5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                  PIX do projeto
+                </p>
+                {project.pixKey ? (
+                  <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="break-all text-sm font-medium text-[var(--color-text)]">
+                      {project.pixKey}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void navigator.clipboard.writeText(project.pixKey ?? "")
+                      }
+                      className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-2 text-xs font-semibold text-[var(--color-primary)] transition hover:border-[var(--color-primary)]"
+                    >
+                      <span className="material-symbols-outlined text-base">
+                        content_copy
+                      </span>
+                      Copiar
+                    </button>
+                  </div>
+                ) : null}
+                {project.pixQrCodeUrl ? (
+                  <img
+                    src={project.pixQrCodeUrl}
+                    alt={`QR Code PIX do projeto ${displayProjectName}`}
+                    className="mt-4 h-36 w-36 rounded-xl border border-[var(--color-border)] object-cover"
+                  />
+                ) : null}
+                <p className="mt-3 text-xs leading-5 text-[var(--color-text-muted)]">
+                  Doacao fiduciaria direta ao projeto, fora da blockchain.
+                </p>
+              </div>
+            ) : null}
           </div>
         </section>
       </main>
@@ -1171,7 +1253,7 @@ function shortAddress(value: string): string {
 
 function formatMetricCurrencyLabel(
   currency: string | undefined,
-  fallback: DemoCurrencyCode,
+  fallback: ProjectFundingAsset,
 ) {
   const normalized = currency?.trim().toUpperCase();
 
@@ -1179,8 +1261,17 @@ function formatMetricCurrencyLabel(
   if (normalized === "USDC" || normalized === "BRZ") {
     return formatDemoCurrencyLabel(normalized);
   }
+  if (normalized === "USDGLO") return "USDGLO";
+  if (normalized === "PIX") return "PIX";
 
-  return formatDemoCurrencyLabel(fallback);
+  return formatProjectFundingAssetLabel(fallback);
+}
+
+function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
+  if (asset === "USDGLO") return "USDGLO";
+  if (asset === "PIX") return "PIX";
+
+  return formatDemoCurrencyLabel(asset);
 }
 
 async function executeOnChainDonation(input: {

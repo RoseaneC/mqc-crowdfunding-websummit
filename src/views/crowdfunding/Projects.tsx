@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
-import type { ProjectDTO } from "../../util/crowdfundingApi";
+import type {
+  ProjectDTO,
+  ProjectFundingAsset,
+} from "../../util/crowdfundingApi";
 import {
   calculateProjectDonationMetrics,
   formatDonationAmount,
@@ -16,7 +19,6 @@ import {
   odsNameByNumber,
   projectThemeFilters,
   webSummitDemoCurrencyNote,
-  type DemoCurrencyCode,
   type OdsNumber,
   type ProjectTheme,
   type ProjectThemeFilter,
@@ -84,7 +86,8 @@ function isAllowedOds(value: number): value is OdsNumber {
   return allowedOdsNumbers.includes(value as OdsNumber);
 }
 
-function isDemoCurrencyCode(value: string): value is DemoCurrencyCode {
+function isProjectFundingAsset(value: string): value is ProjectFundingAsset {
+  if (value === "USDGLO" || value === "PIX") return true;
   return Object.prototype.hasOwnProperty.call(demoCurrencyLabels, value);
 }
 
@@ -154,13 +157,15 @@ function getProjectOdsNames(project: ProjectDTO): string[] {
   return getProjectOds(project).map((ods) => odsNameByNumber[ods]);
 }
 
-function getProjectPrimaryCurrency(project: ProjectDTO): DemoCurrencyCode {
+function getProjectPrimaryCurrency(project: ProjectDTO): ProjectFundingAsset {
   return project.moedaPrincipal ?? "USDC";
 }
 
-function getProjectAcceptedCurrencies(project: ProjectDTO): DemoCurrencyCode[] {
+function getProjectAcceptedCurrencies(
+  project: ProjectDTO,
+): ProjectFundingAsset[] {
   const acceptedCurrencies =
-    project.moedasAceitas?.filter(isDemoCurrencyCode) ?? [];
+    project.moedasAceitas?.filter(isProjectFundingAsset) ?? [];
 
   if (acceptedCurrencies.length > 0) {
     return acceptedCurrencies;
@@ -171,7 +176,7 @@ function getProjectAcceptedCurrencies(project: ProjectDTO): DemoCurrencyCode[] {
 
 function formatMetricCurrencyLabel(
   currency: string | undefined,
-  fallback: DemoCurrencyCode,
+  fallback: ProjectFundingAsset,
 ) {
   const normalized = currency?.trim().toUpperCase();
 
@@ -179,8 +184,17 @@ function formatMetricCurrencyLabel(
   if (normalized === "USDC" || normalized === "BRZ") {
     return formatDemoCurrencyLabel(normalized);
   }
+  if (normalized === "USDGLO") return "USDGLO";
+  if (normalized === "PIX") return "PIX";
 
-  return formatDemoCurrencyLabel(fallback);
+  return formatProjectFundingAssetLabel(fallback);
+}
+
+function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
+  if (asset === "USDGLO") return "USDGLO";
+  if (asset === "PIX") return "PIX";
+
+  return formatDemoCurrencyLabel(asset);
 }
 
 export default function Projects() {
@@ -268,8 +282,8 @@ export default function Projects() {
           theme,
           ...ods.map((item) => `ODS ${item}`),
           ...odsNames,
-          formatDemoCurrencyLabel(primaryCurrency),
-          ...acceptedCurrencies.map(formatDemoCurrencyLabel),
+          formatProjectFundingAssetLabel(primaryCurrency),
+          ...acceptedCurrencies.map(formatProjectFundingAssetLabel),
         ].join(" "),
       );
 
@@ -455,7 +469,7 @@ export default function Projects() {
                         metrics.currency,
                         primaryCurrency,
                       )
-                    : formatDemoCurrencyLabel(primaryCurrency);
+                    : formatProjectFundingAssetLabel(primaryCurrency);
                 const projectImage =
                   projectImages[String(project.id)] ?? HeroProjectsImg.src;
 
@@ -504,16 +518,51 @@ export default function Projects() {
                             <span className="font-semibold text-[var(--color-text)]">
                               Moeda principal:
                             </span>{" "}
-                            {formatDemoCurrencyLabel(primaryCurrency)}
+                            {formatProjectFundingAssetLabel(primaryCurrency)}
                           </p>
                           <p>
                             <span className="font-semibold text-[var(--color-text)]">
                               Moedas aceitas na demo:
                             </span>{" "}
                             {acceptedCurrencies
-                              .map(formatDemoCurrencyLabel)
+                              .map(formatProjectFundingAssetLabel)
                               .join(", ")}
                           </p>
+                          {project.pixKey || project.pixQrCodeUrl ? (
+                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                              <p className="font-semibold text-[var(--color-text)]">
+                                PIX direto do projeto
+                              </p>
+                              {project.pixKey ? (
+                                <div className="mt-2 flex items-center justify-between gap-3">
+                                  <span className="break-all">
+                                    {project.pixKey}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      void navigator.clipboard.writeText(
+                                        project.pixKey ?? "",
+                                      )
+                                    }
+                                    className="shrink-0 rounded-full border border-[var(--color-border)] px-3 py-1 text-[10px] font-semibold text-[var(--color-primary)]"
+                                  >
+                                    Copiar
+                                  </button>
+                                </div>
+                              ) : null}
+                              {project.pixQrCodeUrl ? (
+                                <img
+                                  src={project.pixQrCodeUrl}
+                                  alt={`QR Code PIX do projeto ${project.title}`}
+                                  className="mt-3 h-28 w-28 rounded-lg border border-[var(--color-border)] object-cover"
+                                />
+                              ) : null}
+                              <p className="mt-2 text-[11px] leading-4 text-[var(--color-text-soft)]">
+                                Doacao fiduciaria direta fora da blockchain.
+                              </p>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
 

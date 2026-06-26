@@ -4,8 +4,9 @@ import {
   type DonationMetricRecord,
 } from "../../../util/donationMetrics";
 
-export type StoredDonationAsset = "XLM" | "USDC" | "BRZ";
+export type StoredDonationAsset = "USDGLO" | "XLM" | "USDC" | "BRZ";
 export type StoredDonationNetwork =
+  | "celo-mainnet"
   | "stellar-mainnet"
   | "stellar-testnet"
   | "demo";
@@ -13,7 +14,7 @@ export type StoredDonationStatus = "confirmed" | "pending" | "failed";
 
 export type StoredDonation = {
   id: number;
-  projectId: number;
+  projectId: number | string;
   projectName: string;
   donorType: "PF" | "PJ";
   document?: string;
@@ -32,7 +33,7 @@ export type StoredDonation = {
 
 export type DonationInput = {
   id?: number;
-  projectId: number;
+  projectId: number | string;
   projectName?: string;
   donorType: "PF" | "PJ";
   document?: string;
@@ -86,7 +87,7 @@ export function addDonation(input: DonationInput) {
   const now = new Date().toISOString();
   const donation: StoredDonation = {
     id: input.id && input.id > 0 ? input.id : state.nextId,
-    projectId: Number(input.projectId),
+    projectId: input.projectId,
     projectName:
       input.projectName?.trim() ||
       project?.title ||
