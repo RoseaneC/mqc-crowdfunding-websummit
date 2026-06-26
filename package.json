@@ -14,7 +14,8 @@
     "preview": "next start",
     "lint": "eslint .",
     "format": "prettier . --write",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "prisma generate"
   },
   "workspaces": [
     "packages/*"
