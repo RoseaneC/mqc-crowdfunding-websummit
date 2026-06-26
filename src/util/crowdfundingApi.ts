@@ -5,25 +5,46 @@ import type {
   ProjectTheme,
 } from "./projectDemoMetadata";
 
+export type ImpactAxis = "AMBIENTAL" | "CULTURAL" | "SOCIAL";
+export type ProjectFundingAsset = DemoCurrencyCode | "USDGLO" | "PIX";
+
 export interface ProjectDTO {
-  id: number;
+  id: number | string;
+  name?: string;
+  slug?: string;
   ngoName: string;
   ngoWallet: string;
+  organization?: string;
+  responsibleName?: string;
+  responsibleEmail?: string;
+  walletAddress?: string | null;
+  pixKey?: string | null;
+  pixQrCodeUrl?: string | null;
+  goalAmount?: number;
+  goalAsset?: ProjectFundingAsset;
   title: string;
   description: string;
   taxCategory: string;
   targetXlm: number;
   raisedXlm: number;
-  raisedAsset?: DemoCurrencyCode;
+  raisedAsset?: ProjectFundingAsset;
   donationCount?: number;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
+  featured?: boolean;
+  axes?: ImpactAxis[];
   metadataUri: string;
   createdAt: string;
+  updatedAt?: string;
   eixoTematico?: ProjectTheme;
   ods?: OdsNumber[];
   odsNames?: string[];
-  moedaPrincipal?: DemoCurrencyCode;
-  moedasAceitas?: DemoCurrencyCode[];
+  moedaPrincipal?: ProjectFundingAsset;
+  moedasAceitas?: ProjectFundingAsset[];
+  payoutProvider?: string | null;
+  payoutStatus?: string | null;
+  bankAccountLast4?: string | null;
+  payoutReference?: string | null;
+  offRampEligible?: boolean;
 }
 
 export interface DonationPrepareResponse {
@@ -47,8 +68,8 @@ export interface DonationReceiptDTO {
   nftId: number | null;
   createdAt: string;
   confirmedAt: string | null;
-  asset?: "XLM" | "USDC" | "BRZ";
-  network?: "stellar-mainnet" | "stellar-testnet" | "demo";
+  asset?: "USDGLO" | "XLM" | "USDC" | "BRZ";
+  network?: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
   amount?: number | string;
   destinationAddress?: string | null;
 }
@@ -152,8 +173,8 @@ export interface AdminDonationSummaryDTO {
     projectId: number;
     projectName: string;
     amount: number;
-    asset: "XLM" | "USDC" | "BRZ";
-    network: "stellar-mainnet" | "stellar-testnet" | "demo";
+    asset: "USDGLO" | "XLM" | "USDC" | "BRZ";
+    network: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
     txHash: string | null;
     status: "confirmed" | "pending" | "failed";
     createdAt: string;
@@ -189,12 +210,20 @@ export interface AdminProjectsDTO {
 }
 
 export interface AdminProjectPendingDTO {
-  id: number;
+  id: number | string;
   ngoName: string;
+  organization?: string;
   title: string;
+  name?: string;
   taxCategory: string;
+  axes?: ImpactAxis[];
+  walletAddress?: string | null;
+  pixKey?: string | null;
+  pixQrCodeUrl?: string | null;
+  goalAsset?: ProjectFundingAsset;
   targetXlm: number;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
+  featured?: boolean;
   createdAt: string;
 }
 
@@ -378,15 +407,97 @@ export function registerUser(payload: {
 }
 
 export function createProject(payload: {
-  ngoName: string;
-  ngoWallet: string;
-  title: string;
+  ngoName?: string;
+  ngoWallet?: string;
+  title?: string;
+  name?: string;
   description: string;
-  taxCategory: string;
-  targetXlm: number;
+  organization?: string;
+  responsibleName?: string;
+  responsibleEmail?: string;
+  walletAddress?: string | null;
+  pixKey?: string | null;
+  pixQrCodeUrl?: string | null;
+  taxCategory?: string;
+  targetXlm?: number;
+  goalAmount?: number;
+  goalAsset?: ProjectFundingAsset;
+  axes?: ImpactAxis[];
   metadataUri: string;
 }) {
-  return apiRequest<{ id: number }>("/projects", {
+  return apiRequest<{ id: number | string; project?: ProjectDTO }>(
+    "/projects",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}
+
+export function approveAdminProject(projectId: number | string) {
+  return apiRequest<{ ok: boolean; project?: ProjectDTO }>(
+    `/admin/projects/${projectId}/approve`,
+    {
+      method: "POST",
+    },
+  );
+}
+
+export function rejectAdminProject(
+  projectId: number | string,
+  reason?: string,
+) {
+  return apiRequest<{ ok: boolean; project?: ProjectDTO }>(
+    `/admin/projects/${projectId}/reject`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    },
+  );
+}
+
+export function featureAdminProject(
+  projectId: number | string,
+  featured: boolean,
+) {
+  return apiRequest<{ ok: boolean; project?: ProjectDTO }>(
+    `/admin/projects/${projectId}/feature`,
+    {
+      method: "POST",
+      body: JSON.stringify({ featured }),
+    },
+  );
+}
+
+export function listProjectEvidences(projectId: number | string) {
+  return apiRequest<{
+    data: Array<{
+      id: string;
+      projectId: string;
+      title: string;
+      description: string;
+      type: string;
+      fileUrl: string;
+      fileName: string | null;
+      mimeType: string | null;
+      status: string;
+      createdAt: string;
+    }>;
+  }>(`/projects/${projectId}/evidences`);
+}
+
+export function createProjectEvidence(
+  projectId: number | string,
+  payload: {
+    title: string;
+    description: string;
+    type: string;
+    fileUrl: string;
+    fileName?: string | null;
+    mimeType?: string | null;
+  },
+) {
+  return apiRequest<{ ok: boolean }>("/projects/" + projectId + "/evidences", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -429,8 +540,8 @@ export function submitDonation(payload: {
   donorType?: "PF" | "PJ";
   document?: string;
   amount?: number | string;
-  asset?: "XLM" | "USDC" | "BRZ";
-  network?: "stellar-mainnet" | "stellar-testnet" | "demo";
+  asset?: "USDGLO" | "XLM" | "USDC" | "BRZ";
+  network?: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
   txHash: string;
   status?: "confirmed" | "pending" | "failed";
   walletAddress?: string;
@@ -508,9 +619,9 @@ export function getAdminProjectSummary() {
 }
 
 export function updateProjectStatus(
-  projectId: number,
+  projectId: number | string,
   payload: {
-    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
     reason?: string;
   },
 ) {
@@ -589,9 +700,9 @@ export function removeProjectAdmin(projectId: number, userId: number) {
 export function listMyAdminProjects() {
   return apiRequest<
     Array<{
-      id: number;
+      id: number | string;
       title: string;
-      status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+      status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
       targetXlm: number;
       raisedXlm: number;
       createdAt: string;

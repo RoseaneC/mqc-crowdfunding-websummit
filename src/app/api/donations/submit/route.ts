@@ -5,7 +5,10 @@ import {
   type StoredDonationNetwork,
   type StoredDonationStatus,
 } from "../../_lib/donationStore";
-import { demoProjects } from "../../_lib/demoProjects";
+import {
+  createConfirmedDonation,
+  getImpactProject,
+} from "../../_lib/projectStore";
 import { getApiBaseUrl, proxyToFastify } from "../../_lib/proxy";
 
 export const runtime = "nodejs";
@@ -13,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 type DonationSubmitPayload = {
   donationId?: number;
-  projectId?: number;
+  projectId?: number | string;
   projectName?: string;
   donorType?: "PF" | "PJ";
   document?: string;
@@ -37,7 +40,7 @@ export async function POST(request: Request) {
   const payload = (await request
     .json()
     .catch(() => null)) as DonationSubmitPayload | null;
-  const validation = validateDonationSubmitPayload(payload);
+  const validation = await validateDonationSubmitPayload(payload);
 
   if (!validation.ok) {
     return Response.json(
@@ -47,6 +50,22 @@ export async function POST(request: Request) {
       },
       { status: validation.status },
     );
+  }
+
+  if (
+    validation.value.status === "confirmed" &&
+    (validation.value.network === "celo-mainnet" ||
+      validation.value.network === "stellar-mainnet")
+  ) {
+    await createConfirmedDonation({
+      projectId: String(validation.value.projectId),
+      donorWallet: validation.value.walletAddress,
+      amount: validation.value.amount,
+      asset: validation.value.asset,
+      network: validation.value.network,
+      txHash: validation.value.txHash,
+      destinationAddress: validation.value.destinationAddress,
+    });
   }
 
   const donation = addDonation(validation.value);
@@ -69,12 +88,14 @@ export async function POST(request: Request) {
   );
 }
 
-function validateDonationSubmitPayload(payload: DonationSubmitPayload | null):
+async function validateDonationSubmitPayload(
+  payload: DonationSubmitPayload | null,
+): Promise<
   | {
       ok: true;
       value: {
         id?: number;
-        projectId: number;
+        projectId: number | string;
         projectName?: string;
         donorType: "PF" | "PJ";
         document?: string;
@@ -89,15 +110,16 @@ function validateDonationSubmitPayload(payload: DonationSubmitPayload | null):
         nftId?: number | null;
       };
     }
-  | { ok: false; error: string; status: number } {
+  | { ok: false; error: string; status: number }
+> {
   if (!payload) {
     return { ok: false, error: "Payload invalido.", status: 400 };
   }
 
-  const projectId = Number(payload.projectId);
-  const project = demoProjects.find((item) => Number(item.id) === projectId);
+  const projectId = String(payload.projectId ?? "").trim();
+  const project = projectId ? await getImpactProject(projectId) : null;
 
-  if (!Number.isInteger(projectId) || projectId <= 0 || !project) {
+  if (!projectId || !project) {
     return { ok: false, error: "Projeto invalido.", status: 400 };
   }
 
@@ -124,7 +146,10 @@ function validateDonationSubmitPayload(payload: DonationSubmitPayload | null):
     return { ok: false, error: "Status invalido.", status: 400 };
   }
 
-  if (network === "stellar-mainnet" && !isValidTxHash(txHash)) {
+  if (
+    (network === "stellar-mainnet" || network === "celo-mainnet") &&
+    !isValidTxHash(txHash)
+  ) {
     return {
       ok: false,
       error: "txHash valido e obrigatorio para doacao Mainnet.",
@@ -149,7 +174,7 @@ function validateDonationSubmitPayload(payload: DonationSubmitPayload | null):
     value: {
       id: payload.donationId,
       projectId,
-      projectName: payload.projectName || project.title,
+      projectName: payload.projectName || project.name,
       donorType: payload.donorType === "PJ" ? "PJ" : "PF",
       document: payload.document,
       amount,
@@ -166,12 +191,20 @@ function validateDonationSubmitPayload(payload: DonationSubmitPayload | null):
 }
 
 function parseAsset(value: string | undefined): StoredDonationAsset | null {
-  if (value === "XLM" || value === "USDC" || value === "BRZ") return value;
+  if (
+    value === "USDGLO" ||
+    value === "XLM" ||
+    value === "USDC" ||
+    value === "BRZ"
+  ) {
+    return value;
+  }
   return null;
 }
 
 function parseNetwork(value: string | undefined): StoredDonationNetwork | null {
   if (
+    value === "celo-mainnet" ||
     value === "stellar-mainnet" ||
     value === "stellar-testnet" ||
     value === "demo"
@@ -191,5 +224,5 @@ function parseStatus(value: string | undefined): StoredDonationStatus | null {
 }
 
 function isValidTxHash(hash: string | null | undefined) {
-  return /^[0-9a-fA-F]{64}$/.test((hash ?? "").trim());
+  return /^(0x)?[0-9a-fA-F]{64}$/.test((hash ?? "").trim());
 }

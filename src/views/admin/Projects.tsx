@@ -3,11 +3,13 @@ import { useAuth } from "../../providers/AuthProvider";
 import {
   createProject,
   createTaxTransfer,
+  featureAdminProject,
   getAdminProjectSummary,
   getTaxTransferBudget,
   listAdminPendingProjects,
   listMyAdminProjects,
   listTaxTransfers,
+  rejectAdminProject,
   type AdminProjectPendingDTO,
   type AdminTransferDTO,
   updateProjectStatus,
@@ -26,7 +28,7 @@ export default function Projects() {
   const isSuperadmin = hasRole("SUPERADMIN");
 
   const [projects, setProjects] = useState<AdminProjectPendingDTO[]>([]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | string | null>(null);
   const [summary, setSummary] = useState({
     pending: 0,
     approved: 0,
@@ -35,9 +37,9 @@ export default function Projects() {
   });
   const [myProjects, setMyProjects] = useState<
     Array<{
-      id: number;
+      id: number | string;
       title: string;
-      status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+      status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
       targetXlm: number;
       raisedXlm: number;
       createdAt: string;
@@ -59,6 +61,11 @@ export default function Projects() {
     taxCategory: "EDUCACAO",
     targetXlm: "",
     metadataUri: "ipfs://",
+    responsibleName: "",
+    responsibleEmail: "",
+    pixKey: "",
+    pixQrCodeUrl: "",
+    axes: ["SOCIAL"],
   });
   const explorerLabel = getExplorerLabel();
 
@@ -125,7 +132,17 @@ export default function Projects() {
 
   const handleStatusChange = async (status: "APPROVED" | "REJECTED") => {
     if (!selected) return;
-    await updateProjectStatus(selected.id, { status });
+    if (status === "REJECTED") {
+      await rejectAdminProject(selected.id, "Reprovado no painel admin.");
+    } else {
+      await updateProjectStatus(selected.id, { status });
+    }
+    await loadSuperadmin();
+  };
+
+  const handleToggleFeatured = async () => {
+    if (!selected) return;
+    await featureAdminProject(selected.id, !selected.featured);
     await loadSuperadmin();
   };
 
@@ -151,7 +168,17 @@ export default function Projects() {
         ngoName: projectForm.ngoName,
         ngoWallet: projectForm.ngoWallet,
         title: projectForm.title,
+        name: projectForm.title,
         description: projectForm.description,
+        organization: projectForm.ngoName,
+        responsibleName: projectForm.responsibleName || projectForm.ngoName,
+        responsibleEmail: projectForm.responsibleEmail,
+        walletAddress: projectForm.ngoWallet,
+        pixKey: projectForm.pixKey,
+        pixQrCodeUrl: projectForm.pixQrCodeUrl,
+        axes: projectForm.axes as Array<"AMBIENTAL" | "CULTURAL" | "SOCIAL">,
+        goalAmount: targetXlm,
+        goalAsset: "USDGLO",
         taxCategory: projectForm.taxCategory,
         targetXlm,
         metadataUri: projectForm.metadataUri,
@@ -276,6 +303,27 @@ export default function Projects() {
                     >
                       Aprovar Projeto
                     </button>
+                    <button
+                      type="button"
+                      className="rounded-lg border border-[#002B99] text-[#002B99] px-4 py-2 text-sm font-bold hover:bg-blue-50"
+                      onClick={() => void handleToggleFeatured()}
+                    >
+                      {selected.featured ? "Remover destaque" : "Destacar"}
+                    </button>
+                  </div>
+                  <div className="grid gap-3 rounded-xl bg-slate-50 p-4 text-xs text-slate-600">
+                    <p>
+                      <span className="font-bold">Eixos:</span>{" "}
+                      {selected.axes?.join(", ") || selected.taxCategory}
+                    </p>
+                    <p>
+                      <span className="font-bold">Wallet EVM:</span>{" "}
+                      {selected.walletAddress ?? "nao informada"}
+                    </p>
+                    <p>
+                      <span className="font-bold">PIX:</span>{" "}
+                      {selected.pixKey ?? "nao informado"}
+                    </p>
                   </div>
                 </>
               ) : (
@@ -312,7 +360,29 @@ export default function Projects() {
                     ngoWallet: e.target.value,
                   }))
                 }
-                placeholder="Wallet da ONG (G...)"
+                placeholder="Wallet EVM da organizacao (0x...)"
+                className="rounded-xl border border-slate-300 px-4 py-3"
+              />
+              <input
+                value={projectForm.responsibleName}
+                onChange={(e) =>
+                  setProjectForm((prev) => ({
+                    ...prev,
+                    responsibleName: e.target.value,
+                  }))
+                }
+                placeholder="Responsavel pelo projeto"
+                className="rounded-xl border border-slate-300 px-4 py-3"
+              />
+              <input
+                value={projectForm.responsibleEmail}
+                onChange={(e) =>
+                  setProjectForm((prev) => ({
+                    ...prev,
+                    responsibleEmail: e.target.value,
+                  }))
+                }
+                placeholder="E-mail do responsavel"
                 className="rounded-xl border border-slate-300 px-4 py-3"
               />
               <input
@@ -356,9 +426,57 @@ export default function Projects() {
                     targetXlm: e.target.value,
                   }))
                 }
-                placeholder="Meta (XLM)"
+                placeholder="Meta (USDGLO)"
                 className="rounded-xl border border-slate-300 px-4 py-3"
               />
+              <input
+                value={projectForm.pixKey}
+                onChange={(e) =>
+                  setProjectForm((prev) => ({
+                    ...prev,
+                    pixKey: e.target.value,
+                  }))
+                }
+                placeholder="Chave PIX"
+                className="rounded-xl border border-slate-300 px-4 py-3"
+              />
+              <input
+                value={projectForm.pixQrCodeUrl}
+                onChange={(e) =>
+                  setProjectForm((prev) => ({
+                    ...prev,
+                    pixQrCodeUrl: e.target.value,
+                  }))
+                }
+                placeholder="URL do QR Code PIX"
+                className="rounded-xl border border-slate-300 px-4 py-3"
+              />
+              <div className="md:col-span-2 grid gap-2 rounded-xl border border-slate-200 p-3">
+                <p className="text-xs font-bold uppercase text-slate-500">
+                  Eixos obrigatorios
+                </p>
+                {[
+                  ["AMBIENTAL", "Impacto Ambiental"],
+                  ["CULTURAL", "Impacto Cultural"],
+                  ["SOCIAL", "Impacto Social"],
+                ].map(([axis, label]) => (
+                  <label key={axis} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={projectForm.axes.includes(axis)}
+                      onChange={(event) =>
+                        setProjectForm((prev) => ({
+                          ...prev,
+                          axes: event.target.checked
+                            ? [...prev.axes, axis]
+                            : prev.axes.filter((item) => item !== axis),
+                        }))
+                      }
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
               <input
                 value={projectForm.metadataUri}
                 onChange={(e) =>
@@ -510,10 +628,14 @@ export default function Projects() {
   );
 }
 
-function badgeClass(status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE") {
+function badgeClass(
+  status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED",
+) {
   if (status === "APPROVED") return "bg-emerald-100 text-emerald-700";
   if (status === "REJECTED") return "bg-rose-100 text-rose-700";
-  if (status === "INACTIVE") return "bg-slate-200 text-slate-700";
+  if (status === "INACTIVE" || status === "SUSPENDED") {
+    return "bg-slate-200 text-slate-700";
+  }
   return "bg-orange-100 text-orange-700";
 }
 
@@ -530,9 +652,9 @@ function SummaryCard(props: { title: string; value: number }) {
 
 function MyProjectCard(props: {
   project: {
-    id: number;
+    id: number | string;
     title: string;
-    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE";
+    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
     targetXlm: number;
     raisedXlm: number;
     createdAt: string;
