@@ -184,6 +184,11 @@ export default function ProjectOnboarding() {
               onChange={(value) => updateField("pixQrCodeUrl", value)}
             />
 
+            <p className="md:col-span-2 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+              O PIX permite doações fiduciárias diretas para o projeto, fora da
+              blockchain.
+            </p>
+
             <div className="md:col-span-2 rounded-xl border border-slate-200 p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Eixos obrigatorios

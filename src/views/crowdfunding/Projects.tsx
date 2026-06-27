@@ -529,39 +529,9 @@ export default function Projects() {
                               .join(", ")}
                           </p>
                           {project.pixKey || project.pixQrCodeUrl ? (
-                            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-                              <p className="font-semibold text-[var(--color-text)]">
-                                PIX direto do projeto
-                              </p>
-                              {project.pixKey ? (
-                                <div className="mt-2 flex items-center justify-between gap-3">
-                                  <span className="break-all">
-                                    {project.pixKey}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      void navigator.clipboard.writeText(
-                                        project.pixKey ?? "",
-                                      )
-                                    }
-                                    className="shrink-0 rounded-full border border-[var(--color-border)] px-3 py-1 text-[10px] font-semibold text-[var(--color-primary)]"
-                                  >
-                                    Copiar
-                                  </button>
-                                </div>
-                              ) : null}
-                              {project.pixQrCodeUrl ? (
-                                <img
-                                  src={project.pixQrCodeUrl}
-                                  alt={`QR Code PIX do projeto ${project.title}`}
-                                  className="mt-3 h-28 w-28 rounded-lg border border-[var(--color-border)] object-cover"
-                                />
-                              ) : null}
-                              <p className="mt-2 text-[11px] leading-4 text-[var(--color-text-soft)]">
-                                Doacao fiduciaria direta fora da blockchain.
-                              </p>
-                            </div>
+                            <span className="inline-flex w-fit rounded-full border border-[var(--color-accent)]/40 bg-[var(--color-accent-light)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-primary)]">
+                              PIX disponível
+                            </span>
                           ) : null}
                         </div>
                       </div>

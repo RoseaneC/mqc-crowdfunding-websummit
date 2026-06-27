@@ -322,7 +322,17 @@ export default function Projects() {
                     </p>
                     <p>
                       <span className="font-bold">PIX:</span>{" "}
-                      {selected.pixKey ?? "nao informado"}
+                      {selected.pixKey || selected.pixQrCodeUrl
+                        ? "configurado"
+                        : "nao configurado"}
+                    </p>
+                    <p>
+                      <span className="font-bold">Chave PIX:</span>{" "}
+                      {selected.pixKey ?? "nao informada"}
+                    </p>
+                    <p>
+                      <span className="font-bold">QR Code PIX:</span>{" "}
+                      {selected.pixQrCodeUrl ?? "nao informado"}
                     </p>
                   </div>
                 </>
