@@ -173,6 +173,9 @@ export default function ProjectOnboarding() {
               value={form.walletAddress}
               onChange={(value) => updateField("walletAddress", value)}
             />
+            <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+              Endereço EVM/Celo que receberá doações em USDGLO.
+            </p>
             <TextInput
               label="Chave PIX"
               value={form.pixKey}

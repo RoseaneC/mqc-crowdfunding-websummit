@@ -13,12 +13,8 @@ import {
 } from "../../util/donationMetrics";
 import {
   allowedOdsNumbers,
-  defaultAcceptedDemoCurrencies,
-  demoCurrencyLabels,
-  formatDemoCurrencyLabel,
   odsNameByNumber,
   projectThemeFilters,
-  webSummitDemoCurrencyNote,
   type OdsNumber,
   type ProjectTheme,
   type ProjectThemeFilter,
@@ -27,7 +23,6 @@ import HeroProjectsImg from "../../images/projects-page/foto_ideiathon1.jpg";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
 import EloMeCardImg from "../../images/projects-page/cards/elo-me.png";
-import StellarbridgeCardImg from "../../images/projects-page/cards/stellarbridge.png";
 import KarnCardImg from "../../images/projects-page/cards/karn.png";
 import VizinhancaCardImg from "../../images/projects-page/cards/vizinhanca-cuidadora.png";
 import Web3CardImg from "../../images/projects-page/cards/web3-lideranca.jpeg";
@@ -54,7 +49,6 @@ const fallbackOdsByTheme: Record<ProjectTheme, OdsNumber[]> = {
 const projectImages: Record<string, string> = {
   "1": MqcCardImg.src,
   "2": EloMeCardImg.src,
-  "3": StellarbridgeCardImg.src,
   "4": KarnCardImg.src,
   "5": VizinhancaCardImg.src,
   "6": Web3CardImg.src,
@@ -84,11 +78,6 @@ function formatResultsCount(count: number) {
 
 function isAllowedOds(value: number): value is OdsNumber {
   return allowedOdsNumbers.includes(value as OdsNumber);
-}
-
-function isProjectFundingAsset(value: string): value is ProjectFundingAsset {
-  if (value === "USDGLO" || value === "PIX") return true;
-  return Object.prototype.hasOwnProperty.call(demoCurrencyLabels, value);
 }
 
 function inferProjectTheme(project: ProjectDTO): ProjectTheme {
@@ -158,20 +147,27 @@ function getProjectOdsNames(project: ProjectDTO): string[] {
 }
 
 function getProjectPrimaryCurrency(project: ProjectDTO): ProjectFundingAsset {
-  return project.moedaPrincipal ?? "USDC";
+  if (project.moedaPrincipal === "PIX" || project.moedaPrincipal === "BRZ") {
+    return project.moedaPrincipal;
+  }
+
+  return "USDGLO";
 }
 
 function getProjectAcceptedCurrencies(
   project: ProjectDTO,
 ): ProjectFundingAsset[] {
   const acceptedCurrencies =
-    project.moedasAceitas?.filter(isProjectFundingAsset) ?? [];
+    project.moedasAceitas?.filter((asset) => asset === "USDGLO") ?? [];
 
-  if (acceptedCurrencies.length > 0) {
-    return acceptedCurrencies;
+  const options: ProjectFundingAsset[] =
+    acceptedCurrencies.length > 0 ? acceptedCurrencies : ["USDGLO"];
+
+  if (project.pixKey || project.pixQrCodeUrl) {
+    options.push("PIX");
   }
 
-  return defaultAcceptedDemoCurrencies;
+  return [...new Set(options)];
 }
 
 function formatMetricCurrencyLabel(
@@ -180,12 +176,9 @@ function formatMetricCurrencyLabel(
 ) {
   const normalized = currency?.trim().toUpperCase();
 
-  if (normalized === "XLM") return "XLM";
-  if (normalized === "USDC" || normalized === "BRZ") {
-    return formatDemoCurrencyLabel(normalized);
-  }
   if (normalized === "USDGLO") return "USDGLO";
   if (normalized === "PIX") return "PIX";
+  if (normalized === "BRZ") return "BRZ";
 
   return formatProjectFundingAssetLabel(fallback);
 }
@@ -193,8 +186,9 @@ function formatMetricCurrencyLabel(
 function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
   if (asset === "USDGLO") return "USDGLO";
   if (asset === "PIX") return "PIX";
+  if (asset === "BRZ") return "BRZ";
 
-  return formatDemoCurrencyLabel(asset);
+  return "USDGLO";
 }
 
 export default function Projects() {
@@ -398,7 +392,8 @@ export default function Projects() {
             </div>
 
             <p className="rounded-2xl bg-[var(--color-surface)] px-4 py-3 text-xs leading-6 text-[var(--color-text-muted)]">
-              {webSummitDemoCurrencyNote}
+              Projetos recebem USDGLO na Celo Mainnet e podem oferecer PIX como
+              doação fiduciária direta fora da blockchain.
             </p>
           </div>
         </section>
@@ -522,7 +517,7 @@ export default function Projects() {
                           </p>
                           <p>
                             <span className="font-semibold text-[var(--color-text)]">
-                              Moedas aceitas na demo:
+                              Opções de contribuição:
                             </span>{" "}
                             {acceptedCurrencies
                               .map(formatProjectFundingAssetLabel)
