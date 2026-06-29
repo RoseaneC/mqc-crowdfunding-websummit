@@ -137,18 +137,16 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-6xl text-center">
           <h1 className="mx-auto mt-8 max-w-5xl font-[var(--font-body)] text-5xl font-light leading-tight tracking-tight text-[var(--color-white)] sm:text-6xl lg:text-7xl">
-            Conecte recursos a projetos que transformam territórios{" "}
-            <span className="whitespace-nowrap">
-              em{" "}
-              <span className="font-medium text-[var(--color-accent)]">
-                impacto
-              </span>
+            Conecte recursos a projetos que transformam territorios em{" "}
+            <span className="font-medium text-[var(--color-accent)]">
+              impacto
             </span>
           </h1>
 
           <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-white/70">
-            Ponteia é uma plataforma de apoio a projetos de impacto com Celo,
-            USDGLO, PIX e prestação de contas transparente.
+            A Ponteia apoia projetos sociais, culturais e ambientais com
+            contribuicoes via PIX e moedas digitais estaveis, usando tecnologia
+            para ampliar transparencia e prestacao de contas.
           </p>
 
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
@@ -156,8 +154,14 @@ export default function Home() {
               to="/projetos"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-7 py-3 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent-dark)]"
             >
-              Explorar projetos
+              Conhecer projetos
               <ArrowRight size={16} strokeWidth={2} />
+            </Link>
+            <Link
+              to="/projetos/cadastrar"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-7 py-3 text-sm font-semibold text-white transition hover:border-white/50 hover:bg-white/15"
+            >
+              Cadastrar projeto
             </Link>
           </div>
 
@@ -198,14 +202,15 @@ export default function Home() {
 
                   <p className="mt-8 max-w-2xl text-lg leading-9 text-white/80 sm:text-xl">
                     A <span className="font-semibold text-white">Ponteia</span>{" "}
-                    nasceu para aproximar apoiadores, organizações e projetos
-                    sociais, culturais e ambientais com governança simples.
+                    nasceu para aproximar apoiadores, organizacoes e projetos
+                    sociais, culturais e ambientais com clareza, cuidado e
+                    governanca simples.
                   </p>
 
                   <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--color-white)] sm:text-lg">
-                    A plataforma reúne iniciativas de impacto, opções de doação
-                    em USDGLO na Celo Mainnet, PIX direto para a organização e
-                    evidências para prestação de contas.
+                    A plataforma organiza iniciativas de impacto, apoio via PIX,
+                    contribuicoes digitais estaveis e evidencias para prestacao
+                    de contas. A tecnologia fica a servico da confianca.
                   </p>
                 </div>
               </div>
@@ -241,8 +246,8 @@ export default function Home() {
               </h2>
 
               <p className="mt-5 max-w-xl text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">
-                Um primeiro olhar para projetos liderados por mulheres que unem
-                tecnologia, território e impacto social.
+                Um primeiro olhar para iniciativas que unem territorio, cultura,
+                sustentabilidade e impacto social com prestacao de contas.
               </p>
             </div>
 
@@ -405,16 +410,17 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto mb-16 max-w-3xl text-center">
             <h2 className="mt-4 font-[var(--font-heading)] text-3xl font-bold leading-tight tracking-tight text-[var(--color-text)] sm:text-4xl lg:text-5xl">
-              Como você pode apoiar
+              Como funciona
             </h2>
 
             <p className="mt-3 font-[var(--font-body)] text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">
-              Conecte-se a iniciativas lideradas por mulheres.
+              Apoiar um projeto deve ser simples, transparente e facil de
+              acompanhar.
             </p>
           </div>
 
           <motion.div
-            className="grid gap-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4 lg:gap-10"
+            className="grid gap-10 md:grid-cols-3 md:gap-8 lg:gap-10"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.25 }}
@@ -430,27 +436,21 @@ export default function Home() {
             {[
               {
                 number: "01",
-                title: "Explore projetos",
+                title: "Escolha um projeto",
                 description:
-                  "Conheça iniciativas lideradas por mulheres que estão criando soluções com impacto social e inovação.",
+                  "Conheca iniciativas sociais, culturais e ambientais prontas para receber apoio.",
               },
               {
                 number: "02",
-                title: "Escolha como contribuir",
+                title: "Contribua como preferir",
                 description:
-                  "Apoie projetos, apadrinhe uma aluna ou fortaleça a rede com doações e parcerias.",
+                  "Apoie via PIX ou moedas digitais estaveis na rede Celo.",
               },
               {
                 number: "03",
-                title: "Confirme sua contribuição",
-                description:
-                  "Conecte sua carteira digital, informe seus dados e finalize o apoio com segurança.",
-              },
-              {
-                number: "04",
                 title: "Acompanhe o impacto",
                 description:
-                  "Receba seu comprovante digital e acompanhe como sua doação fortalece cada projeto.",
+                  "Veja atualizacoes, registros e prestacao de contas do projeto apoiado.",
               },
             ].map((step) => (
               <motion.div
@@ -490,6 +490,56 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="bg-[var(--color-surface)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <h2 className="font-[var(--font-heading)] text-3xl font-bold leading-tight tracking-tight text-[var(--color-text)] sm:text-4xl lg:text-5xl">
+              Por que confiar na Ponteia
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">
+              A plataforma combina analise de projetos, registro das
+              contribuicoes digitais e espaco para prestacao de contas.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "Projetos passam por analise",
+                text: "Iniciativas cadastradas podem ser revisadas antes de aparecerem para apoio publico.",
+              },
+              {
+                title: "Contribuicoes digitais tem registro publico",
+                text: "Quando o apoio acontece por moeda digital, a transacao fica verificavel na rede Celo.",
+              },
+              {
+                title: "Projetos publicam evidencias",
+                text: "Atualizacoes, registros e comprovantes ajudam apoiadores a acompanhar o uso dos recursos.",
+              },
+              {
+                title: "PIX vai direto para a organizacao",
+                text: "A chave PIX pertence ao projeto ou organizacao responsavel, sem criar pagamento blockchain.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-white)] p-6 shadow-[0_14px_40px_rgba(15,0,161,0.04)]"
+              >
+                <span className="material-symbols-outlined text-3xl text-[var(--color-primary)]">
+                  verified
+                </span>
+                <h3 className="mt-5 font-[var(--font-heading)] text-lg font-semibold leading-snug text-[var(--color-text)]">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-muted)]">
+                  {item.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section id="faq" className="py-20 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -502,12 +552,12 @@ export default function Home() {
               {
                 question: "O que é a plataforma?",
                 answer:
-                  "Ponteia é uma plataforma de apoio a projetos de impacto social, cultural e ambiental, conectando recursos, doações em USDGLO, PIX e prestação de contas.",
+                  "Ponteia conecta recursos a projetos de impacto social, cultural e ambiental com transparencia, opcoes simples de apoio e prestacao de contas.",
               },
               {
                 question: "Preciso entender blockchain para doar?",
                 answer:
-                  "Não. A interface foi desenhada sem jargões complexos. Você pode apoiar via PIX ou conectar uma carteira EVM compatível para contribuir em USDGLO na Celo.",
+                  "Nao. Voce pode apoiar via PIX pelo app do seu banco. Quando escolher uma moeda digital estavel, a Celo funciona como infraestrutura de registro da contribuicao.",
               },
               {
                 question: "Minha doação pode ser deduzida?",
@@ -542,12 +592,12 @@ export default function Home() {
               {
                 question: "O que é Celo?",
                 answer:
-                  "Celo é uma rede EVM voltada a aplicações financeiras acessíveis, usada pela plataforma para preparar contribuições em USDGLO.",
+                  "A Celo funciona como infraestrutura de registro das contribuicoes digitais. Voce nao precisa entender a tecnologia para apoiar um projeto.",
               },
               {
-                question: "Por que usar blockchain?",
+                question: "O que sao USDGLO e USDC?",
                 answer:
-                  "A blockchain ajuda a registrar apoios de forma transparente, automatizando a divisão de valores e criando registros seguros.",
+                  "USDGLO e USDC sao moedas digitais estaveis. Na Ponteia, USDGLO ja permite contribuicoes rastreaveis na Celo; USDC esta preparado e sera ativado quando o contrato oficial estiver configurado.",
               },
             ].map((faq, index) => {
               const isOpen = openFaq === index;
@@ -598,13 +648,12 @@ export default function Home() {
       <section className="bg-[var(--color-primary)] px-4 py-20 text-center text-[var(--color-white)] sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl">
           <h2 className="font-[var(--font-heading)] text-3xl font-bold leading-tight sm:text-4xl">
-            Pronta para apoiar projetos que transformam futuros?
+            Pronta para apoiar projetos que transformam territorios?
           </h2>
 
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-white/72">
-            Conheça iniciativas em andamento e ajude a construir uma rede mais
-            <br className="hidden sm:block" />
-            forte, diversa e tecnológica.
+            Conheca iniciativas em andamento e acompanhe como cada apoio pode
+            gerar impacto concreto.
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">

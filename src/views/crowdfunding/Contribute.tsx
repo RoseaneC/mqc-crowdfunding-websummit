@@ -43,26 +43,29 @@ const currencyOptions: CurrencyOption[] = [
   {
     code: "USDGLO",
     name: "USDGLO",
-    description: "Pagamentos em USDGLO usam carteira EVM na rede Celo.",
+    description:
+      "Contribuicao digital estavel, registrada na Celo para apoiar o projeto com transparencia.",
     brlRate: 5.2,
   },
   {
     code: "USDC",
     name: "USDC",
-    description: "Pagamentos em USDC usam carteira EVM na rede Celo.",
+    description:
+      "Opcao digital estavel preparada para Celo; sera ativada quando o contrato oficial estiver configurado.",
     brlRate: 5.2,
   },
   {
     code: "PIX",
     name: "PIX",
     description:
-      "Doações via PIX são feitas diretamente para a organização responsável pelo projeto, fora da blockchain.",
+      "Transferencia instantanea pelo seu banco, direto para a organizacao responsavel e fora da blockchain.",
     brlRate: 1,
   },
   {
     code: "BRZ",
     name: "BRZ",
-    description: "Opção informativa para futura integração fiduciária.",
+    description:
+      "Opcao informativa para futuras integracoes fiduciarias da plataforma.",
     brlRate: 1,
   },
 ];
@@ -231,7 +234,7 @@ export default function Contribute() {
 
     if (isUsdcCeloSelected) {
       setDonationFeedback(
-        "USDC via Celo/EVM preparado. Configure NEXT_PUBLIC_USDC_CELO_ADDRESS para ativar doações reais.",
+        "USDC esta preparado para contribuicoes digitais na Celo. Configure NEXT_PUBLIC_USDC_CELO_ADDRESS para ativar transacoes reais.",
       );
       return;
     }
@@ -349,7 +352,7 @@ export default function Contribute() {
           </button>
 
           <span className="hidden rounded-full border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-2 text-xs font-medium text-[var(--color-text-muted)] sm:inline-flex">
-            Celo + USDGLO + PIX
+            Apoio via PIX e moedas digitais estaveis
           </span>
         </div>
 
@@ -381,7 +384,7 @@ export default function Contribute() {
 
                   <p className="mt-5 max-w-2xl text-base leading-8 text-white/78">
                     {project?.description ??
-                      "Apoie projetos de impacto liderados por mulheres com pagamentos em USDGLO na Celo ou PIX direto para a organização."}
+                      "Apoie projetos de impacto com PIX direto para a organizacao ou contribuicoes digitais estaveis registradas na Celo."}
                   </p>
                 </div>
               </div>
@@ -553,8 +556,8 @@ export default function Contribute() {
                         BRZ informativo
                       </p>
                       <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
-                        BRZ está reservado para futura integração fiduciária.
-                        Por enquanto, use USDGLO ou PIX para apoiar o projeto.
+                        BRZ esta reservado para futuras integracoes fiduciarias.
+                        Por enquanto, use PIX, USDGLO ou USDC quando disponivel.
                       </p>
                     </div>
                   ) : null}
@@ -587,8 +590,9 @@ export default function Contribute() {
                   ) : null}
 
                   <p className="text-center text-[11px] leading-5 text-[var(--color-text-soft)]">
-                    USDGLO e USDC usam Celo Mainnet/EVM. PIX é uma doação
-                    fiduciária direta fora da blockchain.
+                    PIX acontece pelo app do seu banco. USDGLO e USDC sao
+                    contribuicoes digitais na Celo; os detalhes tecnicos ficam
+                    como registro de transparencia.
                   </p>
                 </div>
               </div>
@@ -682,15 +686,15 @@ function getCryptoInlineMessage(input: {
   enabled: boolean;
 }) {
   if (!validateCeloWallet(input.destinationWallet)) {
-    return "Este projeto ainda não possui carteira EVM configurada para receber doações em cripto.";
+    return "Este projeto ainda nao possui carteira EVM configurada para receber contribuicoes em moedas digitais.";
   }
 
   if (!input.enabled) {
     if (input.asset === "USDC") {
-      return "USDC via Celo/EVM preparado. Contrato do token será ativado por variável de ambiente.";
+      return "USDC esta preparado para contribuicoes digitais na Celo e sera ativado quando o contrato oficial estiver configurado.";
     }
 
-    return `Fluxo ${input.asset}/Celo preparado. Conecte carteira EVM na rede Celo para continuar.`;
+    return `${input.asset} esta preparado para contribuicoes digitais na Celo. Conecte uma carteira compativel para continuar.`;
   }
 
   return null;
@@ -720,7 +724,8 @@ function CeloTokenPanel(props: {
             Carteira EVM via Privy
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
-            Pagamentos em {props.asset} usam carteira EVM na rede Celo.
+            Conecte sua carteira para autorizar a contribuicao digital. A Celo
+            registra a transacao para ampliar transparencia.
           </p>
         </div>
 
@@ -752,7 +757,8 @@ function CeloTokenPanel(props: {
           {props.asset} Celo Mainnet
         </p>
         <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
-          Pagamentos em {props.asset} usam carteira EVM na rede Celo.
+          {props.asset} e uma moeda digital estavel usada para apoiar projetos
+          com registro publico da contribuicao.
         </p>
         <p className="mt-2 text-xs font-semibold text-[var(--color-text)]">
           Destino:{" "}
@@ -785,11 +791,12 @@ function PixPanel(props: {
       ].join(" ")}
     >
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
-        Doação via PIX
+        Doacao via PIX
       </p>
       <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
-        Doações via PIX são feitas diretamente para a organização responsável
-        pelo projeto, fora da blockchain.
+        Transferencia instantanea pelo seu banco. Copie a chave PIX e pague pelo
+        app do banco de sempre. O valor vai direto para a organizacao
+        responsavel, fora da blockchain.
       </p>
 
       {props.project?.pixKey || props.project?.pixQrCodeUrl ? (

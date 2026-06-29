@@ -404,8 +404,8 @@ export default function Projects() {
             </div>
 
             <p className="rounded-2xl bg-[var(--color-surface)] px-4 py-3 text-xs leading-6 text-[var(--color-text-muted)]">
-              Projetos recebem USDGLO na Celo Mainnet e podem oferecer PIX como
-              doação fiduciária direta fora da blockchain.
+              Apoie por PIX direto para a organizacao ou por moedas digitais
+              estaveis com registro transparente na Celo.
             </p>
           </div>
         </section>
@@ -529,7 +529,7 @@ export default function Projects() {
                           </p>
                           <p>
                             <span className="font-semibold text-[var(--color-text)]">
-                              Opções de contribuição:
+                              Opções de apoio:
                             </span>{" "}
                             {acceptedCurrencies
                               .map(formatProjectFundingAssetLabel)

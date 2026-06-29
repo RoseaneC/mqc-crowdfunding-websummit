@@ -119,11 +119,11 @@ export default function ProjectOnboarding() {
               Cadastro de projetos sociais
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Submeta um projeto para apoio em USDGLO Celo e PIX
+              Cadastre um projeto para receber apoio pela Ponteia
             </h1>
             <p className="mt-4 text-sm leading-7 text-[var(--color-text-muted)]">
-              O projeto nasce como PENDING e precisa ser aprovado no admin antes
-              de aparecer como campanha ativa.
+              A equipe revisa as informacoes antes de publicar a campanha para
+              apoiadores.
             </p>
           </div>
 
@@ -174,7 +174,7 @@ export default function ProjectOnboarding() {
               onChange={(value) => updateField("walletAddress", value)}
             />
             <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-              Endereço EVM/Celo que receberá doações em USDGLO.
+              Endereco EVM/Celo que recebera contribuicoes digitais em USDGLO.
             </p>
             <TextInput
               label="Chave PIX"
@@ -188,8 +188,8 @@ export default function ProjectOnboarding() {
             />
 
             <p className="md:col-span-2 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-              O PIX permite doações fiduciárias diretas para o projeto, fora da
-              blockchain.
+              O PIX permite transferencias diretas para o projeto pelo app do
+              banco, fora da blockchain.
             </p>
 
             <div className="md:col-span-2 rounded-xl border border-slate-200 p-4">
