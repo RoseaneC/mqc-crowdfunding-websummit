@@ -27,13 +27,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (getApiBaseUrl()) {
-    return proxyToFastify(request, "POST", "/projects");
-  }
-
-  const payload = (await request
-    .json()
-    .catch(() => null)) as ProjectCreatePayload | null;
+  const payload: unknown = await request.json().catch(() => null);
   const validation = validateCreateProjectPayload(payload);
 
   if (!validation.ok) {
@@ -43,6 +37,18 @@ export async function POST(request: Request) {
         error: validation.error,
       },
       { status: 400 },
+    );
+  }
+
+  if (getApiBaseUrl()) {
+    return proxyToFastify(
+      new Request(request.url, {
+        method: "POST",
+        headers: request.headers,
+        body: JSON.stringify(payload),
+      }),
+      "POST",
+      "/projects",
     );
   }
 
@@ -59,26 +65,7 @@ export async function POST(request: Request) {
   );
 }
 
-type ProjectCreatePayload = {
-  name?: string;
-  title?: string;
-  description?: string;
-  organization?: string;
-  ngoName?: string;
-  responsibleName?: string;
-  responsibleEmail?: string;
-  email?: string;
-  walletAddress?: string | null;
-  ngoWallet?: string | null;
-  pixKey?: string | null;
-  pixQrCodeUrl?: string | null;
-  goalAmount?: number | string;
-  targetXlm?: number | string;
-  goalAsset?: string;
-  axes?: string[];
-};
-
-function validateCreateProjectPayload(payload: ProjectCreatePayload | null):
+function validateCreateProjectPayload(payload: unknown):
   | {
       ok: true;
       value: {
@@ -96,31 +83,67 @@ function validateCreateProjectPayload(payload: ProjectCreatePayload | null):
       };
     }
   | { ok: false; error: string } {
-  if (!payload) {
+  if (!isRecord(payload)) {
     return { ok: false, error: "Payload invalido." };
   }
 
-  const name = (payload.name ?? payload.title ?? "").trim();
-  const description = payload.description?.trim() ?? "";
-  const organization = (payload.organization ?? payload.ngoName ?? "").trim();
-  const responsibleName = payload.responsibleName?.trim() ?? organization;
+  const name = (
+    getStringField(payload, "name") || getStringField(payload, "title")
+  ).trim();
+  const description = getStringField(payload, "description").trim();
+  const organization = (
+    getStringField(payload, "organization") ||
+    getStringField(payload, "ngoName")
+  ).trim();
+  const responsibleName =
+    getStringField(payload, "responsibleName").trim() || organization;
   const responsibleEmail = (
-    payload.responsibleEmail ??
-    payload.email ??
-    ""
+    getStringField(payload, "responsibleEmail") ||
+    getStringField(payload, "email")
   ).trim();
   const walletAddress = (
-    payload.walletAddress ??
-    payload.ngoWallet ??
-    ""
+    getStringField(payload, "walletAddress") ||
+    getStringField(payload, "ngoWallet")
   ).trim();
-  const pixKey = payload.pixKey?.trim() ?? "";
-  const pixQrCodeUrl = payload.pixQrCodeUrl?.trim() ?? "";
-  const goalAmount = Number(payload.goalAmount ?? payload.targetXlm);
-  const axes = (payload.axes ?? []).filter(isImpactAxis);
+  const pixKey = getStringField(payload, "pixKey").trim();
+  const pixQrCodeUrl = getStringField(payload, "pixQrCodeUrl").trim();
+  const goalAmount = Number(
+    getField(payload, "goalAmount") ?? getField(payload, "targetXlm"),
+  );
 
   if (!name || !description || !organization || !responsibleName) {
     return { ok: false, error: "Preencha os dados principais do projeto." };
+  }
+
+  if (!Array.isArray(payload.axes)) {
+    return {
+      ok: false,
+      error:
+        "Selecione pelo menos um eixo de impacto para cadastrar o projeto.",
+    };
+  }
+
+  if (payload.axes.length === 0) {
+    return {
+      ok: false,
+      error:
+        "Selecione pelo menos um eixo de impacto para cadastrar o projeto.",
+    };
+  }
+
+  const axes: ImpactProjectAxis[] = [];
+
+  for (const axis of payload.axes) {
+    if (typeof axis !== "string" || !isImpactAxis(axis)) {
+      return {
+        ok: false,
+        error: "Eixo de impacto invalido. Use AMBIENTAL, CULTURAL ou SOCIAL.",
+      };
+    }
+
+    if (!axes.includes(axis)) {
+      axes.push(axis);
+    }
   }
 
   if (
@@ -128,10 +151,6 @@ function validateCreateProjectPayload(payload: ProjectCreatePayload | null):
     !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(responsibleEmail)
   ) {
     return { ok: false, error: "Informe um e-mail responsavel valido." };
-  }
-
-  if (axes.length === 0) {
-    return { ok: false, error: "Selecione pelo menos um eixo de impacto." };
   }
 
   if (!Number.isFinite(goalAmount) || goalAmount <= 0) {
@@ -172,4 +191,18 @@ function validateCreateProjectPayload(payload: ProjectCreatePayload | null):
 
 function isImpactAxis(value: string): value is ImpactProjectAxis {
   return value === "AMBIENTAL" || value === "CULTURAL" || value === "SOCIAL";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getField(record: Record<string, unknown>, field: string) {
+  return record[field];
+}
+
+function getStringField(record: Record<string, unknown>, field: string) {
+  const value = record[field];
+
+  return typeof value === "string" ? value : "";
 }

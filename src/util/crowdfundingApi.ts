@@ -201,7 +201,10 @@ export interface AdminDonationResetResponseDTO {
 }
 
 export interface AdminProjectsDTO {
-  summary: {
+  data: AdminProjectPendingDTO[];
+  source?: string;
+  warning?: string;
+  summary?: {
     pending: number;
     approved: number;
     rejected: number;
@@ -222,6 +225,8 @@ export interface AdminProjectPendingDTO {
   pixQrCodeUrl?: string | null;
   goalAsset?: ProjectFundingAsset;
   targetXlm: number;
+  raisedXlm?: number;
+  donationCount?: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
   featured?: boolean;
   createdAt: string;

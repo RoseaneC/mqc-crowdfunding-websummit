@@ -19,7 +19,7 @@ export default function ProjectOnboarding() {
     pixKey: "",
     pixQrCodeUrl: "",
     goalAmount: "",
-    axes: ["SOCIAL"] as ImpactAxis[],
+    axes: [] as ImpactAxis[],
   });
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +41,9 @@ export default function ProjectOnboarding() {
     setFeedback(null);
 
     if (form.axes.length === 0) {
-      setFeedback("Selecione pelo menos um eixo de impacto.");
+      setFeedback(
+        "Selecione pelo menos um eixo de impacto para cadastrar o projeto.",
+      );
       return;
     }
 
@@ -89,7 +91,7 @@ export default function ProjectOnboarding() {
         pixKey: "",
         pixQrCodeUrl: "",
         goalAmount: "",
-        axes: ["SOCIAL"],
+        axes: [],
       });
     } catch (error) {
       setFeedback(
@@ -196,11 +198,19 @@ export default function ProjectOnboarding() {
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Eixos obrigatorios
               </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                Selecione pelo menos um eixo para orientar a analise e a
+                prestacao de contas do projeto.
+              </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {axisOptions.map((axis) => (
                   <label
                     key={axis.value}
-                    className="flex items-center gap-2 rounded-sm bg-[var(--color-surface)] px-3 py-2 text-sm"
+                    className={`flex cursor-pointer items-center gap-3 rounded-sm border px-4 py-3 text-sm font-semibold transition ${
+                      form.axes.includes(axis.value)
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                        : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]"
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -208,6 +218,7 @@ export default function ProjectOnboarding() {
                       onChange={(event) =>
                         toggleAxis(axis.value, event.target.checked)
                       }
+                      className="h-4 w-4 accent-[var(--color-primary)]"
                     />
                     {axis.label}
                   </label>

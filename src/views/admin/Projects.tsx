@@ -1,42 +1,52 @@
 import { useEffect, useMemo, useState } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { useAuth } from "../../providers/AuthProvider";
 import {
+  approveAdminProject,
   createProject,
   featureAdminProject,
-  getAdminProjectSummary,
-  listAdminPendingProjects,
+  getAdminProjects,
   listMyAdminProjects,
   rejectAdminProject,
   type AdminProjectPendingDTO,
-  updateProjectStatus,
+  type ImpactAxis,
 } from "../../util/crowdfundingApi";
 import {
   calculateProjectDonationMetrics,
   formatDonationAmount,
 } from "../../util/donationMetrics";
 
+type ProjectStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED"
+  | "INACTIVE"
+  | "SUSPENDED";
+
+const axisOptions: Array<{ value: ImpactAxis; label: string }> = [
+  { value: "AMBIENTAL", label: "Impacto Ambiental" },
+  { value: "CULTURAL", label: "Impacto Cultural" },
+  { value: "SOCIAL", label: "Impacto Social" },
+];
+
 export default function Projects() {
   const { hasRole, user } = useAuth();
   const isSuperadmin = hasRole("SUPERADMIN");
 
   const [projects, setProjects] = useState<AdminProjectPendingDTO[]>([]);
-  const [selectedId, setSelectedId] = useState<number | string | null>(null);
-  const [summary, setSummary] = useState({
-    pending: 0,
-    approved: 0,
-    rejected: 0,
-    totalProjects: 0,
-  });
   const [myProjects, setMyProjects] = useState<
     Array<{
       id: number | string;
       title: string;
-      status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
+      status: ProjectStatus;
       targetXlm: number;
       raisedXlm: number;
       createdAt: string;
     }>
   >([]);
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [actionPendingId, setActionPendingId] = useState<string | null>(null);
   const [isSubmittingProject, setIsSubmittingProject] = useState(false);
   const [projectFeedback, setProjectFeedback] = useState<string | null>(null);
   const [projectForm, setProjectForm] = useState({
@@ -44,48 +54,77 @@ export default function Projects() {
     ngoWallet: user?.walletAddress ?? "",
     title: "",
     description: "",
-    taxCategory: "EDUCACAO",
+    taxCategory: "IMPACTO",
     targetXlm: "",
-    metadataUri: "ipfs://",
+    metadataUri: "impact-project-onboarding",
     responsibleName: "",
     responsibleEmail: "",
     pixKey: "",
     pixQrCodeUrl: "",
-    axes: ["SOCIAL"],
+    axes: [] as ImpactAxis[],
   });
 
-  const selected = useMemo(
-    () => projects.find((project) => project.id === selectedId) ?? projects[0],
-    [projects, selectedId],
-  );
+  const adminSummary = useMemo(() => {
+    return projects.reduce(
+      (summary, project) => {
+        const status = project.status;
+        const metrics = calculateProjectDonationMetrics(project);
+
+        return {
+          totalProjects: summary.totalProjects + 1,
+          pending: summary.pending + (status === "PENDING" ? 1 : 0),
+          approved: summary.approved + (status === "APPROVED" ? 1 : 0),
+          rejected: summary.rejected + (status === "REJECTED" ? 1 : 0),
+          totalRaised: summary.totalRaised + metrics.totalRaised,
+          confirmedDonations:
+            summary.confirmedDonations + metrics.donationCount,
+        };
+      },
+      {
+        totalProjects: 0,
+        pending: 0,
+        approved: 0,
+        rejected: 0,
+        totalRaised: 0,
+        confirmedDonations: 0,
+      },
+    );
+  }, [projects]);
 
   const loadSuperadmin = async () => {
-    const [data, summaryData] = await Promise.all([
-      listAdminPendingProjects(),
-      getAdminProjectSummary(),
-    ]);
-    setProjects(data);
-    setSummary({
-      pending: summaryData.pending,
-      approved: summaryData.approved,
-      rejected: summaryData.rejected,
-      totalProjects: summaryData.total_projects,
-    });
-    if (data.length > 0 && !selectedId) setSelectedId(data[0].id);
+    setLoading(true);
+    try {
+      const response = await getAdminProjects();
+      setProjects(response.data ?? []);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const loadProjectOwner = async () => {
-    const data = await listMyAdminProjects();
-    setMyProjects(data);
+    setLoading(true);
+    try {
+      const data = await listMyAdminProjects();
+      setMyProjects(data);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (isSuperadmin) {
-      void loadSuperadmin().catch(() => {});
+      void loadSuperadmin().catch(() => {
+        setFeedback("Erro ao carregar projetos.");
+        setLoading(false);
+      });
       return;
     }
-    void loadProjectOwner().catch(() => {});
-  }, [isSuperadmin]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    void loadProjectOwner().catch(() => {
+      setProjectFeedback("Erro ao carregar seus projetos.");
+      setLoading(false);
+    });
+  }, [isSuperadmin]);
 
   useEffect(() => {
     if (user?.walletAddress) {
@@ -96,34 +135,56 @@ export default function Projects() {
     }
   }, [user?.walletAddress]);
 
-  const handleStatusChange = async (status: "APPROVED" | "REJECTED") => {
-    if (!selected) return;
-    if (status === "REJECTED") {
-      await rejectAdminProject(selected.id, "Reprovado no painel admin.");
-    } else {
-      await updateProjectStatus(selected.id, { status });
-    }
-    await loadSuperadmin();
-  };
+  const handleProjectAction = async (
+    project: AdminProjectPendingDTO,
+    action: "approve" | "reject" | "feature",
+  ) => {
+    setFeedback(null);
+    setActionPendingId(`${project.id}:${action}`);
 
-  const handleToggleFeatured = async () => {
-    if (!selected) return;
-    await featureAdminProject(selected.id, !selected.featured);
-    await loadSuperadmin();
+    try {
+      if (action === "approve") {
+        await approveAdminProject(project.id);
+        setFeedback("Projeto aprovado.");
+      } else if (action === "reject") {
+        await rejectAdminProject(project.id, "Reprovado no painel admin.");
+        setFeedback("Projeto reprovado.");
+      } else {
+        await featureAdminProject(project.id, !project.featured);
+        setFeedback(
+          project.featured
+            ? "Projeto removido dos destaques."
+            : "Projeto destacado.",
+        );
+      }
+
+      await loadSuperadmin();
+    } catch {
+      setFeedback("Erro ao atualizar projeto.");
+    } finally {
+      setActionPendingId(null);
+    }
   };
 
   const handleCreateProject = async () => {
     const targetXlm = Number(projectForm.targetXlm);
+
+    if (projectForm.axes.length === 0) {
+      setProjectFeedback(
+        "Selecione pelo menos um eixo de impacto para cadastrar o projeto.",
+      );
+      return;
+    }
+
     if (
       !projectForm.ngoName ||
       !projectForm.ngoWallet ||
       !projectForm.title ||
       !projectForm.description ||
-      !projectForm.taxCategory ||
-      !projectForm.metadataUri ||
+      !projectForm.responsibleEmail ||
       !(targetXlm > 0)
     ) {
-      setProjectFeedback("Preencha todos os campos obrigatórios do projeto.");
+      setProjectFeedback("Preencha todos os campos obrigatorios do projeto.");
       return;
     }
 
@@ -142,10 +203,10 @@ export default function Projects() {
         walletAddress: projectForm.ngoWallet,
         pixKey: projectForm.pixKey,
         pixQrCodeUrl: projectForm.pixQrCodeUrl,
-        axes: projectForm.axes as Array<"AMBIENTAL" | "CULTURAL" | "SOCIAL">,
+        axes: projectForm.axes,
         goalAmount: targetXlm,
         goalAsset: "USDGLO",
-        taxCategory: projectForm.taxCategory,
+        taxCategory: projectForm.axes.join(", "),
         targetXlm,
         metadataUri: projectForm.metadataUri,
       });
@@ -154,9 +215,10 @@ export default function Projects() {
         title: "",
         description: "",
         targetXlm: "",
+        axes: [],
       }));
       await loadProjectOwner();
-      setProjectFeedback("Projeto enviado para aprovação com sucesso.");
+      setProjectFeedback("Projeto enviado para aprovacao com sucesso.");
     } catch (error) {
       setProjectFeedback(
         error instanceof Error ? error.message : "Falha ao enviar projeto.",
@@ -167,332 +229,547 @@ export default function Projects() {
   };
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in space-y-8 text-[var(--color-text)]">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-          Gestão de Projetos
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent-dark)]">
+          Area interna Ponteia
+        </p>
+        <h1 className="mt-2 text-2xl font-black tracking-tight text-[var(--color-text)] sm:text-3xl">
+          Gestao de Projetos
         </h1>
-        <p className="text-slate-500 mt-1 text-sm">
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--color-text-muted)]">
           {isSuperadmin
-            ? "Aprove projetos, revise wallets EVM e acompanhe PIX configurado."
-            : "Envie seus projetos para aprovação e acompanhe o status."}
+            ? "Painel interno para revisar projetos, acompanhar configuracao de PIX e wallet EVM, aprovar publicacao e destacar iniciativas."
+            : "Envie seus projetos para aprovacao e acompanhe o status."}
         </p>
       </div>
 
       {isSuperadmin ? (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <SummaryCard title="Pendentes" value={summary.pending} />
-            <SummaryCard title="Aprovados" value={summary.approved} />
-            <SummaryCard title="Rejeitados" value={summary.rejected} />
-            <SummaryCard title="Total Projetos" value={summary.totalProjects} />
+          {feedback ? (
+            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-3 text-sm font-semibold text-[var(--color-primary)]">
+              {feedback}
+            </div>
+          ) : null}
+
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
+            <SummaryCard title="Total" value={adminSummary.totalProjects} />
+            <SummaryCard title="Pendentes" value={adminSummary.pending} />
+            <SummaryCard title="Aprovados" value={adminSummary.approved} />
+            <SummaryCard title="Reprovados" value={adminSummary.rejected} />
+            <SummaryCard
+              title="Arrecadado"
+              value={`${formatDonationAmount(adminSummary.totalRaised)} USDGLO`}
+            />
+            <SummaryCard
+              title="Doacoes confirmadas"
+              value={adminSummary.confirmedDonations}
+            />
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-1 space-y-3">
-              <h3 className="font-bold text-slate-900">
-                Solicitações Pendentes
-              </h3>
-              {projects.map((project) => (
-                <button
-                  key={project.id}
-                  type="button"
-                  onClick={() => setSelectedId(project.id)}
-                  className={`w-full text-left bg-white p-4 rounded-xl border transition ${
-                    selected?.id === project.id
-                      ? "border-2 border-[#002B99]"
-                      : "border-slate-200"
-                  }`}
-                >
-                  <h4 className="font-bold text-slate-900 text-sm">
-                    {project.title}
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-1">
-                    ONG: {project.ngoName}
-                  </p>
-                  <div className="flex justify-between items-center mt-4">
-                    <span className="text-orange-600 bg-orange-50 px-2 py-1 rounded text-[10px] font-bold">
-                      {project.status}
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      {new Date(project.createdAt).toLocaleDateString("pt-BR")}
-                    </span>
-                  </div>
-                </button>
-              ))}
+          <section className="overflow-hidden rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_44px_rgba(28,26,23,0.05)]">
+            <div className="border-b border-[var(--color-border)] px-5 py-4">
+              <h2 className="font-[var(--font-heading)] text-lg font-semibold">
+                Projetos cadastrados
+              </h2>
+              <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                Modo demonstrativo sem autenticacao administrativa complexa
+                nesta etapa. O guard existente foi preservado.
+              </p>
             </div>
 
-            <div className="xl:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
-              {selected ? (
-                <>
-                  <h2 className="text-xl font-black text-slate-900">
-                    {selected.title}
-                  </h2>
-                  <p className="text-sm text-slate-500">{selected.ngoName}</p>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      className="rounded-lg border border-red-300 text-red-700 px-4 py-2 text-sm font-bold hover:bg-red-50"
-                      onClick={() => void handleStatusChange("REJECTED")}
-                    >
-                      Rejeitar
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-lg bg-green-600 text-white px-4 py-2 text-sm font-bold hover:bg-green-700"
-                      onClick={() => void handleStatusChange("APPROVED")}
-                    >
-                      Aprovar Projeto
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-lg border border-[#002B99] text-[#002B99] px-4 py-2 text-sm font-bold hover:bg-blue-50"
-                      onClick={() => void handleToggleFeatured()}
-                    >
-                      {selected.featured ? "Remover destaque" : "Destacar"}
-                    </button>
-                  </div>
-                  <div className="grid gap-3 rounded-xl bg-slate-50 p-4 text-xs text-slate-600">
-                    <p>
-                      <span className="font-bold">Eixos:</span>{" "}
-                      {selected.axes?.join(", ") || selected.taxCategory}
-                    </p>
-                    <p>
-                      <span className="font-bold">Wallet EVM:</span>{" "}
-                      {selected.walletAddress ?? "nao informada"}
-                    </p>
-                    <p>
-                      <span className="font-bold">PIX:</span>{" "}
-                      {selected.pixKey || selected.pixQrCodeUrl
-                        ? "configurado"
-                        : "nao configurado"}
-                    </p>
-                    <p>
-                      <span className="font-bold">Chave PIX:</span>{" "}
-                      {selected.pixKey ?? "nao informada"}
-                    </p>
-                    <p>
-                      <span className="font-bold">QR Code PIX:</span>{" "}
-                      {selected.pixQrCodeUrl ?? "nao informado"}
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm font-bold text-slate-500">
-                  Nenhum projeto pendente para análise.
-                </p>
-              )}
+            <div className="overflow-x-auto">
+              <table className="min-w-[1180px] w-full text-left text-sm">
+                <thead className="bg-[var(--color-surface)] text-xs uppercase tracking-[0.12em] text-[var(--color-text-soft)]">
+                  <tr>
+                    <Th>Projeto</Th>
+                    <Th>Organizacao</Th>
+                    <Th>Eixos</Th>
+                    <Th>Status</Th>
+                    <Th>Meta</Th>
+                    <Th>Arrecadado</Th>
+                    <Th>Wallet EVM</Th>
+                    <Th>PIX</Th>
+                    <Th>Criado em</Th>
+                    <Th>Acoes</Th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[var(--color-border)]">
+                  {loading ? (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-5 py-8 text-center text-[var(--color-text-muted)]"
+                      >
+                        Carregando projetos...
+                      </td>
+                    </tr>
+                  ) : projects.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={10}
+                        className="px-5 py-8 text-center text-[var(--color-text-muted)]"
+                      >
+                        Nenhum projeto encontrado.
+                      </td>
+                    </tr>
+                  ) : (
+                    projects.map((project) => {
+                      const metrics = calculateProjectDonationMetrics(project);
+                      const walletAddress =
+                        project.walletAddress || "nao informada";
+                      const pixConfigured = Boolean(
+                        project.pixKey || project.pixQrCodeUrl,
+                      );
+
+                      return (
+                        <tr
+                          key={project.id}
+                          className="align-top transition hover:bg-[var(--color-surface)]/70"
+                        >
+                          <Td>
+                            <div className="max-w-[220px]">
+                              <p className="font-semibold text-[var(--color-text)]">
+                                {project.title}
+                              </p>
+                              {project.featured ? (
+                                <span className="mt-2 inline-flex rounded-full bg-[var(--color-accent-light)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-accent-dark)]">
+                                  Destaque
+                                </span>
+                              ) : null}
+                            </div>
+                          </Td>
+                          <Td>{project.organization ?? project.ngoName}</Td>
+                          <Td>
+                            <div className="flex max-w-[220px] flex-wrap gap-1.5">
+                              {(project.axes ?? []).map((axis) => (
+                                <AxisBadge key={axis} axis={axis} />
+                              ))}
+                              {(project.axes ?? []).length === 0 ? (
+                                <span className="text-xs text-[var(--color-text-soft)]">
+                                  sem eixo
+                                </span>
+                              ) : null}
+                            </div>
+                          </Td>
+                          <Td>
+                            <StatusBadge status={project.status} />
+                          </Td>
+                          <Td>
+                            {formatDonationAmount(project.targetXlm)}{" "}
+                            {project.goalAsset ?? "USDGLO"}
+                          </Td>
+                          <Td>
+                            <span className="font-semibold">
+                              {formatDonationAmount(metrics.totalRaised)}{" "}
+                              {metrics.currency}
+                            </span>
+                            <span className="mt-1 block text-xs text-[var(--color-text-soft)]">
+                              {metrics.donationCount} confirmada
+                              {metrics.donationCount === 1 ? "" : "s"}
+                            </span>
+                          </Td>
+                          <Td>
+                            <span className="block max-w-[190px] truncate font-mono text-xs">
+                              {walletAddress}
+                            </span>
+                          </Td>
+                          <Td>
+                            <span
+                              className={`inline-flex rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
+                                pixConfigured
+                                  ? "bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                                  : "bg-[var(--color-surface-alt)] text-[var(--color-text-soft)]"
+                              }`}
+                            >
+                              {pixConfigured
+                                ? "Configurado"
+                                : "Nao configurado"}
+                            </span>
+                          </Td>
+                          <Td>
+                            {new Date(project.createdAt).toLocaleDateString(
+                              "pt-BR",
+                            )}
+                          </Td>
+                          <Td>
+                            <div className="flex flex-wrap gap-2">
+                              <ActionButton
+                                disabled={
+                                  actionPendingId === `${project.id}:approve`
+                                }
+                                onClick={() =>
+                                  void handleProjectAction(project, "approve")
+                                }
+                              >
+                                Aprovar
+                              </ActionButton>
+                              <ActionButton
+                                tone="danger"
+                                disabled={
+                                  actionPendingId === `${project.id}:reject`
+                                }
+                                onClick={() =>
+                                  void handleProjectAction(project, "reject")
+                                }
+                              >
+                                Reprovar
+                              </ActionButton>
+                              <ActionButton
+                                tone="secondary"
+                                disabled={
+                                  actionPendingId === `${project.id}:feature`
+                                }
+                                onClick={() =>
+                                  void handleProjectAction(project, "feature")
+                                }
+                              >
+                                {project.featured
+                                  ? "Remover destaque"
+                                  : "Destacar"}
+                              </ActionButton>
+                            </div>
+                          </Td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
-          </div>
+          </section>
         </>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-            <h3 className="text-lg font-black text-slate-900">
-              Criar Novo Projeto
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                value={projectForm.ngoName}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    ngoName: e.target.value,
-                  }))
-                }
-                placeholder="Nome da ONG"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <input
-                value={projectForm.ngoWallet}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    ngoWallet: e.target.value,
-                  }))
-                }
-                placeholder="Wallet EVM da organizacao (0x...)"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <input
-                value={projectForm.responsibleName}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    responsibleName: e.target.value,
-                  }))
-                }
-                placeholder="Responsavel pelo projeto"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <input
-                value={projectForm.responsibleEmail}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    responsibleEmail: e.target.value,
-                  }))
-                }
-                placeholder="E-mail do responsavel"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <input
-                value={projectForm.title}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({ ...prev, title: e.target.value }))
-                }
-                placeholder="Título do projeto"
-                className="rounded-xl border border-slate-300 px-4 py-3 md:col-span-2"
-              />
-              <textarea
-                value={projectForm.description}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Descrição"
-                className="rounded-xl border border-slate-300 px-4 py-3 md:col-span-2 min-h-28"
-              />
-              <input
-                value={projectForm.taxCategory}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    taxCategory: e.target.value,
-                  }))
-                }
-                placeholder="Categoria fiscal"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <input
-                type="number"
-                min="0"
-                step="0.0000001"
-                value={projectForm.targetXlm}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    targetXlm: e.target.value,
-                  }))
-                }
-                placeholder="Meta (USDGLO)"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <input
-                value={projectForm.pixKey}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    pixKey: e.target.value,
-                  }))
-                }
-                placeholder="Chave PIX"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <input
-                value={projectForm.pixQrCodeUrl}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    pixQrCodeUrl: e.target.value,
-                  }))
-                }
-                placeholder="URL do QR Code PIX"
-                className="rounded-xl border border-slate-300 px-4 py-3"
-              />
-              <div className="md:col-span-2 grid gap-2 rounded-xl border border-slate-200 p-3">
-                <p className="text-xs font-bold uppercase text-slate-500">
-                  Eixos obrigatorios
-                </p>
-                {[
-                  ["AMBIENTAL", "Impacto Ambiental"],
-                  ["CULTURAL", "Impacto Cultural"],
-                  ["SOCIAL", "Impacto Social"],
-                ].map(([axis, label]) => (
-                  <label key={axis} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={projectForm.axes.includes(axis)}
-                      onChange={(event) =>
-                        setProjectForm((prev) => ({
-                          ...prev,
-                          axes: event.target.checked
-                            ? [...prev.axes, axis]
-                            : prev.axes.filter((item) => item !== axis),
-                        }))
-                      }
-                    />
-                    {label}
-                  </label>
-                ))}
-              </div>
-              <input
-                value={projectForm.metadataUri}
-                onChange={(e) =>
-                  setProjectForm((prev) => ({
-                    ...prev,
-                    metadataUri: e.target.value,
-                  }))
-                }
-                placeholder="Metadata URI (ipfs://...)"
-                className="rounded-xl border border-slate-300 px-4 py-3 md:col-span-2"
-              />
-            </div>
-            <button
-              type="button"
-              disabled={isSubmittingProject}
-              onClick={() => void handleCreateProject()}
-              className="rounded-xl bg-[#002B99] text-white px-5 py-3 text-sm font-black uppercase tracking-wider disabled:opacity-60"
-            >
-              {isSubmittingProject ? "Enviando..." : "Enviar para aprovação"}
-            </button>
-            {projectFeedback ? (
-              <p className="text-xs font-bold text-slate-600 break-all">
-                {projectFeedback}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h3 className="text-lg font-black text-slate-900 mb-3">
-              Meus Projetos Enviados
-            </h3>
-            <div className="space-y-3">
-              {myProjects.map((project) => (
-                <MyProjectCard key={project.id} project={project} />
-              ))}
-              {myProjects.length === 0 ? (
-                <p className="text-xs text-slate-500">
-                  Você ainda não enviou projetos.
-                </p>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        <ProjectOwnerView
+          projectForm={projectForm}
+          setProjectForm={setProjectForm}
+          isSubmittingProject={isSubmittingProject}
+          projectFeedback={projectFeedback}
+          myProjects={myProjects}
+          loading={loading}
+          onSubmit={() => void handleCreateProject()}
+        />
       )}
     </div>
   );
 }
 
-function badgeClass(
-  status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED",
-) {
-  if (status === "APPROVED") return "bg-emerald-100 text-emerald-700";
-  if (status === "REJECTED") return "bg-rose-100 text-rose-700";
-  if (status === "INACTIVE" || status === "SUSPENDED") {
-    return "bg-slate-200 text-slate-700";
-  }
-  return "bg-orange-100 text-orange-700";
+function ProjectOwnerView(props: {
+  projectForm: {
+    ngoName: string;
+    ngoWallet: string;
+    title: string;
+    description: string;
+    taxCategory: string;
+    targetXlm: string;
+    metadataUri: string;
+    responsibleName: string;
+    responsibleEmail: string;
+    pixKey: string;
+    pixQrCodeUrl: string;
+    axes: ImpactAxis[];
+  };
+  setProjectForm: Dispatch<
+    SetStateAction<{
+      ngoName: string;
+      ngoWallet: string;
+      title: string;
+      description: string;
+      taxCategory: string;
+      targetXlm: string;
+      metadataUri: string;
+      responsibleName: string;
+      responsibleEmail: string;
+      pixKey: string;
+      pixQrCodeUrl: string;
+      axes: ImpactAxis[];
+    }>
+  >;
+  isSubmittingProject: boolean;
+  projectFeedback: string | null;
+  myProjects: Array<{
+    id: number | string;
+    title: string;
+    status: ProjectStatus;
+    targetXlm: number;
+    raisedXlm: number;
+    createdAt: string;
+  }>;
+  loading: boolean;
+  onSubmit: () => void;
+}) {
+  const { projectForm, setProjectForm } = props;
+
+  return (
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="space-y-4 rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-6">
+        <h3 className="text-lg font-black text-[var(--color-text)]">
+          Criar Novo Projeto
+        </h3>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AdminInput
+            value={projectForm.ngoName}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, ngoName: value }))
+            }
+            placeholder="Nome da organizacao"
+          />
+          <AdminInput
+            value={projectForm.ngoWallet}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, ngoWallet: value }))
+            }
+            placeholder="Wallet EVM da organizacao (0x...)"
+          />
+          <AdminInput
+            value={projectForm.responsibleName}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, responsibleName: value }))
+            }
+            placeholder="Responsavel pelo projeto"
+          />
+          <AdminInput
+            value={projectForm.responsibleEmail}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, responsibleEmail: value }))
+            }
+            placeholder="E-mail do responsavel"
+          />
+          <AdminInput
+            value={projectForm.title}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, title: value }))
+            }
+            placeholder="Titulo do projeto"
+            className="md:col-span-2"
+          />
+          <textarea
+            value={projectForm.description}
+            onChange={(event) =>
+              setProjectForm((prev) => ({
+                ...prev,
+                description: event.target.value,
+              }))
+            }
+            placeholder="Descricao"
+            className="min-h-28 rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] md:col-span-2"
+          />
+          <AdminInput
+            value={projectForm.pixKey}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, pixKey: value }))
+            }
+            placeholder="Chave PIX"
+          />
+          <AdminInput
+            value={projectForm.pixQrCodeUrl}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, pixQrCodeUrl: value }))
+            }
+            placeholder="URL do QR Code PIX"
+          />
+          <AdminInput
+            type="number"
+            value={projectForm.targetXlm}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, targetXlm: value }))
+            }
+            placeholder="Meta (USDGLO)"
+          />
+          <AdminInput
+            value={projectForm.metadataUri}
+            onChange={(value) =>
+              setProjectForm((prev) => ({ ...prev, metadataUri: value }))
+            }
+            placeholder="Metadata URI"
+          />
+          <div className="grid gap-3 rounded-sm border border-[var(--color-border)] p-4 md:col-span-2">
+            <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">
+              Eixos obrigatorios
+            </p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {axisOptions.map((axis) => (
+                <label
+                  key={axis.value}
+                  className={`flex cursor-pointer items-center gap-2 rounded-sm border px-3 py-2 text-sm ${
+                    projectForm.axes.includes(axis.value)
+                      ? "border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                      : "border-[var(--color-border)] text-[var(--color-text-muted)]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={projectForm.axes.includes(axis.value)}
+                    onChange={(event) =>
+                      setProjectForm((prev) => ({
+                        ...prev,
+                        axes: event.target.checked
+                          ? [...new Set([...prev.axes, axis.value])]
+                          : prev.axes.filter((item) => item !== axis.value),
+                      }))
+                    }
+                    className="accent-[var(--color-primary)]"
+                  />
+                  {axis.label}
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button
+          type="button"
+          disabled={props.isSubmittingProject}
+          onClick={props.onSubmit}
+          className="rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+        >
+          {props.isSubmittingProject ? "Enviando..." : "Enviar para aprovacao"}
+        </button>
+        {props.projectFeedback ? (
+          <p className="break-all text-xs font-bold text-[var(--color-text-muted)]">
+            {props.projectFeedback}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-6">
+        <h3 className="mb-3 text-lg font-black text-[var(--color-text)]">
+          Meus Projetos Enviados
+        </h3>
+        <div className="space-y-3">
+          {props.loading ? (
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Carregando projetos...
+            </p>
+          ) : null}
+          {props.myProjects.map((project) => (
+            <MyProjectCard key={project.id} project={project} />
+          ))}
+          {!props.loading && props.myProjects.length === 0 ? (
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Voce ainda nao enviou projetos.
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
 }
 
-function SummaryCard(props: { title: string; value: number }) {
+function Th(props: { children: ReactNode }) {
+  return <th className="px-5 py-3 font-bold">{props.children}</th>;
+}
+
+function Td(props: { children: ReactNode }) {
   return (
-    <div className="bg-white p-5 rounded-xl border border-slate-100 shadow-sm">
-      <p className="text-slate-500 text-sm font-medium">{props.title}</p>
-      <h2 className="text-3xl font-black text-slate-900">
-        {props.value.toLocaleString("pt-BR")}
+    <td className="px-5 py-4 text-[var(--color-text-muted)]">
+      {props.children}
+    </td>
+  );
+}
+
+function AdminInput(props: {
+  value: string;
+  type?: string;
+  placeholder: string;
+  className?: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <input
+      type={props.type ?? "text"}
+      value={props.value}
+      onChange={(event) => props.onChange(event.target.value)}
+      placeholder={props.placeholder}
+      className={`rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] ${
+        props.className ?? ""
+      }`}
+    />
+  );
+}
+
+function AxisBadge(props: { axis: ImpactAxis }) {
+  const labelByAxis: Record<ImpactAxis, string> = {
+    AMBIENTAL: "Ambiental",
+    CULTURAL: "Cultural",
+    SOCIAL: "Social",
+  };
+
+  return (
+    <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-primary)]">
+      {labelByAxis[props.axis]}
+    </span>
+  );
+}
+
+function StatusBadge(props: { status: ProjectStatus }) {
+  const labelByStatus: Record<ProjectStatus, string> = {
+    PENDING: "Pendente",
+    APPROVED: "Aprovado",
+    REJECTED: "Reprovado",
+    INACTIVE: "Inativo",
+    SUSPENDED: "Suspenso",
+  };
+
+  return (
+    <span
+      className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${badgeClass(props.status)}`}
+    >
+      {labelByStatus[props.status]}
+    </span>
+  );
+}
+
+function ActionButton(props: {
+  children: ReactNode;
+  tone?: "primary" | "secondary" | "danger";
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  const tone = props.tone ?? "primary";
+  const classes = {
+    primary:
+      "border-[var(--color-primary)] bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)]",
+    secondary:
+      "border-[var(--color-border-strong)] bg-transparent text-[var(--color-primary)] hover:bg-[var(--color-primary-light)]",
+    danger: "border-rose-300 bg-transparent text-rose-700 hover:bg-rose-50",
+  };
+
+  return (
+    <button
+      type="button"
+      disabled={props.disabled}
+      onClick={props.onClick}
+      className={`rounded-full border px-3 py-2 text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-60 ${classes[tone]}`}
+    >
+      {props.children}
+    </button>
+  );
+}
+
+function badgeClass(status: ProjectStatus) {
+  if (status === "APPROVED") {
+    return "bg-[var(--color-primary-light)] text-[var(--color-primary)]";
+  }
+  if (status === "REJECTED") return "bg-rose-100 text-rose-700";
+  if (status === "INACTIVE" || status === "SUSPENDED") {
+    return "bg-[var(--color-surface-alt)] text-[var(--color-text-muted)]";
+  }
+  return "bg-[var(--color-accent-light)] text-[var(--color-accent-dark)]";
+}
+
+function SummaryCard(props: { title: string; value: number | string }) {
+  const value =
+    typeof props.value === "number"
+      ? props.value.toLocaleString("pt-BR")
+      : props.value;
+
+  return (
+    <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-5 shadow-[0_14px_38px_rgba(28,26,23,0.05)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-soft)]">
+        {props.title}
+      </p>
+      <h2 className="mt-2 text-2xl font-black text-[var(--color-text)]">
+        {value}
       </h2>
     </div>
   );
@@ -502,7 +779,7 @@ function MyProjectCard(props: {
   project: {
     id: number | string;
     title: string;
-    status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
+    status: ProjectStatus;
     targetXlm: number;
     raisedXlm: number;
     createdAt: string;
@@ -511,21 +788,17 @@ function MyProjectCard(props: {
   const metrics = calculateProjectDonationMetrics(props.project);
 
   return (
-    <div className="border border-slate-200 rounded-xl p-4 space-y-2">
+    <div className="space-y-2 rounded-sm border border-[var(--color-border)] p-4">
       <div className="flex justify-between gap-3">
-        <p className="font-bold text-slate-900">{props.project.title}</p>
-        <span
-          className={`text-[10px] font-black px-2 py-1 rounded ${badgeClass(
-            props.project.status,
-          )}`}
-        >
-          {props.project.status}
-        </span>
+        <p className="font-bold text-[var(--color-text)]">
+          {props.project.title}
+        </p>
+        <StatusBadge status={props.project.status} />
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-[var(--color-text-muted)]">
         Meta: {formatDonationAmount(metrics.targetAmount)} USDGLO
       </p>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-[var(--color-text-muted)]">
         Captado: {formatDonationAmount(metrics.totalRaised)} USDGLO
       </p>
     </div>

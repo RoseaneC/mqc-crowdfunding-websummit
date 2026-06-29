@@ -658,7 +658,7 @@ function projectFromDemo(
     goalAsset: project.primaryAsset,
     status: project.status,
     featured: ["1", "6", "8"].includes(String(project.id)),
-    axes: ["SOCIAL"],
+    axes: getDemoProjectAxes(project.ods),
     payoutProvider: null,
     payoutStatus: "NOT_REQUESTED",
     bankAccountLast4: null,
@@ -695,6 +695,22 @@ function evidenceFromPrisma(evidence: {
     status: parseEvidenceStatus(evidence.status),
     createdAt: evidence.createdAt.toISOString(),
   };
+}
+
+function getDemoProjectAxes(ods: readonly number[]): ImpactProjectAxis[] {
+  const axes = new Set<ImpactProjectAxis>();
+
+  if (ods.some((item) => [2, 7, 11, 12, 13, 14, 15].includes(item))) {
+    axes.add("AMBIENTAL");
+  }
+
+  if (ods.some((item) => [4, 5, 9, 10].includes(item))) {
+    axes.add("CULTURAL");
+  }
+
+  axes.add("SOCIAL");
+
+  return [...axes];
 }
 
 function donationFromPrismaMetric(donation: {
