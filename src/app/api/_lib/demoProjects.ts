@@ -1,4 +1,4 @@
-const defaultDemoCurrencies = ["USDGLO", "PIX", "BRZ"] as const;
+const defaultDemoCurrencies = ["USDGLO", "USDC", "PIX", "BRZ"] as const;
 
 export const demoProjects = [
   {

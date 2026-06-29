@@ -158,10 +158,20 @@ function getProjectAcceptedCurrencies(
   project: ProjectDTO,
 ): ProjectFundingAsset[] {
   const acceptedCurrencies =
-    project.moedasAceitas?.filter((asset) => asset === "USDGLO") ?? [];
+    project.moedasAceitas?.filter(
+      (asset) => asset === "USDGLO" || asset === "USDC",
+    ) ?? [];
 
   const options: ProjectFundingAsset[] =
-    acceptedCurrencies.length > 0 ? acceptedCurrencies : ["USDGLO"];
+    acceptedCurrencies.length > 0 ? acceptedCurrencies : ["USDGLO", "USDC"];
+
+  if (!options.includes("USDGLO")) {
+    options.unshift("USDGLO");
+  }
+
+  if (!options.includes("USDC")) {
+    options.push("USDC");
+  }
 
   if (project.pixKey || project.pixQrCodeUrl) {
     options.push("PIX");
@@ -177,6 +187,7 @@ function formatMetricCurrencyLabel(
   const normalized = currency?.trim().toUpperCase();
 
   if (normalized === "USDGLO") return "USDGLO";
+  if (normalized === "USDC") return "USDC";
   if (normalized === "PIX") return "PIX";
   if (normalized === "BRZ") return "BRZ";
 
@@ -185,6 +196,7 @@ function formatMetricCurrencyLabel(
 
 function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
   if (asset === "USDGLO") return "USDGLO";
+  if (asset === "USDC") return "USDC";
   if (asset === "PIX") return "PIX";
   if (asset === "BRZ") return "BRZ";
 

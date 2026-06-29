@@ -15,7 +15,7 @@ import {
   getDonationCampaignMessage,
 } from "../../util/donationMetrics";
 import { formatDemoCurrencyLabel } from "../../util/projectDemoMetadata";
-import { isCeloUsdgloEnabled } from "../../util/celoConfig";
+import { isCeloUsdcEnabled, isCeloUsdgloEnabled } from "../../util/celoConfig";
 import { validateCeloWallet } from "../../util/usdgloCelo";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
@@ -26,7 +26,8 @@ import Web3CardImg from "../../images/projects-page/cards/web3-lideranca.jpeg";
 import FormacaoCardImg from "../../images/projects-page/cards/formacaoMulheres.jpeg";
 
 type DonorType = "PF" | "PJ";
-type CurrencyCode = "USDGLO" | "PIX" | "BRZ";
+type CryptoCurrencyCode = "USDGLO" | "USDC";
+type CurrencyCode = CryptoCurrencyCode | "PIX" | "BRZ";
 
 type CurrencyOption = {
   code: CurrencyCode;
@@ -40,6 +41,12 @@ const currencyOptions: CurrencyOption[] = [
     code: "USDGLO",
     name: "USDGLO",
     description: "Pagamentos em USDGLO usam carteira EVM na rede Celo.",
+    brlRate: 5.2,
+  },
+  {
+    code: "USDC",
+    name: "USDC",
+    description: "Pagamentos em USDC usam carteira EVM na rede Celo.",
     brlRate: 5.2,
   },
   {
@@ -101,11 +108,18 @@ export default function Contribute() {
   const numericContribution = Number(contributionValue || 0);
   const amountBRL = numericContribution * currency.brlRate;
   const isUsdGloCeloSelected = selectedCurrency === "USDGLO";
+  const isUsdcCeloSelected = selectedCurrency === "USDC";
+  const isCryptoCeloSelected = isUsdGloCeloSelected || isUsdcCeloSelected;
   const isPixSelected = selectedCurrency === "PIX";
   const isBrzSelected = selectedCurrency === "BRZ";
   const hasProjectPix = Boolean(project?.pixKey || project?.pixQrCodeUrl);
   const hasValidDestinationWallet = validateCeloWallet(project?.walletAddress);
   const hasValidEvmWallet = validateCeloWallet(privyWallet.evmAddress);
+  const isSelectedCryptoEnabled = isUsdGloCeloSelected
+    ? isCeloUsdgloEnabled()
+    : isUsdcCeloSelected
+      ? isCeloUsdcEnabled()
+      : false;
   const projectMetrics = project
     ? calculateProjectDonationMetrics({
         ...project,
@@ -138,11 +152,24 @@ export default function Contribute() {
         : project?.pixQrCodeUrl
           ? "Ver QR Code PIX"
           : "PIX ainda não configurado"
-      : isUsdGloCeloSelected
+      : isCryptoCeloSelected
         ? !privyWallet.authenticated || !hasValidEvmWallet
           ? "Conectar carteira EVM"
-          : "Confirmar doação em USDGLO"
+          : `Confirmar doação em ${selectedCurrency}`
         : "Ver instruções BRZ";
+  const cryptoInlineMessage = getCryptoInlineMessage({
+    asset: isCryptoCeloSelected ? selectedCurrency : "USDGLO",
+    destinationWallet: project?.walletAddress,
+    enabled: isSelectedCryptoEnabled,
+  });
+  const pixInlineMessage =
+    isPixSelected && !hasProjectPix
+      ? "PIX ainda não configurado para este projeto."
+      : null;
+  const isSubmitDisabled =
+    isSubmitting ||
+    (isPixSelected && !hasProjectPix) ||
+    (isCryptoCeloSelected && !hasValidDestinationWallet);
 
   const handleIdentificacaoChange = (event: ChangeEvent<HTMLInputElement>) => {
     setIdentificacao(formatDocument(event.target.value, tipoDoador));
@@ -173,7 +200,6 @@ export default function Contribute() {
         window.setTimeout(() => setPixCopyFeedback(null), 2500);
         return;
       }
-      alert("PIX ainda não configurado para este projeto.");
       return;
     }
 
@@ -189,22 +215,11 @@ export default function Contribute() {
       return;
     }
 
-    if (!isCeloUsdgloEnabled()) {
-      alert(
-        "Fluxo USDGLO/Celo preparado. Conecte carteira EVM na rede Celo para continuar.",
-      );
-      return;
-    }
-
     if (!hasValidEvmWallet) {
-      alert("Conecte uma carteira EVM via Privy para doar em USDGLO.");
       return;
     }
 
     if (!hasValidDestinationWallet) {
-      alert(
-        "Este projeto ainda não possui carteira EVM configurada para receber USDGLO.",
-      );
       return;
     }
 
@@ -212,7 +227,7 @@ export default function Contribute() {
     window.setTimeout(() => {
       setIsSubmitting(false);
       alert(
-        "Fluxo USDGLO/Celo preparado. A transação real será conectada na próxima etapa; nenhuma doação foi registrada sem txHash.",
+        `Fluxo ${selectedCurrency}/Celo preparado. A transação real será conectada na próxima etapa; nenhuma doação foi registrada sem txHash.`,
       );
     }, 250);
   };
@@ -437,13 +452,15 @@ export default function Contribute() {
                     </p>
                   </div>
 
-                  {isUsdGloCeloSelected ? (
-                    <UsdGloPanel
+                  {isCryptoCeloSelected ? (
+                    <CeloTokenPanel
+                      asset={selectedCurrency}
                       authenticated={privyWallet.authenticated}
                       ready={privyWallet.ready}
                       evmAddress={privyWallet.evmAddress}
                       shortEvmAddress={privyWallet.shortEvmAddress}
                       destinationWallet={project?.walletAddress ?? null}
+                      tokenEnabled={isSelectedCryptoEnabled}
                       onLogin={handlePrivyLogin}
                     />
                   ) : null}
@@ -472,15 +489,27 @@ export default function Contribute() {
                   <button
                     type="button"
                     onClick={() => void handleConfirmarDoacao()}
-                    disabled={isSubmitting}
+                    disabled={isSubmitDisabled}
                     className="w-full rounded-full bg-[var(--color-primary)] px-6 py-4 text-sm font-semibold text-[var(--color-white)] shadow-[0_12px_34px_rgba(15,0,161,0.25)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {submitButtonLabel}
                   </button>
 
+                  {cryptoInlineMessage && isCryptoCeloSelected ? (
+                    <p className="rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-primary-dark)]">
+                      {cryptoInlineMessage}
+                    </p>
+                  ) : null}
+
+                  {pixInlineMessage ? (
+                    <p className="rounded-xl bg-[var(--color-surface)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-text-muted)]">
+                      {pixInlineMessage}
+                    </p>
+                  ) : null}
+
                   <p className="text-center text-[11px] leading-5 text-[var(--color-text-soft)]">
-                    USDGLO usa Celo Mainnet/EVM. PIX é uma doação fiduciária
-                    direta fora da blockchain.
+                    USDGLO e USDC usam Celo Mainnet/EVM. PIX é uma doação
+                    fiduciária direta fora da blockchain.
                   </p>
                 </div>
               </div>
@@ -568,38 +597,38 @@ export default function Contribute() {
   );
 }
 
-function UsdgloCeloStatusMessage(props: {
+function getCryptoInlineMessage(input: {
+  asset: CryptoCurrencyCode;
   destinationWallet: string | null | undefined;
+  enabled: boolean;
 }) {
-  if (!validateCeloWallet(props.destinationWallet)) {
-    return (
-      <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
-        Este projeto ainda não possui carteira EVM configurada para receber
-        USDGLO.
-      </p>
-    );
+  if (!validateCeloWallet(input.destinationWallet)) {
+    return "Este projeto ainda não possui carteira EVM configurada para receber doações em cripto.";
   }
 
-  if (!isCeloUsdgloEnabled()) {
-    return (
-      <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
-        Fluxo USDGLO/Celo preparado. Conecte carteira EVM na rede Celo para
-        continuar.
-      </p>
-    );
+  if (!input.enabled) {
+    return `Fluxo ${input.asset}/Celo preparado. Conecte carteira EVM na rede Celo para continuar.`;
   }
 
   return null;
 }
 
-function UsdGloPanel(props: {
+function CeloTokenPanel(props: {
+  asset: CryptoCurrencyCode;
   authenticated: boolean;
   ready: boolean;
   evmAddress: string | null;
   shortEvmAddress: string | null;
   destinationWallet: string | null;
+  tokenEnabled: boolean;
   onLogin: () => void;
 }) {
+  const inlineMessage = getCryptoInlineMessage({
+    asset: props.asset,
+    destinationWallet: props.destinationWallet,
+    enabled: props.tokenEnabled,
+  });
+
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -608,7 +637,7 @@ function UsdGloPanel(props: {
             Carteira EVM via Privy
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
-            Pagamentos em USDGLO usam carteira EVM na rede Celo.
+            Pagamentos em {props.asset} usam carteira EVM na rede Celo.
           </p>
         </div>
 
@@ -637,10 +666,10 @@ function UsdGloPanel(props: {
 
       <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
-          USDGLO Celo Mainnet
+          {props.asset} Celo Mainnet
         </p>
         <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
-          Pagamentos em USDGLO usam carteira EVM na rede Celo.
+          Pagamentos em {props.asset} usam carteira EVM na rede Celo.
         </p>
         <p className="mt-2 text-xs font-semibold text-[var(--color-text)]">
           Destino:{" "}
@@ -648,7 +677,11 @@ function UsdGloPanel(props: {
             ? shortAddress(props.destinationWallet ?? "")
             : "não configurado"}
         </p>
-        <UsdgloCeloStatusMessage destinationWallet={props.destinationWallet} />
+        {inlineMessage ? (
+          <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+            {inlineMessage}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -738,6 +771,10 @@ function normalizePrimaryAsset(
     return "BRZ";
   }
 
+  if (project?.moedaPrincipal === "USDC" || project?.goalAsset === "USDC") {
+    return "USDGLO";
+  }
+
   return "USDGLO";
 }
 
@@ -825,6 +862,7 @@ function formatMetricCurrencyLabel(
   const normalized = currency?.trim().toUpperCase();
 
   if (normalized === "USDGLO") return "USDGLO";
+  if (normalized === "USDC") return "USDC";
   if (normalized === "PIX") return "PIX";
   if (normalized === "BRZ") return "BRZ";
 
@@ -833,6 +871,7 @@ function formatMetricCurrencyLabel(
 
 function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
   if (asset === "USDGLO") return "USDGLO";
+  if (asset === "USDC") return "USDC";
   if (asset === "PIX") return "PIX";
   if (asset === "BRZ") return "BRZ";
 
