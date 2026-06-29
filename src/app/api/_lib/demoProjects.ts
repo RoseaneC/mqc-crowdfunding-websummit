@@ -1,10 +1,20 @@
 const defaultDemoCurrencies = ["USDGLO", "USDC", "PIX", "BRZ"] as const;
+const demoNetwork = "CELO";
+const demoPrimaryAsset = "USDGLO";
+const demoWalletAddress = "0x228cbC1d913A463a9dC4D353AC9b5FdcfC1c71Cb";
+const demoPixKey = "62.977.919/0001-97";
 
 export const demoProjects = [
   {
     id: 1,
     ngoName: "Mulheres Que Codam",
-    ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ngoWallet: demoWalletAddress,
+    walletAddress: demoWalletAddress,
+    network: demoNetwork,
+    primaryAsset: demoPrimaryAsset,
+    acceptedAssets: defaultDemoCurrencies,
+    pixKey: demoPixKey,
+    pixQrCodeUrl: null,
     title: "Mulheres Que Codam - Formação em Tecnologia",
     description:
       "Formação em programação, letramento digital e qualificação profissional para mulheres que desejam iniciar ou fortalecer sua trajetória na tecnologia.",
@@ -27,7 +37,13 @@ export const demoProjects = [
   {
     id: 2,
     ngoName: "Elo.me",
-    ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ngoWallet: demoWalletAddress,
+    walletAddress: demoWalletAddress,
+    network: demoNetwork,
+    primaryAsset: demoPrimaryAsset,
+    acceptedAssets: defaultDemoCurrencies,
+    pixKey: demoPixKey,
+    pixQrCodeUrl: null,
     title: "Elo.me - Rede de Proteção e Mentoria",
     description:
       "Rede de apoio para conectar mulheres em início de carreira a mentoras, trilhas de empregabilidade, proteção social e autonomia econômica.",
@@ -50,7 +66,13 @@ export const demoProjects = [
   {
     id: 3,
     ngoName: "Ponte Produtiva",
-    ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ngoWallet: demoWalletAddress,
+    walletAddress: demoWalletAddress,
+    network: demoNetwork,
+    primaryAsset: demoPrimaryAsset,
+    acceptedAssets: defaultDemoCurrencies,
+    pixKey: demoPixKey,
+    pixQrCodeUrl: null,
     title: "Trilhas de Inclusão Produtiva",
     description:
       "Capacitação em finanças digitais, inovação e empreendedorismo para ampliar renda, empregabilidade e participação de mulheres na economia digital.",
@@ -73,7 +95,13 @@ export const demoProjects = [
   {
     id: 4,
     ngoName: "Karn",
-    ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ngoWallet: demoWalletAddress,
+    walletAddress: demoWalletAddress,
+    network: demoNetwork,
+    primaryAsset: demoPrimaryAsset,
+    acceptedAssets: defaultDemoCurrencies,
+    pixKey: demoPixKey,
+    pixQrCodeUrl: null,
     title: "Karn - Energia Comunitária",
     description:
       "Ferramenta para apoiar comunidades periféricas no planejamento de energia limpa, acesso energético e indicadores de sustentabilidade territorial.",
@@ -96,7 +124,13 @@ export const demoProjects = [
   {
     id: 5,
     ngoName: "Vizinhança Cuidadora",
-    ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ngoWallet: demoWalletAddress,
+    walletAddress: demoWalletAddress,
+    network: demoNetwork,
+    primaryAsset: demoPrimaryAsset,
+    acceptedAssets: defaultDemoCurrencies,
+    pixKey: demoPixKey,
+    pixQrCodeUrl: null,
     title: "Vizinhança Cuidadora - Segurança Alimentar",
     description:
       "Iniciativa comunitária que usa tecnologia para mapear necessidades locais, combater a fome e ampliar o acesso a alimentos de qualidade.",
@@ -118,7 +152,13 @@ export const demoProjects = [
   {
     id: 6,
     ngoName: "Mulheres Que Codam",
-    ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ngoWallet: demoWalletAddress,
+    walletAddress: demoWalletAddress,
+    network: demoNetwork,
+    primaryAsset: demoPrimaryAsset,
+    acceptedAssets: defaultDemoCurrencies,
+    pixKey: demoPixKey,
+    pixQrCodeUrl: null,
     title: "Web3 Liderança para Mulheres",
     description:
       "Programa de liderança para mulheres que querem criar, gerir e comunicar projetos de impacto com autonomia econômica e combate à desigualdade.",
@@ -141,7 +181,13 @@ export const demoProjects = [
   {
     id: 8,
     ngoName: "Mulheres Que Codam",
-    ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
+    ngoWallet: demoWalletAddress,
+    walletAddress: demoWalletAddress,
+    network: demoNetwork,
+    primaryAsset: demoPrimaryAsset,
+    acceptedAssets: defaultDemoCurrencies,
+    pixKey: demoPixKey,
+    pixQrCodeUrl: null,
     title: "Formação Mulheres em Tecnologia",
     description:
       "Ciclo de educação de qualidade com aulas práticas, acompanhamento pedagógico e suporte para mulheres em transição de carreira.",

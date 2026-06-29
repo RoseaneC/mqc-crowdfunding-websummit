@@ -607,6 +607,10 @@ function getCryptoInlineMessage(input: {
   }
 
   if (!input.enabled) {
+    if (input.asset === "USDC") {
+      return "USDC via Celo/EVM preparado. Contrato do token será ativado por variável de ambiente.";
+    }
+
     return `Fluxo ${input.asset}/Celo preparado. Conecte carteira EVM na rede Celo para continuar.`;
   }
 
