@@ -33,6 +33,7 @@ export default function Success() {
   const valorSimulado = Number(searchParams.get("valor")) || valorDoadoXLM;
   const mainnetAsset = searchParams.get("asset")?.toUpperCase() ?? moeda;
   const paymentNetwork = parsePaymentNetwork(searchParams.get("rede"));
+  const isCeloMainnetPayment = paymentNetwork === "celo-mainnet";
   const isStellarMainnetPayment = paymentNetwork === "stellar-mainnet";
   const isStellarTestnetPayment =
     paymentNetwork === "stellar-testnet" || paymentNetwork === "demo";
@@ -56,11 +57,13 @@ export default function Success() {
     (donationId ? `Campanha #${donationId}` : "Campanha apoiada");
 
   const cotacaoXLM = 0.5432;
-  const valorTotalBRL = isUsdcMainnetPayment
+  const valorTotalBRL = isCeloMainnetPayment
     ? valorSimulado * 5.2
-    : isXlmMainnetPayment
-      ? valorSimulado * cotacaoXLM
-      : valorDoadoXLM * cotacaoXLM;
+    : isUsdcMainnetPayment
+      ? valorSimulado * 5.2
+      : isXlmMainnetPayment
+        ? valorSimulado * cotacaoXLM
+        : valorDoadoXLM * cotacaoXLM;
 
   const taxaAdminPct = tipo === "PF" ? 0.07 : 0.05;
   const valorTaxa = valorTotalBRL * taxaAdminPct;
@@ -83,7 +86,7 @@ export default function Success() {
     : buildTransactionExplorerUrl(receiptTxHash);
   const nftExplorerUrl = buildNftTokenExplorerUrl(nftId);
   const explorerLabel = stellarExpertSegment
-    ? "Stellar Expert"
+    ? "explorador da rede"
     : getExplorerLabel();
 
   useEffect(() => {
@@ -121,7 +124,7 @@ export default function Success() {
           <div className="p-12 space-y-8">
             <div>
               <p className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">
-                {isStellarMainnetPayment
+                {isCeloMainnetPayment || isStellarMainnetPayment
                   ? "VALOR TOTAL CONFIRMADO"
                   : "VALOR TOTAL SIMULADO"}
               </p>
@@ -131,9 +134,13 @@ export default function Success() {
                 })}{" "}
                 {moedaLabel}
               </h2>
-              {isStellarMainnetPayment ? (
+              {isCeloMainnetPayment ? (
                 <p className="text-xs font-black text-slate-400 mt-2">
-                  Liquidação: {mainnetAsset} na Stellar Mainnet
+                  Liquidação: USDGLO na Celo Mainnet
+                </p>
+              ) : isStellarMainnetPayment ? (
+                <p className="text-xs font-black text-slate-400 mt-2">
+                  Liquidação registrada em rede principal
                 </p>
               ) : isStellarTestnetPayment ? (
                 <p className="text-xs font-black text-slate-400 mt-2">
@@ -225,7 +232,7 @@ export default function Success() {
             <div className="relative h-full flex flex-col items-center justify-center p-10 text-center space-y-5 z-10">
               <div className="absolute top-8 right-8 bg-white text-slate-900 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center gap-2">
                 <span className="material-icons text-sm">stars</span>
-                NFT emitido
+                Registro emitido
               </div>
 
               <div className="w-28 h-28 bg-white/10 backdrop-blur-xl rounded-[1.5rem] border border-white/25 flex items-center justify-center">
@@ -235,7 +242,7 @@ export default function Success() {
               </div>
 
               <h3 className="text-5xl font-black uppercase leading-none tracking-tighter drop-shadow-md">
-                {nftData ? nftData.name : "NFT em processamento"}
+                {nftData ? nftData.name : "Registro em processamento"}
               </h3>
               <h4 className="text-2xl font-black uppercase tracking-[0.2em] opacity-80">
                 {nftData
@@ -250,7 +257,7 @@ export default function Success() {
 
           <div className="p-10 space-y-7 text-center">
             <h3 className="text-3xl font-black text-slate-900 tracking-tighter uppercase italic">
-              Seu NFT de Impacto
+              Seu comprovante de impacto
             </h3>
             <p className="text-[10px] text-slate-500 leading-relaxed font-black uppercase tracking-[0.3em]">
               Este colecionável digital intransferível comprova que você ajudou
@@ -268,7 +275,7 @@ export default function Success() {
                 </span>
               </div>
               <p className="text-xl font-black text-slate-900 tracking-tight uppercase leading-none mt-2">
-                MULHERES QUE CODAM • {projetoNome}
+                PONTEIA • {projetoNome}
               </p>
               <div className="pt-3 border-t border-slate-200">
                 {nftExplorerUrl ? (
@@ -279,12 +286,12 @@ export default function Success() {
                     className="text-[11px] font-black uppercase tracking-[0.2em] text-[#002B99] hover:underline inline-flex items-center gap-1"
                     title={`Abrir NFT no ${explorerLabel}`}
                   >
-                    Ver NFT no {explorerLabel}
+                    Ver registro no {explorerLabel}
                     <span className="material-icons text-sm">open_in_new</span>
                   </a>
                 ) : (
                   <span className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-                    NFT indisponível no explorer
+                    Registro indisponível no explorer
                   </span>
                 )}
               </div>
@@ -298,12 +305,20 @@ export default function Success() {
 
 function parseDemoCurrency(value: string | null): DemoCurrencyCode {
   if (value === "BRZ" || value === "XLM") return value;
-  return "USDC";
+  return "BRZ";
 }
 
-type PaymentNetwork = "stellar-mainnet" | "stellar-testnet" | "demo";
+type PaymentNetwork =
+  | "celo-mainnet"
+  | "stellar-mainnet"
+  | "stellar-testnet"
+  | "demo";
 
 function parsePaymentNetwork(value: string | null): PaymentNetwork {
+  if (value === "celo-mainnet") {
+    return value;
+  }
+
   if (value === "stellar-mainnet" || value === "stellar-testnet") {
     return value;
   }
@@ -316,14 +331,16 @@ function getSuccessAssetLabel(input: {
   moeda: DemoCurrencyCode;
   paymentNetwork: PaymentNetwork;
 }) {
+  if (input.paymentNetwork === "celo-mainnet" || input.asset === "USDGLO") {
+    return "USDGLO";
+  }
+
   if (input.paymentNetwork === "stellar-mainnet") {
-    return input.asset === "XLM" ? "XLM Mainnet" : input.asset;
+    return "Ativo legado";
   }
 
   if (input.paymentNetwork === "stellar-testnet" || input.moeda === "XLM") {
-    return input.asset === "XLM" || input.moeda === "XLM"
-      ? "XLM Testnet"
-      : formatDemoCurrencyLabel(input.moeda);
+    return input.asset === "USDGLO" ? "USDGLO" : "Ativo legado";
   }
 
   return formatDemoCurrencyLabel(input.moeda);
@@ -334,15 +351,20 @@ function getTechnicalSettlementLabel(input: {
   moeda: DemoCurrencyCode;
   paymentNetwork: PaymentNetwork;
 }) {
-  if (input.paymentNetwork === "stellar-mainnet") {
-    return input.asset === "XLM" ? "XLM Mainnet" : input.asset;
+  if (input.paymentNetwork === "celo-mainnet" || input.asset === "USDGLO") {
+    return "USDGLO Celo Mainnet";
   }
 
-  return "XLM Testnet";
+  if (input.paymentNetwork === "stellar-mainnet") {
+    return "registro em rede principal";
+  }
+
+  return "ambiente legado";
 }
 
 function getStellarExpertSegment(paymentNetwork: PaymentNetwork) {
   if (paymentNetwork === "stellar-mainnet") return "public";
+  if (paymentNetwork !== "stellar-testnet") return null;
   return "testnet";
 }
 

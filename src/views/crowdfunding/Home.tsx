@@ -34,7 +34,6 @@ const partners = [
     src: "/images/logos-parceiros/institutoCrianca.png",
   },
   { name: "ITS", src: "/images/logos-parceiros/logo_its.png" },
-  { name: "Stellar", src: "/images/logos-parceiros/logo_stella.png" },
 ];
 
 const projectImages: Record<string, string> = {
@@ -138,19 +137,18 @@ export default function Home() {
 
         <div className="relative mx-auto max-w-6xl text-center">
           <h1 className="mx-auto mt-8 max-w-5xl font-[var(--font-body)] text-5xl font-light leading-tight tracking-tight text-[var(--color-white)] sm:text-6xl lg:text-7xl">
-            Apoie mulheres que transformam tecnologia{" "}
+            Conecte recursos a projetos que transformam territórios{" "}
             <span className="whitespace-nowrap">
               em{" "}
               <span className="font-medium text-[var(--color-accent)]">
-                futuro
+                impacto
               </span>
             </span>
           </h1>
 
           <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-white/70">
-            O Mulheres que Codam é uma plataforma de cofinanciamento de impacto
-            social criada para conectar apoiadores a projetos liderados por
-            mulheres.
+            Ponteia é uma plataforma de apoio a projetos de impacto com Celo,
+            USDGLO, PIX e prestação de contas transparente.
           </p>
 
           <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
@@ -177,7 +175,7 @@ export default function Home() {
 
                   <Image
                     src={fotoMeninas}
-                    alt="Sobre o programa Mulheres que Codam"
+                    alt="Pessoas reunidas em programa de impacto social"
                     className="h-[520px] w-full rounded-[1.2rem] object-cover transition duration-700 ease-out group-hover:scale-[1.018]"
                     priority
                   />
@@ -192,26 +190,22 @@ export default function Home() {
                   <h2 className="mt-6 max-w-3xl font-[var(--font-heading)] text-3xl font-semibold leading-tight tracking-tight text-[var(--color-white)] drop-shadow-[0_6px_24px_rgba(0,0,0,0.18)] sm:text-4xl lg:text-[3rem]">
                     Mais que uma vitrine de projetos:
                     <span className="block text-[var(--color-accent)]">
-                      uma ponte entre talento e oportunidade.
+                      uma ponte entre recursos e impacto.
                     </span>
                   </h2>
 
                   <div className="mt-6 h-[3px] w-24 rounded-full bg-gradient-to-r from-[var(--color-accent)] via-white/80 to-transparent" />
 
                   <p className="mt-8 max-w-2xl text-lg leading-9 text-white/80 sm:text-xl">
-                    O{" "}
-                    <span className="font-semibold text-white">
-                      Mulheres que Codam
-                    </span>{" "}
-                    nasceu para ampliar o acesso de mulheres à tecnologia, ao
-                    empreendedorismo e às redes de apoio.
+                    A <span className="font-semibold text-white">Ponteia</span>{" "}
+                    nasceu para aproximar apoiadores, organizações e projetos
+                    sociais, culturais e ambientais com governança simples.
                   </p>
 
                   <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--color-white)] sm:text-lg">
-                    A plataforma reúne projetos de impacto social, iniciativas
-                    femininas e pessoas dispostas a construir um futuro digital
-                    mais justo, conectando visibilidade, apoio financeiro e
-                    transformação real.
+                    A plataforma reúne iniciativas de impacto, opções de doação
+                    em USDGLO na Celo Mainnet, PIX direto para a organização e
+                    evidências para prestação de contas.
                   </p>
                 </div>
               </div>
@@ -508,12 +502,12 @@ export default function Home() {
               {
                 question: "O que é a plataforma?",
                 answer:
-                  "É uma plataforma de financiamento coletivo baseada na rede Stellar, criada para conectar pessoas apoiadoras a projetos de impacto social liderados por mulheres.",
+                  "Ponteia é uma plataforma de apoio a projetos de impacto social, cultural e ambiental, conectando recursos, doações em USDGLO, PIX e prestação de contas.",
               },
               {
                 question: "Preciso entender blockchain para doar?",
                 answer:
-                  "Não. A interface foi desenhada sem jargões complexos. Você só precisa conectar uma carteira compatível e seguir as instruções.",
+                  "Não. A interface foi desenhada sem jargões complexos. Você pode apoiar via PIX ou conectar uma carteira EVM compatível para contribuir em USDGLO na Celo.",
               },
               {
                 question: "Minha doação pode ser deduzida?",
@@ -523,7 +517,7 @@ export default function Home() {
               {
                 question: "O que é o Certificado Digital de Impacto?",
                 answer:
-                  "É um registro digital intransferível na rede Stellar que serve como prova transparente do seu apoio ao projeto.",
+                  "É um registro de apoio vinculado à prestação de contas do projeto, pensado para facilitar transparência e acompanhamento de impacto.",
               },
               {
                 question: "Empresas podem doar?",
@@ -538,7 +532,7 @@ export default function Home() {
               {
                 question: "Como ONGs enviam projetos?",
                 answer:
-                  "Representantes devem cadastrar a iniciativa, informar os dados da organização, definir a carteira Stellar e submeter o projeto para revisão administrativa.",
+                  "Representantes devem cadastrar a iniciativa, informar os dados da organização, definir a wallet EVM/Celo para USDGLO, configurar PIX quando houver e submeter o projeto para revisão administrativa.",
               },
               {
                 question: "Quais documentos são necessários?",
@@ -546,9 +540,9 @@ export default function Home() {
                   "Documentação legal da ONG, CNPJ ativo e certificados governamentais relativos às tags fiscais escolhidas.",
               },
               {
-                question: "O que é Stellar?",
+                question: "O que é Celo?",
                 answer:
-                  "Stellar é uma rede blockchain de código aberto otimizada para pagamentos rápidos, seguros e com taxas mínimas.",
+                  "Celo é uma rede EVM voltada a aplicações financeiras acessíveis, usada pela plataforma para preparar contribuições em USDGLO.",
               },
               {
                 question: "Por que usar blockchain?",

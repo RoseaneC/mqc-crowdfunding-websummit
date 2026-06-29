@@ -7,13 +7,21 @@ import {
   useMemo,
   type ReactNode,
 } from "react";
-import { usePrivy, useWallets, type User } from "@privy-io/react-auth";
+import {
+  usePrivy,
+  useWallets,
+  type ConnectedWallet,
+  type EIP1193Provider,
+  type User,
+} from "@privy-io/react-auth";
 import {
   useCreateWallet,
   useSignRawHash,
 } from "@privy-io/react-auth/extended-chains";
 
 type WalletAction = () => void | Promise<void>;
+type GetEvmProviderAction = () => Promise<EIP1193Provider | null>;
+type SwitchEvmChainAction = (chainId: number) => Promise<void>;
 type CreateStellarWalletAction = () => Promise<string | null>;
 type SignStellarHashAction = (
   hash: `0x${string}`,
@@ -45,6 +53,8 @@ export type PrivyWalletAbstraction = {
   login: WalletAction;
   logout: WalletAction;
   connectWallet: WalletAction;
+  getEvmProvider: GetEvmProviderAction;
+  switchEvmChain: SwitchEvmChainAction;
 };
 
 export type PrivyWalletEnv = {
@@ -54,6 +64,8 @@ export type PrivyWalletEnv = {
 };
 
 const noopWalletAction: WalletAction = () => undefined;
+const noopGetEvmProvider: GetEvmProviderAction = () => Promise.resolve(null);
+const noopSwitchEvmChain: SwitchEvmChainAction = () => Promise.resolve();
 const noopCreateStellarWallet: CreateStellarWalletAction = () =>
   Promise.resolve(null);
 const noopSignStellarHash: SignStellarHashAction = () =>
@@ -83,6 +95,8 @@ export const disabledPrivyWalletAbstraction: PrivyWalletAbstraction = {
   login: noopWalletAction,
   logout: noopWalletAction,
   connectWallet: noopWalletAction,
+  getEvmProvider: noopGetEvmProvider,
+  switchEvmChain: noopSwitchEvmChain,
 };
 
 export const PrivyWalletAbstractionContext =
@@ -189,6 +203,22 @@ export function PrivyWalletAbstractionBridge({
 
         privy.login();
       },
+      getEvmProvider: async () => {
+        const wallet = getConnectedEvmWallet(privyWallets.wallets);
+
+        if (!wallet) return null;
+
+        return wallet.getEthereumProvider();
+      },
+      switchEvmChain: async (chainId) => {
+        const wallet = getConnectedEvmWallet(privyWallets.wallets);
+
+        if (!wallet) {
+          throw new Error("Carteira EVM não conectada.");
+        }
+
+        await wallet.switchChain(chainId);
+      },
     }),
     [
       hasPrivyConfigured,
@@ -199,6 +229,7 @@ export function PrivyWalletAbstractionBridge({
       signRawHash,
       activeWalletType,
       evmAddress,
+      privyWallets.wallets,
       shortEvmAddress,
       shortStellarAddress,
       stellarAddress,
@@ -210,6 +241,12 @@ export function PrivyWalletAbstractionBridge({
     { value },
     children,
   );
+}
+
+function getConnectedEvmWallet(
+  wallets: Array<ConnectedWallet>,
+): ConnectedWallet | null {
+  return wallets.find((wallet) => wallet.type === "ethereum") ?? null;
 }
 
 export function usePrivyWalletAbstraction(): PrivyWalletAbstraction {

@@ -1,8 +1,8 @@
 import LegalPage from "../../components/legal/legalPage";
 
 export const metadata = {
-  title: "Política de Cookies | Mulheres Que Codam",
-  description: "Política de Cookies da plataforma Mulheres Que Codam.",
+  title: "Política de Cookies | Ponteia",
+  description: "Política de Cookies da plataforma Ponteia.",
 };
 
 export default function CookiesPage() {
@@ -10,14 +10,14 @@ export default function CookiesPage() {
     <LegalPage
       eyebrow="Cookies"
       title="Política de Cookies"
-      description="Esta política explica como a plataforma Mulheres Que Codam utiliza cookies e tecnologias semelhantes para melhorar a experiência, proteger sessões e apoiar funcionalidades relacionadas à rede Stellar."
+      description="Esta política explica como a plataforma Ponteia utiliza cookies e tecnologias semelhantes para melhorar a experiência, proteger sessões e apoiar funcionalidades de doação, carteira digital e prestação de contas."
       lastUpdated="05 de março de 2026"
       sections={[
         {
           title: "1. Sobre esta Política",
           paragraphs: [
-            "A plataforma Mulheres Que Codam, operada em parceria pelo Instituto Florescer Caldeira e pela ITS Cripto Educacional, utiliza cookies e tecnologias semelhantes para garantir uma experiência mais segura, funcional e personalizada.",
-            "Essas tecnologias também podem apoiar recursos técnicos relacionados à navegação, autenticação, integração com carteiras digitais, emissão de recibos digitais e interação com funcionalidades baseadas na rede Stellar.",
+            "A plataforma Ponteia, operada em parceria pelo Instituto Florescer Caldeira e pela ITS Cripto Educacional, utiliza cookies e tecnologias semelhantes para garantir uma experiência mais segura, funcional e personalizada.",
+            "Essas tecnologias também podem apoiar recursos técnicos relacionados à navegação, autenticação, integração com carteiras digitais, emissão de recibos digitais, PIX e interação com funcionalidades baseadas na rede Celo.",
           ],
         },
         {
@@ -31,7 +31,7 @@ export default function CookiesPage() {
           title: "3. Cookies essenciais",
           paragraphs: [
             "Utilizamos cookies essenciais para permitir o funcionamento básico e seguro da plataforma.",
-            "Esses cookies podem ser necessários para login, manutenção de sessão, navegação entre páginas, proteção contra uso indevido e integração com a carteira Stellar durante operações realizadas pela pessoa usuária.",
+            "Esses cookies podem ser necessários para login, manutenção de sessão, navegação entre páginas, proteção contra uso indevido e integração com carteira EVM durante operações realizadas pela pessoa usuária.",
             "Sem esses cookies, algumas funcionalidades podem não funcionar corretamente, incluindo recursos relacionados à visualização de recibos digitais, conexão de carteira ou acompanhamento de interações realizadas na plataforma.",
           ],
         },
@@ -63,7 +63,7 @@ export default function CookiesPage() {
           title: "7. Como gerenciar cookies",
           paragraphs: [
             "A pessoa usuária pode configurar seu navegador para bloquear, remover ou alertar sobre o uso de cookies.",
-            "No entanto, a desativação de cookies essenciais poderá comprometer o funcionamento da plataforma e impedir o acesso a determinadas funcionalidades, como login, conexão com carteira, manutenção de sessão ou visualização de recibos digitais em NFT.",
+            "No entanto, a desativação de cookies essenciais poderá comprometer o funcionamento da plataforma e impedir o acesso a determinadas funcionalidades, como login, conexão com carteira, manutenção de sessão ou visualização de recibos digitais.",
             "As configurações de cookies podem variar conforme o navegador utilizado. Consulte as opções de privacidade e segurança do seu navegador para ajustar suas preferências.",
           ],
         },

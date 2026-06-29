@@ -15,24 +15,19 @@ export default function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-start gap-3 mb-4">
-              {/* Logo textual igual navbar */}
               <div className="flex flex-col leading-none">
                 <span className="font-display font-black uppercase tracking-tight text-white text-lg leading-none">
-                  Mulheres
+                  Ponteia
                 </span>
-
-                <span className="-mt-1 font-display font-black uppercase tracking-tight text-white text-sm sm:text-base leading-none">
-                  <span className="inline-flex items-baseline gap-1 sm:gap-1.5">
-                    <span>Que</span>
-                    <span className="text-accent">Codam</span>
-                  </span>
+                <span className="mt-1 font-display text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+                  Impacto com transparência
                 </span>
               </div>
             </div>
 
             <p className="text-gray-400 text-sm leading-relaxed mb-6 max-w-xs">
-              Juntas programando o futuro. Transformando vidas através da
-              educação em tecnologia.
+              Conectando recursos a projetos de impacto com Celo, USDGLO, PIX e
+              prestação de contas.
             </p>
             <div className="flex items-center gap-3">
               {[
@@ -171,7 +166,7 @@ export default function Footer() {
         {/* Bottom */}
         <div className="border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-xs">
-            © 2026 Mulheres que Codam. Todos os direitos reservados.
+            © 2026 Ponteia. Todos os direitos reservados.
           </p>
 
           <div className="flex items-center gap-4 text-xs text-gray-500">
@@ -179,7 +174,7 @@ export default function Footer() {
               <span className="w-2 h-2 rounded-full bg-green-400" />
               Plataforma online
             </span>
-            <span>Com tecnologia Stellar</span>
+            <span>Celo, USDGLO e PIX</span>
           </div>
         </div>
       </div>

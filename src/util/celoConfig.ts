@@ -7,6 +7,8 @@ export type CeloConfig = {
   chainId: number;
   rpcUrl: string;
   usdgloAddress: `0x${string}`;
+  usdcEnabled: boolean;
+  usdcAddress: `0x${string}` | null;
 };
 
 export function getCeloConfig(): CeloConfig {
@@ -18,13 +20,21 @@ export function getCeloConfig(): CeloConfig {
   const usdgloAddress = (
     process.env.NEXT_PUBLIC_USDGLO_CELO_ADDRESS?.trim() || USDGLO_CELO_ADDRESS
   ).toLowerCase();
+  const usdcAddress = process.env.NEXT_PUBLIC_USDC_CELO_ADDRESS?.trim() ?? "";
   const enabled = process.env.NEXT_PUBLIC_ENABLE_CELO_USDGLO === "true";
+  const usdcEnabled =
+    process.env.NEXT_PUBLIC_ENABLE_CELO_USDC === "true" &&
+    /^0x[a-fA-F0-9]{40}$/.test(usdcAddress);
 
   return {
     enabled,
     chainId,
     rpcUrl,
     usdgloAddress: usdgloAddress as `0x${string}`,
+    usdcEnabled,
+    usdcAddress: usdcEnabled
+      ? (usdcAddress.toLowerCase() as `0x${string}`)
+      : null,
   };
 }
 
@@ -36,5 +46,16 @@ export function isCeloUsdgloEnabled() {
     config.chainId === CELO_MAINNET_CHAIN_ID &&
     config.rpcUrl.length > 0 &&
     config.usdgloAddress.toLowerCase() === USDGLO_CELO_ADDRESS
+  );
+}
+
+export function isCeloUsdcEnabled() {
+  const config = getCeloConfig();
+
+  return (
+    config.usdcEnabled &&
+    config.chainId === CELO_MAINNET_CHAIN_ID &&
+    config.rpcUrl.length > 0 &&
+    Boolean(config.usdcAddress)
   );
 }

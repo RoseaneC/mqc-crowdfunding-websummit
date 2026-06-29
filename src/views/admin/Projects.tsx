@@ -2,22 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../../providers/AuthProvider";
 import {
   createProject,
-  createTaxTransfer,
   featureAdminProject,
   getAdminProjectSummary,
-  getTaxTransferBudget,
   listAdminPendingProjects,
   listMyAdminProjects,
-  listTaxTransfers,
   rejectAdminProject,
   type AdminProjectPendingDTO,
-  type AdminTransferDTO,
   updateProjectStatus,
 } from "../../util/crowdfundingApi";
-import {
-  buildTransactionExplorerUrl,
-  getExplorerLabel,
-} from "../../util/explorerLinks";
 import {
   calculateProjectDonationMetrics,
   formatDonationAmount,
@@ -45,13 +37,7 @@ export default function Projects() {
       createdAt: string;
     }>
   >([]);
-  const [budget, setBudget] = useState<number>(0);
-  const [transfers, setTransfers] = useState<AdminTransferDTO[]>([]);
-  const [toWallet, setToWallet] = useState("");
-  const [amountXlm, setAmountXlm] = useState("");
-  const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
   const [isSubmittingProject, setIsSubmittingProject] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
   const [projectFeedback, setProjectFeedback] = useState<string | null>(null);
   const [projectForm, setProjectForm] = useState({
     ngoName: "",
@@ -67,7 +53,6 @@ export default function Projects() {
     pixQrCodeUrl: "",
     axes: ["SOCIAL"],
   });
-  const explorerLabel = getExplorerLabel();
 
   const selected = useMemo(
     () => projects.find((project) => project.id === selectedId) ?? projects[0],
@@ -94,31 +79,12 @@ export default function Projects() {
     setMyProjects(data);
   };
 
-  const loadTransfers = async () => {
-    if (!isSuperadmin) {
-      setBudget(0);
-      setTransfers([]);
-      return;
-    }
-
-    const [budgetData, transferData] = await Promise.all([
-      getTaxTransferBudget(),
-      listTaxTransfers(),
-    ]);
-    setBudget(Number(budgetData.availableXlm));
-    setTransfers(transferData);
-  };
-
   useEffect(() => {
     if (isSuperadmin) {
       void loadSuperadmin().catch(() => {});
       return;
     }
     void loadProjectOwner().catch(() => {});
-  }, [isSuperadmin]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    void loadTransfers().catch(() => {});
   }, [isSuperadmin]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -200,31 +166,6 @@ export default function Projects() {
     }
   };
 
-  const handleCreateTransfer = async () => {
-    if (!toWallet || Number(amountXlm) <= 0) return;
-    setFeedback(null);
-    setIsSubmittingTransfer(true);
-    try {
-      const result = await createTaxTransfer({
-        toWallet,
-        amountXlm: Number(amountXlm),
-      });
-      if (result.error) throw new Error(result.error);
-      setToWallet("");
-      setAmountXlm("");
-      await loadTransfers();
-      setFeedback("Transferência criada com sucesso.");
-    } catch (error) {
-      setFeedback(
-        error instanceof Error
-          ? error.message
-          : "Falha ao criar transferência.",
-      );
-    } finally {
-      setIsSubmittingTransfer(false);
-    }
-  };
-
   return (
     <div className="animate-fade-in space-y-8">
       <div>
@@ -233,7 +174,7 @@ export default function Projects() {
         </h1>
         <p className="text-slate-500 mt-1 text-sm">
           {isSuperadmin
-            ? "Aprove projetos e execute transferências de taxa."
+            ? "Aprove projetos, revise wallets EVM e acompanhe PIX configurado."
             : "Envie seus projetos para aprovação e acompanhe o status."}
         </p>
       </div>
@@ -322,7 +263,17 @@ export default function Projects() {
                     </p>
                     <p>
                       <span className="font-bold">PIX:</span>{" "}
-                      {selected.pixKey ?? "nao informado"}
+                      {selected.pixKey || selected.pixQrCodeUrl
+                        ? "configurado"
+                        : "nao configurado"}
+                    </p>
+                    <p>
+                      <span className="font-bold">Chave PIX:</span>{" "}
+                      {selected.pixKey ?? "nao informada"}
+                    </p>
+                    <p>
+                      <span className="font-bold">QR Code PIX:</span>{" "}
+                      {selected.pixQrCodeUrl ?? "nao informado"}
                     </p>
                   </div>
                 </>
@@ -521,109 +472,6 @@ export default function Projects() {
           </div>
         </div>
       )}
-
-      {isSuperadmin ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-6">
-          <h3 className="text-lg font-black text-slate-900">
-            Transferência de Taxas
-          </h3>
-
-          <p className="text-sm text-slate-500">
-            Saldo disponível:{" "}
-            <span className="font-black text-[#002B99]">
-              {budget.toLocaleString("pt-BR")} XLM
-            </span>
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <input
-              value={toWallet}
-              onChange={(e) => setToWallet(e.target.value)}
-              placeholder="Wallet destino (G...)"
-              className="rounded-xl border border-slate-300 px-4 py-3"
-            />
-            <input
-              value={amountXlm}
-              onChange={(e) => setAmountXlm(e.target.value)}
-              type="number"
-              min="0"
-              step="0.0000001"
-              placeholder="Valor em XLM"
-              className="rounded-xl border border-slate-300 px-4 py-3"
-            />
-          </div>
-          <button
-            type="button"
-            disabled={isSubmittingTransfer}
-            onClick={() => void handleCreateTransfer()}
-            className="rounded-xl bg-[#002B99] text-white px-5 py-3 text-sm font-black uppercase tracking-wider disabled:opacity-60"
-          >
-            {isSubmittingTransfer ? "Processando..." : "Executar Transferência"}
-          </button>
-          {feedback ? (
-            <p className="text-xs font-bold text-slate-600 break-all">
-              {feedback}
-            </p>
-          ) : null}
-
-          <div className="space-y-3">
-            <h4 className="text-sm font-black text-slate-700 uppercase tracking-wider">
-              Histórico
-            </h4>
-            {transfers.map((transfer) => (
-              <div
-                key={transfer.id}
-                className="border border-slate-200 rounded-xl p-3 text-xs"
-              >
-                <p>
-                  <span className="font-bold">Destino:</span>{" "}
-                  {transfer.toWallet}
-                </p>
-                <p>
-                  <span className="font-bold">Valor:</span>{" "}
-                  {Number(transfer.amountXlm).toLocaleString("pt-BR")} XLM
-                </p>
-                <p>
-                  <span className="font-bold">Status:</span> {transfer.status}
-                </p>
-                {transfer.txHash ? (
-                  <p className="break-all">
-                    <span className="font-bold">Tx:</span>{" "}
-                    {buildTransactionExplorerUrl(transfer.txHash) ? (
-                      <a
-                        href={
-                          buildTransactionExplorerUrl(transfer.txHash) ?? "#"
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#002B99] hover:underline inline-flex items-center gap-1"
-                        title={`Abrir transacao no ${explorerLabel}`}
-                      >
-                        {transfer.txHash}
-                        <span className="material-icons text-sm">
-                          open_in_new
-                        </span>
-                      </a>
-                    ) : (
-                      transfer.txHash
-                    )}
-                  </p>
-                ) : null}
-                {transfer.failureReason ? (
-                  <p className="text-red-600 break-all">
-                    {transfer.failureReason}
-                  </p>
-                ) : null}
-              </div>
-            ))}
-            {transfers.length === 0 ? (
-              <p className="text-xs text-slate-500">
-                Sem transferências ainda.
-              </p>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -675,10 +523,10 @@ function MyProjectCard(props: {
         </span>
       </div>
       <p className="text-xs text-slate-500">
-        Meta: {formatDonationAmount(metrics.targetAmount)} XLM
+        Meta: {formatDonationAmount(metrics.targetAmount)} USDGLO
       </p>
       <p className="text-xs text-slate-500">
-        Captado: {formatDonationAmount(metrics.totalRaised)} XLM
+        Captado: {formatDonationAmount(metrics.totalRaised)} USDGLO
       </p>
     </div>
   );

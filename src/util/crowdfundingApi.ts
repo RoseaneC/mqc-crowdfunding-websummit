@@ -535,7 +535,7 @@ export function prepareDonation(payload: {
 
 export function submitDonation(payload: {
   donationId?: number;
-  projectId?: number;
+  projectId?: number | string;
   projectName?: string;
   donorType?: "PF" | "PJ";
   document?: string;
