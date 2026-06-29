@@ -3,9 +3,9 @@ import "../index.css";
 import "@stellar/design-system/build/styles.min.css";
 
 export const metadata: Metadata = {
-  title: "Mulheres Que Codam | Plataforma de Impacto",
+  title: "Ponteia | Plataforma de Impacto",
   description:
-    "Plataforma de financiamento coletivo para projetos liderados por mulheres.",
+    "Plataforma de apoio a projetos de impacto com Celo, USDGLO, PIX e prestação de contas.",
 };
 
 export default function RootLayout({

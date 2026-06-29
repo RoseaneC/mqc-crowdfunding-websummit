@@ -11,7 +11,7 @@ const privyConfig = {
   appearance: {
     theme: "light",
     accentColor: "#3f2fff",
-    landingHeader: "Mulheres Que Codam",
+    landingHeader: "Ponteia",
     loginMessage: "Entre para apoiar projetos de impacto com segurança.",
     walletChainType: "ethereum-only",
   },

@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, Menu, X } from "lucide-react";
-import { useWallet } from "../../hooks/useWallet";
 import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
-import { connectWallet, disconnectWallet } from "../../util/wallet";
 
 type NavItem = {
   label: string;
@@ -14,7 +12,6 @@ const WALLET_PENDING_TIMEOUT_MS = 12000;
 
 export default function Navbar() {
   const location = useLocation();
-  const { address } = useWallet();
   const privyWallet = usePrivyWalletAbstraction();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [walletActionPending, setWalletActionPending] = useState(false);
@@ -35,45 +32,23 @@ export default function Navbar() {
     setMobileOpen(false);
   }, [location.pathname]);
 
-  const shortAddress = address
-    ? `${address.slice(0, 6)}...${address.slice(-4)}`
-    : null;
   const usesPrivyWallet = privyWallet.isUsingPrivy;
-  const hasConnectedWallet = usesPrivyWallet
-    ? privyWallet.authenticated
-    : Boolean(address);
+  const hasConnectedWallet = privyWallet.authenticated;
   const privyWalletStatusLabel =
-    privyWallet.activeWalletType === "stellar"
-      ? "Carteira Stellar conectada"
-      : privyWallet.activeWalletType === "evm"
-        ? "Carteira EVM conectada"
-        : "Conta conectada";
+    privyWallet.activeWalletType === "evm"
+      ? "Carteira EVM conectada"
+      : "Conta conectada";
   const privyWalletAddressLabel =
-    privyWallet.activeWalletType === "stellar" &&
-    privyWallet.shortStellarAddress
-      ? `Stellar ${privyWallet.shortStellarAddress}`
-      : privyWallet.shortEvmAddress
-        ? `EVM ${privyWallet.shortEvmAddress}`
-        : "Conta conectada";
-  const connectedWalletLabel = usesPrivyWallet
-    ? privyWalletAddressLabel
-    : shortAddress;
-  const shouldShowCreateStellarAction =
-    usesPrivyWallet &&
-    privyWallet.authenticated &&
-    !privyWallet.hasStellarWallet;
+    privyWallet.shortEvmAddress ?? "Conta conectada";
+  const connectedWalletLabel = privyWalletAddressLabel;
   const isWalletButtonDisabled =
     walletActionPending || (usesPrivyWallet && !privyWallet.ready);
   const connectWalletLabel = usesPrivyWallet
     ? walletActionPending
       ? "Abrindo..."
       : "Entrar / Conectar carteira"
-    : walletActionPending
-      ? "Conectando..."
-      : "Conectar carteira";
-  const disconnectWalletLabel = usesPrivyWallet
-    ? "Sair da conta"
-    : "Sair da carteira";
+    : "Entrar / Conectar carteira";
+  const disconnectWalletLabel = "Sair da conta";
 
   const handleConnect = async () => {
     if (walletActionPending) return;
@@ -86,8 +61,6 @@ export default function Navbar() {
     try {
       if (usesPrivyWallet) {
         await Promise.resolve(privyWallet.login());
-      } else {
-        await connectWallet();
       }
     } finally {
       window.clearTimeout(timeout);
@@ -106,31 +79,7 @@ export default function Navbar() {
     try {
       if (usesPrivyWallet) {
         await Promise.resolve(privyWallet.logout());
-      } else {
-        await disconnectWallet();
       }
-    } finally {
-      window.clearTimeout(timeout);
-      setWalletActionPending(false);
-    }
-  };
-
-  const handleCreateStellarWallet = async () => {
-    if (walletActionPending) return;
-
-    setWalletActionPending(true);
-    const timeout = window.setTimeout(() => {
-      setWalletActionPending(false);
-    }, WALLET_PENDING_TIMEOUT_MS);
-
-    try {
-      await privyWallet.createStellarWallet();
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Não foi possível criar a carteira Stellar agora.";
-      alert(message);
     } finally {
       window.clearTimeout(timeout);
       setWalletActionPending(false);
@@ -148,16 +97,16 @@ export default function Navbar() {
         >
           <span className="hidden flex-col leading-none lg:flex">
             <span className="font-[var(--font-heading)] text-sm font-black uppercase tracking-[0.08em] text-[var(--color-white)]">
-              Mulheres
+              Ponteia
             </span>
-            <span className="font-[var(--font-heading)] text-lg font-black uppercase tracking-[0.04em] text-[var(--color-white)]">
-              Que <span className="text-[var(--color-accent)]">Codam</span>
+            <span className="font-[var(--font-heading)] text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-accent)]">
+              Impacto com transparência
             </span>
           </span>
 
           <span className="flex items-center lg:hidden">
             <span className="font-[var(--font-heading)] text-2xl font-black uppercase text-[var(--color-white)]">
-              MQ<span className="text-[var(--color-accent)]">C</span>
+              Ponte<span className="text-[var(--color-accent)]">ia</span>
             </span>
           </span>
         </Link>
@@ -197,27 +146,14 @@ export default function Navbar() {
               <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2">
                 <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
                 <span className="flex flex-col leading-tight">
-                  {usesPrivyWallet ? (
-                    <span className="text-[10px] font-semibold text-white/65">
-                      {privyWalletStatusLabel}
-                    </span>
-                  ) : null}
+                  <span className="text-[10px] font-semibold text-white/65">
+                    {privyWalletStatusLabel}
+                  </span>
                   <span className="text-xs font-bold text-[var(--color-white)]">
                     {connectedWalletLabel}
                   </span>
                 </span>
               </div>
-
-              {shouldShowCreateStellarAction ? (
-                <button
-                  type="button"
-                  onClick={() => void handleCreateStellarWallet()}
-                  disabled={walletActionPending}
-                  className="rounded-full border border-[var(--color-accent)]/70 px-4 py-2 text-xs font-semibold text-[var(--color-accent)] transition hover:bg-white/10 disabled:opacity-60"
-                >
-                  Criar carteira Stellar
-                </button>
-              ) : null}
 
               <button
                 type="button"
@@ -283,25 +219,12 @@ export default function Navbar() {
             <div className="space-y-3">
               <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
                 <p className="text-xs font-semibold text-white/65">
-                  {usesPrivyWallet
-                    ? privyWalletStatusLabel
-                    : "Carteira conectada"}
+                  {privyWalletStatusLabel}
                 </p>
                 <p className="mt-1 text-sm font-bold text-[var(--color-white)]">
                   {connectedWalletLabel}
                 </p>
               </div>
-
-              {shouldShowCreateStellarAction ? (
-                <button
-                  type="button"
-                  onClick={() => void handleCreateStellarWallet()}
-                  disabled={walletActionPending}
-                  className="w-full rounded-full border border-[var(--color-accent)] py-4 font-semibold text-[var(--color-accent)] transition hover:bg-white/10 disabled:opacity-60"
-                >
-                  Criar carteira Stellar
-                </button>
-              ) : null}
 
               <button
                 type="button"

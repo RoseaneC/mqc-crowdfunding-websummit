@@ -11,7 +11,7 @@ export default function Login() {
           Entrar com carteira
         </h1>
         <p className="text-slate-500">
-          Use sua carteira Stellar para autenticar no painel de doações.
+          Use sua conta ou carteira EVM para autenticar no painel de doações.
         </p>
         <button
           onClick={() => void connectWallet()}

@@ -1,8 +1,8 @@
 import LegalPage from "../../components/legal/legalPage";
 
 export const metadata = {
-  title: "Termos de Uso | Mulheres Que Codam",
-  description: "Termos e Condições de Uso da plataforma Mulheres Que Codam.",
+  title: "Termos de Uso | Ponteia",
+  description: "Termos e Condições de Uso da plataforma Ponteia.",
 };
 
 export default function TermsPage() {
@@ -10,14 +10,14 @@ export default function TermsPage() {
     <LegalPage
       eyebrow="Termos"
       title="Termos e Condições de Uso"
-      description="Estes termos definem as condições gerais para acesso e uso da plataforma de financiamento coletivo Mulheres Que Codam."
+      description="Estes termos definem as condições gerais para acesso e uso da plataforma Ponteia."
       lastUpdated="maio de 2026"
       sections={[
         {
           title: "1. Aceitação e objeto",
           paragraphs: [
-            "Ao acessar ou utilizar a plataforma Mulheres Que Codam — Hub de Impacto, a pessoa usuária declara que leu, compreendeu e concorda com estes Termos e Condições de Uso.",
-            "A plataforma tem como objeto facilitar doações, captação de recursos e apoio a projetos e startups fundadas ou lideradas por mulheres, utilizando infraestrutura tecnológica baseada na rede Stellar.",
+            "Ao acessar ou utilizar a plataforma Ponteia, a pessoa usuária declara que leu, compreendeu e concorda com estes Termos e Condições de Uso.",
+            "A plataforma tem como objeto facilitar doações, captação de recursos e apoio a projetos de impacto social, cultural e ambiental, utilizando PIX, Celo, USDGLO e ferramentas de prestação de contas.",
             "Caso a pessoa usuária não concorde com qualquer disposição destes Termos, recomenda-se que não utilize a plataforma.",
           ],
         },
@@ -30,10 +30,10 @@ export default function TermsPage() {
           ],
         },
         {
-          title: "3. Tecnologia Stellar e ativos digitais de impacto",
+          title: "3. Tecnologia Celo, USDGLO e ativos digitais de impacto",
           paragraphs: [
-            "A plataforma pode utilizar a rede Stellar para registrar determinadas operações, conferir transparência ao fluxo financeiro e viabilizar a emissão de ativos digitais relacionados às contribuições realizadas.",
-            "Ao confirmar uma contribuição, a pessoa doadora poderá receber um NFT ou outro registro digital na rede Stellar, que servirá como recibo digital ou comprovação tecnológica da operação realizada.",
+            "A plataforma pode utilizar a rede Celo e o token USDGLO para registrar determinadas operações, conferir transparência ao fluxo financeiro e apoiar a rastreabilidade das contribuições realizadas.",
+            "Ao confirmar uma contribuição, a pessoa doadora poderá receber comprovantes, recibos ou registros digitais associados ao projeto apoiado, conforme a funcionalidade disponível no momento da operação.",
             "A pessoa usuária reconhece que transações registradas em blockchain podem ser públicas, verificáveis, permanentes e irreversíveis após confirmação na rede.",
             "Antes de confirmar qualquer transação, a pessoa usuária deve revisar cuidadosamente os dados informados, incluindo valor, carteira conectada, chave pública, rede utilizada e demais informações exibidas pela plataforma ou pela carteira digital.",
           ],
@@ -61,7 +61,7 @@ export default function TermsPage() {
             "A pessoa usuária compromete-se a utilizar a plataforma de forma ética, legal, transparente e compatível com sua finalidade.",
             "É responsabilidade da pessoa usuária fornecer informações verdadeiras, completas e atualizadas, bem como revisar os dados antes de confirmar qualquer operação.",
             "A pessoa usuária é responsável pela guarda e segurança de sua carteira digital, chaves privadas, senhas, dispositivos, frases de recuperação e demais mecanismos de autenticação.",
-            "A Mulheres Que Codam, o Instituto Florescer Caldeira e a ITS Cripto Educacional nunca solicitarão chaves privadas, seed phrases ou senhas de carteiras digitais.",
+            "A Ponteia, o Instituto Florescer Caldeira e a ITS Cripto Educacional nunca solicitarão chaves privadas, seed phrases ou senhas de carteiras digitais.",
           ],
         },
         {

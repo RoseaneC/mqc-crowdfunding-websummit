@@ -1,8 +1,8 @@
 import LegalPage from "../../components/legal/legalPage";
 
 export const metadata = {
-  title: "Política de Privacidade | Mulheres Que Codam",
-  description: "Política de Privacidade da plataforma Mulheres Que Codam.",
+  title: "Política de Privacidade | Ponteia",
+  description: "Política de Privacidade da plataforma Ponteia.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -10,14 +10,14 @@ export default function PrivacyPolicyPage() {
     <LegalPage
       eyebrow="Privacidade"
       title="Política de Privacidade (LGPD)"
-      description="Esta política explica como a Mulheres Que Codam pode coletar, utilizar, compartilhar e proteger informações relacionadas ao uso da plataforma."
+      description="Esta política explica como a Ponteia pode coletar, utilizar, compartilhar e proteger informações relacionadas ao uso da plataforma."
       lastUpdated="maio de 2026"
       sections={[
         {
           title: "1. Agentes de tratamento",
           paragraphs: [
-            "Para fins desta Política de Privacidade, o Instituto Florescer Caldeira e a ITS Cripto Educacional atuam como controladores dos dados pessoais tratados no contexto da plataforma Mulheres Que Codam, definindo as finalidades e os meios de tratamento aplicáveis.",
-            "A rede Stellar é uma infraestrutura tecnológica descentralizada utilizada para registro de determinadas operações em blockchain. Por sua natureza pública e distribuída, informações registradas na rede podem ser verificáveis por terceiros e não dependem exclusivamente dos controladores para sua manutenção.",
+            "Para fins desta Política de Privacidade, o Instituto Florescer Caldeira e a ITS Cripto Educacional atuam como controladores dos dados pessoais tratados no contexto da plataforma Ponteia, definindo as finalidades e os meios de tratamento aplicáveis.",
+            "A rede Celo é uma infraestrutura tecnológica descentralizada utilizada para registro de determinadas operações em blockchain. Por sua natureza pública e distribuída, informações registradas na rede podem ser verificáveis por terceiros e não dependem exclusivamente dos controladores para sua manutenção.",
             "Serviços técnicos, provedores de infraestrutura, ferramentas de hospedagem, carteiras digitais e outros parceiros operacionais poderão atuar como operadores ou prestadores de serviço, conforme o caso, sempre de acordo com as finalidades descritas nesta Política.",
           ],
         },
@@ -25,8 +25,8 @@ export default function PrivacyPolicyPage() {
           title: "2. Dados coletados e finalidades",
           paragraphs: [
             "Podemos coletar dados de identificação, como nome, CPF e e-mail, quando necessários para viabilizar a emissão de recibos legais de doação, cumprir obrigações regulatórias, prevenir fraudes e apoiar procedimentos relacionados à prevenção à lavagem de dinheiro.",
-            "Também podemos tratar dados relacionados à blockchain, como endereço público da carteira Stellar, identificadores de transações, registros públicos de contribuição, Tokens de Impacto e NFTs-recibo vinculados à participação da pessoa usuária na plataforma.",
-            "Dados socioeconômicos poderão ser coletados, quando aplicável, para composição de relatórios de impacto social, prestação de contas, mensuração de resultados e atendimento a requisitos de parceiros institucionais, como a Stellar Development Foundation.",
+            "Também podemos tratar dados relacionados à blockchain, como endereço público de carteira EVM, identificadores de transações, registros públicos de contribuição e comprovantes digitais vinculados à participação da pessoa usuária na plataforma.",
+            "Dados socioeconômicos poderão ser coletados, quando aplicável, para composição de relatórios de impacto social, prestação de contas, mensuração de resultados e atendimento a requisitos de parceiros institucionais.",
             "Podemos ainda coletar dados enviados voluntariamente por formulários de contato, como nome, e-mail e conteúdo da mensagem, exclusivamente para responder solicitações, dúvidas, sugestões ou propostas de parceria.",
           ],
         },
@@ -43,14 +43,14 @@ export default function PrivacyPolicyPage() {
           title: "4. Compartilhamento de dados",
           paragraphs: [
             "Dados de identificação poderão ser compartilhados com organizações parceiras, instituições apoiadas, prestadores de serviço e parceiros operacionais quando necessário para emissão de recibos, documentação fiscal, comprovação de doações, prestação de contas ou execução das funcionalidades da plataforma.",
-            "Dados de transações realizadas em blockchain, como endereço público da carteira, identificador da transação, valores e registros associados ao contrato inteligente, podem ser públicos e consultáveis por terceiros em exploradores da rede Stellar.",
+            "Dados de transações realizadas em blockchain, como endereço público da carteira, identificador da transação, valores e registros associados ao contrato inteligente, podem ser públicos e consultáveis por terceiros em exploradores da rede Celo.",
             "O compartilhamento de dados será limitado ao necessário para cumprir as finalidades informadas nesta Política, respeitando a legislação aplicável e as medidas razoáveis de segurança e governança.",
           ],
         },
         {
           title: "5. Blockchain, transparência e imutabilidade",
           paragraphs: [
-            "A plataforma pode utilizar a rede Stellar para registrar informações relacionadas a contribuições, recibos digitais, Tokens de Impacto, NFTs-recibo e outras interações on-chain.",
+            "A plataforma pode utilizar a rede Celo para registrar informações relacionadas a contribuições em USDGLO, recibos digitais e outras interações on-chain.",
             "Por se tratar de uma infraestrutura descentralizada, determinadas informações registradas em blockchain podem ser públicas, permanentes, verificáveis e de difícil ou impossível exclusão técnica após sua confirmação na rede.",
             "Recomendamos que a pessoa usuária não insira dados pessoais sensíveis, informações confidenciais ou dados desnecessários em campos que possam ser gravados em blockchain, metadados públicos, descrições de transações ou carteiras digitais.",
           ],
@@ -68,7 +68,7 @@ export default function PrivacyPolicyPage() {
           paragraphs: [
             "Adotamos medidas técnicas e organizacionais razoáveis para proteger os dados pessoais contra acessos não autorizados, perda, alteração, divulgação indevida ou qualquer forma de tratamento inadequado.",
             "Apesar dos esforços de segurança, nenhum sistema é totalmente imune a riscos. A pessoa usuária também deve proteger suas credenciais, dispositivos, carteiras digitais, senhas, chaves privadas e frases de recuperação.",
-            "A Mulheres Que Codam, o Instituto Florescer Caldeira e a ITS Cripto Educacional nunca solicitarão chaves privadas, seed phrases ou senhas de carteiras digitais.",
+            "A Ponteia, o Instituto Florescer Caldeira e a ITS Cripto Educacional nunca solicitarão chaves privadas, seed phrases ou senhas de carteiras digitais.",
           ],
         },
         {

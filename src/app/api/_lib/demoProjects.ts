@@ -1,4 +1,4 @@
-const defaultDemoCurrencies = ["USDC", "BRZ", "XLM"] as const;
+const defaultDemoCurrencies = ["USDGLO", "PIX", "BRZ"] as const;
 
 export const demoProjects = [
   {
@@ -16,7 +16,7 @@ export const demoProjects = [
       "ODS 5 - Igualdade de gênero",
       "ODS 8 - Trabalho decente e crescimento econômico",
     ],
-    moedaPrincipal: "USDC",
+    moedaPrincipal: "USDGLO",
     moedasAceitas: defaultDemoCurrencies,
     targetXlm: 8000,
     raisedXlm: 0,
@@ -39,7 +39,7 @@ export const demoProjects = [
       "ODS 8 - Trabalho decente e crescimento econômico",
       "ODS 10 - Redução das desigualdades",
     ],
-    moedaPrincipal: "USDC",
+    moedaPrincipal: "USDGLO",
     moedasAceitas: defaultDemoCurrencies,
     targetXlm: 6500,
     raisedXlm: 0,
@@ -49,9 +49,9 @@ export const demoProjects = [
   },
   {
     id: 3,
-    ngoName: "StellarBridge",
+    ngoName: "Ponte Produtiva",
     ngoWallet: "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF",
-    title: "StellarBridge - Trilhas de Inclusão Produtiva",
+    title: "Trilhas de Inclusão Produtiva",
     description:
       "Capacitação em finanças digitais, inovação e empreendedorismo para ampliar renda, empregabilidade e participação de mulheres na economia digital.",
     taxCategory: "Inclusão produtiva",
@@ -62,12 +62,12 @@ export const demoProjects = [
       "ODS 9 - Indústria, inovação e infraestrutura",
       "ODS 10 - Redução das desigualdades",
     ],
-    moedaPrincipal: "USDC",
+    moedaPrincipal: "USDGLO",
     moedasAceitas: defaultDemoCurrencies,
     targetXlm: 7200,
     raisedXlm: 0,
     status: "APPROVED",
-    metadataUri: "stellarbridge-inclusao-produtiva-ods-8-9-10",
+    metadataUri: "trilhas-inclusao-produtiva-ods-8-9-10",
     createdAt: "2026-05-05T12:00:00.000Z",
   },
   {
@@ -85,7 +85,7 @@ export const demoProjects = [
       "ODS 9 - Indústria, inovação e infraestrutura",
       "ODS 10 - Redução das desigualdades",
     ],
-    moedaPrincipal: "USDC",
+    moedaPrincipal: "USDGLO",
     moedasAceitas: defaultDemoCurrencies,
     targetXlm: 9000,
     raisedXlm: 0,
@@ -107,7 +107,7 @@ export const demoProjects = [
       "ODS 2 - Fome zero e agricultura sustentável",
       "ODS 10 - Redução das desigualdades",
     ],
-    moedaPrincipal: "USDC",
+    moedaPrincipal: "USDGLO",
     moedasAceitas: defaultDemoCurrencies,
     targetXlm: 7800,
     raisedXlm: 0,
@@ -130,7 +130,7 @@ export const demoProjects = [
       "ODS 8 - Trabalho decente e crescimento econômico",
       "ODS 10 - Redução das desigualdades",
     ],
-    moedaPrincipal: "USDC",
+    moedaPrincipal: "USDGLO",
     moedasAceitas: defaultDemoCurrencies,
     targetXlm: 8500,
     raisedXlm: 0,
@@ -153,7 +153,7 @@ export const demoProjects = [
       "ODS 8 - Trabalho decente e crescimento econômico",
       "ODS 9 - Indústria, inovação e infraestrutura",
     ],
-    moedaPrincipal: "USDC",
+    moedaPrincipal: "USDGLO",
     moedasAceitas: defaultDemoCurrencies,
     targetXlm: 10000,
     raisedXlm: 0,

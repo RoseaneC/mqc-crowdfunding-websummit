@@ -295,7 +295,7 @@ export default function Projects() {
       <header className="relative min-h-[520px] overflow-hidden bg-[var(--color-primary)]">
         <img
           src={HeroProjectsImg.src}
-          alt="Mulheres participantes do programa Mulheres Que Codam"
+          alt="Participantes em programa de impacto social"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
 

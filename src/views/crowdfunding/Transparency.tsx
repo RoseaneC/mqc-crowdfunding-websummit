@@ -53,16 +53,16 @@ export default function Transparency() {
       <section className="max-w-7xl mx-auto px-4 -mt-10 relative z-20">
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <MetricCard
-            label="Total Simulado"
-            value={`${summary.totalXlm.toLocaleString("pt-BR")} USDC`}
+            label="Total acompanhado"
+            value={`${summary.totalXlm.toLocaleString("pt-BR")} USDGLO`}
           />
           <MetricCard
             label="Líquido em projetos"
-            value={`${summary.projectXlm.toLocaleString("pt-BR")} USDC`}
+            value={`${summary.projectXlm.toLocaleString("pt-BR")} USDGLO`}
           />
           <MetricCard
             label="Taxa da Plataforma"
-            value={`${summary.feeXlm.toLocaleString("pt-BR")} USDC`}
+            value={`${summary.feeXlm.toLocaleString("pt-BR")} USDGLO`}
           />
           <MetricCard
             label="Projetos Aprovados"
@@ -97,9 +97,8 @@ export default function Transparency() {
                 1. Você Contribui
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed font-bold">
-                Faça sua contribuição simulada em USDC, BRZ ou XLM Testnet. A
-                liquidação real depende da integração final com carteira e
-                contratos Stellar.
+                Faça sua contribuição em USDGLO na rede Celo ou use PIX quando o
+                projeto disponibilizar uma chave fiduciária direta.
               </p>
             </div>
           </div>
@@ -113,12 +112,11 @@ export default function Transparency() {
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-black uppercase tracking-tight">
-                2. Bolsas são Geradas
+                2. Recursos são direcionados
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed font-bold">
-                Os recursos são direcionados diretamente para financiar
-                bootcamps de programação e kits de tecnologia para alunas em
-                comunidades periféricas.
+                Os recursos apoiam a execução do projeto aprovado, conforme
+                meta, organização responsável e plano de impacto informado.
               </p>
             </div>
           </div>
@@ -132,18 +130,18 @@ export default function Transparency() {
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-black uppercase tracking-tight">
-                3. Você Recebe um NFT
+                3. Evidências são publicadas
               </h3>
               <p className="text-slate-500 text-sm leading-relaxed font-bold">
-                Como comprovante imutável do seu impacto social, você recebe um
-                NFT de Impacto exclusivo em sua carteira digital Stellar.
+                A organização responsável compartilha comprovantes, relatórios e
+                evidências para facilitar acompanhamento e prestação de contas.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SEÇÃO NFT DE IMPACTO - REQUISITO VISUAL IMAGE_D719D8 */}
+      {/* SEÇÃO CERTIFICADO DE IMPACTO */}
       <section className="bg-slate-100 py-24">
         <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="relative group">
@@ -154,10 +152,10 @@ export default function Transparency() {
               <h3 className="text-6xl font-black uppercase tracking-tighter leading-none text-center">
                 IMPACTO
                 <br />
-                <span className="text-yellow-400">NFT</span>
+                <span className="text-yellow-400">COMPROVADO</span>
               </h3>
               <p className="mt-8 text-xs font-black tracking-[0.4em] uppercase opacity-60">
-                Certificado Digital de Doação
+                Evidências e prestação de contas
               </p>
             </div>
           </div>
@@ -168,14 +166,14 @@ export default function Transparency() {
                 Transparência Radical
               </span>
               <h2 className="text-5xl font-black text-slate-900 tracking-tighter uppercase leading-none">
-                O que é o{" "}
-                <span className="text-[#002B99]">NFT de Impacto?</span>
+                O que é a{" "}
+                <span className="text-[#002B99]">prestação de contas?</span>
               </h2>
             </div>
             <p className="text-lg text-slate-500 leading-relaxed font-medium">
-              Não é arte especulativa. É um recibo digital eterno. Ao contrário
-              de recibos de papel que se perdem, o NFT (Token Não Fungível) de
-              Impacto é registrado na blockchain da Stellar Network.
+              Cada projeto pode publicar registros, comprovantes, fotos,
+              relatórios e links de evidência. A ideia é permitir que pessoas
+              apoiadoras acompanhem como os recursos geram impacto real.
             </p>
 
             <div className="space-y-6">
@@ -187,10 +185,11 @@ export default function Transparency() {
                 </div>
                 <div>
                   <h4 className="font-black uppercase text-sm tracking-widest">
-                    Intransferível
+                    Transparente
                   </h4>
                   <p className="text-slate-500 text-sm">
-                    Prova que você fez a diferença. Não pode ser vendido.
+                    Informações de projeto, meta, recebimento e evidências ficam
+                    organizadas para consulta.
                   </p>
                 </div>
               </div>
@@ -202,11 +201,11 @@ export default function Transparency() {
                 </div>
                 <div>
                   <h4 className="font-black uppercase text-sm tracking-widest">
-                    Rastreável
+                    Auditável
                   </h4>
                   <p className="text-slate-500 text-sm">
-                    Você pode ver exatamente para qual turma sua doação foi
-                    destinada.
+                    Doações em USDGLO podem ser verificadas na rede Celo quando
+                    houver transação confirmada.
                   </p>
                 </div>
               </div>
@@ -216,7 +215,7 @@ export default function Transparency() {
               to="/contribuir"
               className="inline-flex items-center gap-4 bg-[#002B99] hover:bg-blue-800 text-white font-black px-10 py-5 rounded-2xl text-xs uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95"
             >
-              Quero meu NFT de Impacto{" "}
+              Apoiar projetos{" "}
               <span className="material-icons">arrow_forward</span>
             </Link>
           </div>
@@ -246,9 +245,9 @@ export default function Transparency() {
               Para onde vai o dinheiro?
             </h4>
             <p className="text-slate-500 font-medium">
-              100% das doações líquidas vão para o fundo educacional do Mulheres
-              que Codam, financiando professoras, computadores e internet para
-              alunas em situação de vulnerabilidade.
+              Os recursos líquidos vão para a organização responsável pelo
+              projeto apoiado, conforme as informações cadastradas, a modalidade
+              de doação escolhida e as evidências de prestação de contas.
             </p>
           </div>
         </div>

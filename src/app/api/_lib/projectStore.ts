@@ -650,7 +650,7 @@ function projectFromDemo(
     description: project.description,
     organization: project.ngoName,
     responsibleName: project.ngoName,
-    responsibleEmail: "demo@mulheresquecodam.org",
+    responsibleEmail: "demo@ponteia.org",
     walletAddress: null,
     pixKey: null,
     pixQrCodeUrl: null,
