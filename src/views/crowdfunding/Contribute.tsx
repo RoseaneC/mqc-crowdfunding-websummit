@@ -4,6 +4,7 @@ import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction
 import {
   listProjectMedia,
   listProjects,
+  submitDonation,
   type ProjectDTO,
   type ProjectFundingAsset,
   type ProjectMediaItemDTO,
@@ -15,7 +16,9 @@ import {
   getDonationCampaignMessage,
 } from "../../util/donationMetrics";
 import { formatDemoCurrencyLabel } from "../../util/projectDemoMetadata";
+import { CELO_MAINNET_CHAIN_ID } from "../../util/celoConfig";
 import { isCeloUsdcEnabled, isCeloUsdgloEnabled } from "../../util/celoConfig";
+import { transferCeloErc20 } from "../../util/erc20Celo";
 import { validateCeloWallet } from "../../util/usdgloCelo";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
@@ -92,6 +95,7 @@ export default function Contribute() {
   const [identificacao, setIdentificacao] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pixCopyFeedback, setPixCopyFeedback] = useState<string | null>(null);
+  const [donationFeedback, setDonationFeedback] = useState<string | null>(null);
 
   const displayProjectName =
     project?.title || projetoNomeParam || `Campanha #${projetoId}`;
@@ -189,7 +193,9 @@ export default function Contribute() {
     return true;
   };
 
-  const handleConfirmarDoacao = () => {
+  const handleConfirmarDoacao = async () => {
+    setDonationFeedback(null);
+
     if (isPixSelected) {
       if (project?.pixKey) {
         void handleCopyPixKey();
@@ -204,7 +210,7 @@ export default function Contribute() {
     }
 
     if (isBrzSelected) {
-      alert(
+      setDonationFeedback(
         "BRZ permanece como opção informativa/futura. Nenhum pagamento foi criado.",
       );
       return;
@@ -223,13 +229,80 @@ export default function Contribute() {
       return;
     }
 
-    setIsSubmitting(true);
-    window.setTimeout(() => {
-      setIsSubmitting(false);
-      alert(
-        `Fluxo ${selectedCurrency}/Celo preparado. A transação real será conectada na próxima etapa; nenhuma doação foi registrada sem txHash.`,
+    if (isUsdcCeloSelected) {
+      setDonationFeedback(
+        "USDC via Celo/EVM preparado. Configure NEXT_PUBLIC_USDC_CELO_ADDRESS para ativar doações reais.",
       );
-    }, 250);
+      return;
+    }
+
+    if (!isUsdGloCeloSelected || !project?.walletAddress) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setDonationFeedback("Aguardando assinatura na carteira...");
+
+    try {
+      await privyWallet.switchEvmChain(CELO_MAINNET_CHAIN_ID);
+      const provider = await privyWallet.getEvmProvider();
+
+      if (!provider || !privyWallet.evmAddress) {
+        throw new Error("Carteira EVM não conectada.");
+      }
+
+      const transfer = await transferCeloErc20({
+        asset: "USDGLO",
+        provider,
+        donorWallet: privyWallet.evmAddress,
+        recipientWallet: project.walletAddress,
+        amount: contributionValue,
+        onStatus: (status) => {
+          if (status === "awaiting-signature") {
+            setDonationFeedback("Aguardando assinatura na carteira...");
+            return;
+          }
+
+          if (status === "submitted") {
+            setDonationFeedback("Transação enviada para a Celo Mainnet...");
+            return;
+          }
+
+          setDonationFeedback("Aguardando confirmação...");
+        },
+      });
+
+      await submitDonation({
+        projectId: project.id,
+        projectName: displayProjectName,
+        donorType: tipoDoador,
+        document: identificacao,
+        amount: transfer.amount,
+        asset: "USDGLO",
+        network: "celo-mainnet",
+        txHash: transfer.txHash,
+        status: "confirmed",
+        walletAddress: transfer.donorWallet,
+        destinationAddress: transfer.recipientWallet,
+      });
+
+      setDonationFeedback("Doação confirmada com sucesso.");
+      void navigate(
+        `/sucesso?projeto=${encodeURIComponent(displayProjectName)}&valor=${encodeURIComponent(
+          transfer.amount,
+        )}&asset=USDGLO&rede=celo-mainnet&txHash=${encodeURIComponent(
+          transfer.txHash,
+        )}`,
+      );
+    } catch (error) {
+      setDonationFeedback(
+        error instanceof Error
+          ? error.message
+          : "Transação recusada ou falhou.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -504,6 +577,12 @@ export default function Contribute() {
                   {pixInlineMessage ? (
                     <p className="rounded-xl bg-[var(--color-surface)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-text-muted)]">
                       {pixInlineMessage}
+                    </p>
+                  ) : null}
+
+                  {donationFeedback ? (
+                    <p className="rounded-xl bg-[var(--color-surface)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-text-muted)]">
+                      {donationFeedback}
                     </p>
                   ) : null}
 
