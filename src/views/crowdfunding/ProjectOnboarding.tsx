@@ -101,7 +101,7 @@ export default function ProjectOnboarding() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] px-4 py-10 text-[var(--color-text)] sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[var(--color-background)] px-4 py-10 text-[var(--color-text)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <Link
           to="/projetos"
@@ -113,7 +113,7 @@ export default function ProjectOnboarding() {
           Voltar para projetos
         </Link>
 
-        <section className="mt-8 rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm sm:p-8">
+        <section className="mt-8 rounded-sm border border-[var(--color-border)] bg-white p-6 shadow-[0_18px_44px_rgba(28,26,23,0.06)] sm:p-8">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-dark)]">
               Cadastro de projetos sociais
@@ -158,7 +158,7 @@ export default function ProjectOnboarding() {
                 onChange={(event) =>
                   updateField("description", event.target.value)
                 }
-                className="mt-2 min-h-32 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
+                className="mt-2 min-h-32 w-full rounded-sm border border-[var(--color-border)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
               />
             </label>
 
@@ -173,7 +173,7 @@ export default function ProjectOnboarding() {
               value={form.walletAddress}
               onChange={(value) => updateField("walletAddress", value)}
             />
-            <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+            <p className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm leading-6 text-[var(--color-text-muted)]">
               Endereco EVM/Celo que recebera contribuicoes digitais em USDGLO.
             </p>
             <TextInput
@@ -187,12 +187,12 @@ export default function ProjectOnboarding() {
               onChange={(value) => updateField("pixQrCodeUrl", value)}
             />
 
-            <p className="md:col-span-2 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+            <p className="md:col-span-2 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm leading-6 text-[var(--color-text-muted)]">
               O PIX permite transferencias diretas para o projeto pelo app do
               banco, fora da blockchain.
             </p>
 
-            <div className="md:col-span-2 rounded-xl border border-slate-200 p-4">
+            <div className="md:col-span-2 rounded-sm border border-[var(--color-border)] p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Eixos obrigatorios
               </p>
@@ -200,7 +200,7 @@ export default function ProjectOnboarding() {
                 {axisOptions.map((axis) => (
                   <label
                     key={axis.value}
-                    className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                    className="flex items-center gap-2 rounded-sm bg-[var(--color-surface)] px-3 py-2 text-sm"
                   >
                     <input
                       type="checkbox"
@@ -226,7 +226,9 @@ export default function ProjectOnboarding() {
               {isSubmitting ? "Enviando..." : "Enviar para analise"}
             </button>
             {feedback ? (
-              <p className="text-sm font-semibold text-slate-600">{feedback}</p>
+              <p className="text-sm font-semibold text-[var(--color-text-muted)]">
+                {feedback}
+              </p>
             ) : null}
           </div>
         </section>
@@ -243,14 +245,14 @@ function TextInput(props: {
 }) {
   return (
     <label>
-      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+      <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-soft)]">
         {props.label}
       </span>
       <input
         type={props.type ?? "text"}
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
-        className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
+        className="mt-2 w-full rounded-sm border border-[var(--color-border)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
       />
     </label>
   );

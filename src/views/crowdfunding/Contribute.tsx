@@ -44,21 +44,21 @@ const currencyOptions: CurrencyOption[] = [
     code: "USDGLO",
     name: "USDGLO",
     description:
-      "Contribuicao digital estavel, registrada na Celo para apoiar o projeto com transparencia.",
+      "Moeda digital estavel na rede Celo. Permite contribuicoes rastreaveis e transparentes para projetos de impacto.",
     brlRate: 5.2,
   },
   {
     code: "USDC",
     name: "USDC",
     description:
-      "Opcao digital estavel preparada para Celo; sera ativada quando o contrato oficial estiver configurado.",
+      "Moeda digital estavel via Celo/EVM. O fluxo esta preparado e sera ativado quando o contrato oficial estiver configurado.",
     brlRate: 5.2,
   },
   {
     code: "PIX",
     name: "PIX",
     description:
-      "Transferencia instantanea pelo seu banco, direto para a organizacao responsavel e fora da blockchain.",
+      "Transferencia instantanea pelo seu banco. Copie a chave PIX e pague pelo app do banco de sempre.",
     brlRate: 1,
   },
   {
@@ -337,7 +337,7 @@ export default function Contribute() {
   }, [projetoId]);
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] font-[var(--font-body)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[var(--color-background)] font-[var(--font-body)] text-[var(--color-text)]">
       <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 flex items-center justify-between">
           <button
@@ -356,7 +356,7 @@ export default function Contribute() {
           </span>
         </div>
 
-        <section className="overflow-hidden rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_24px_80px_rgba(15,0,161,0.10)]">
+        <section className="overflow-hidden rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_24px_80px_rgba(28,26,23,0.10)]">
           <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
             <div className="relative min-h-[480px] overflow-hidden bg-[var(--color-primary)]">
               <img
@@ -364,13 +364,13 @@ export default function Contribute() {
                 alt={displayProjectName}
                 className="absolute inset-0 h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,0,36,0.84)_0%,rgba(15,0,161,0.50)_58%,rgba(15,0,161,0.20)_100%)]" />
-              <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[rgba(5,0,36,0.92)] to-transparent" />
+              <div className="absolute inset-0 bg-[rgba(26,74,46,0.76)]" />
+              <div className="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[rgba(18,53,32,0.94)] to-transparent" />
 
               <div className="relative z-10 flex min-h-[480px] flex-col justify-end p-8 sm:p-10">
                 <div className="max-w-3xl">
                   <div className="mb-5 flex flex-wrap items-center gap-3">
-                    <span className="rounded-full bg-[var(--color-accent)] px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
+                    <span className="rounded-full bg-[var(--color-accent-light)] px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-primary)]">
                       {project?.taxCategory ?? "Projeto de impacto"}
                     </span>
                     <span className="rounded-full border border-white/20 bg-white/10 px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/80 backdrop-blur">
@@ -392,7 +392,7 @@ export default function Contribute() {
 
             <aside className="bg-[var(--color-white)] p-6 sm:p-8">
               <div className="mx-auto max-w-xl">
-                <div className="mb-6 rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                <div className="mb-6 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
                   <div className="flex items-end justify-between gap-5">
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
@@ -439,7 +439,7 @@ export default function Contribute() {
                           type="button"
                           onClick={() => setTipoDoador(type)}
                           className={[
-                            "rounded-2xl border px-4 py-3 text-sm font-semibold transition",
+                            "rounded-sm border px-4 py-3 text-sm font-semibold transition",
                             tipoDoador === type
                               ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-white)]"
                               : "border-[var(--color-border)] bg-[var(--color-white)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]",
@@ -465,7 +465,7 @@ export default function Contribute() {
                           : "00.000.000/0000-00"
                       }
                       className={[
-                        "mt-3 w-full rounded-2xl border bg-[var(--color-surface)] px-4 py-3 text-sm font-medium text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)] focus:bg-[var(--color-white)] focus:ring-4",
+                        "mt-3 w-full rounded-sm border bg-[var(--color-surface)] px-4 py-3 text-sm font-medium text-[var(--color-text)] outline-none transition placeholder:text-[var(--color-text-soft)] focus:bg-[var(--color-white)] focus:ring-4",
                         identificacao && !isDocumentValid
                           ? "border-[var(--color-error)] focus:ring-[var(--color-error)]/10"
                           : "border-[var(--color-border)] focus:border-[var(--color-primary)] focus:ring-[var(--color-primary)]/10",
@@ -485,7 +485,7 @@ export default function Contribute() {
                       Valor
                     </label>
                     <div className="mt-3 grid grid-cols-[1fr_142px] gap-3">
-                      <div className="flex items-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 focus-within:border-[var(--color-primary)] focus-within:bg-[var(--color-white)] focus-within:ring-4 focus-within:ring-[var(--color-primary)]/10">
+                      <div className="flex items-center rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 focus-within:border-[var(--color-primary)] focus-within:bg-[var(--color-white)] focus-within:ring-4 focus-within:ring-[var(--color-primary)]/10">
                         <input
                           type="number"
                           min="0"
@@ -503,7 +503,7 @@ export default function Contribute() {
                             event.target.value as CurrencyCode,
                           )
                         }
-                        className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] px-3 text-sm font-semibold text-[var(--color-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
+                        className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] px-3 text-sm font-semibold text-[var(--color-primary)] outline-none focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
                       >
                         {currencyOptions.map((option) => (
                           <option key={option.code} value={option.code}>
@@ -517,7 +517,7 @@ export default function Contribute() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl border border-[var(--color-primary)]/15 bg-[var(--color-primary-light)] p-4">
+                  <div className="rounded-sm border border-[var(--color-primary)]/15 bg-[var(--color-primary-light)] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
                       Incentivo fiscal estimado
                     </p>
@@ -551,7 +551,7 @@ export default function Contribute() {
                   ) : null}
 
                   {isBrzSelected ? (
-                    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                    <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
                         BRZ informativo
                       </p>
@@ -566,25 +566,25 @@ export default function Contribute() {
                     type="button"
                     onClick={() => void handleConfirmarDoacao()}
                     disabled={isSubmitDisabled}
-                    className="w-full rounded-full bg-[var(--color-primary)] px-6 py-4 text-sm font-semibold text-[var(--color-white)] shadow-[0_12px_34px_rgba(15,0,161,0.25)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full rounded-full bg-[var(--color-primary)] px-6 py-4 text-sm font-semibold text-[var(--color-white)] shadow-[0_12px_34px_rgba(28,26,23,0.18)] transition hover:bg-[var(--color-primary-dark)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {submitButtonLabel}
                   </button>
 
                   {cryptoInlineMessage && isCryptoCeloSelected ? (
-                    <p className="rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-primary-dark)]">
+                    <p className="rounded-sm bg-[var(--color-accent-light)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-primary-dark)]">
                       {cryptoInlineMessage}
                     </p>
                   ) : null}
 
                   {pixInlineMessage ? (
-                    <p className="rounded-xl bg-[var(--color-surface)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-text-muted)]">
+                    <p className="rounded-sm bg-[var(--color-surface)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-text-muted)]">
                       {pixInlineMessage}
                     </p>
                   ) : null}
 
                   {donationFeedback ? (
-                    <p className="rounded-xl bg-[var(--color-surface)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-text-muted)]">
+                    <p className="rounded-sm bg-[var(--color-surface)] px-3 py-2 text-center text-xs font-semibold leading-5 text-[var(--color-text-muted)]">
                       {donationFeedback}
                     </p>
                   ) : null}
@@ -601,7 +601,7 @@ export default function Contribute() {
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.75fr]">
-          <div className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_14px_40px_rgba(15,0,161,0.05)]">
+          <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_14px_40px_rgba(28,26,23,0.05)]">
             <p className="text-sm font-medium uppercase tracking-[0.16em] text-[var(--color-accent-dark)]">
               Por que apoiar este projeto?
             </p>
@@ -610,25 +610,25 @@ export default function Contribute() {
                 {
                   title: "Impacto direto",
                   text: "Sua contribuição fortalece iniciativas lideradas por mulheres e amplia oportunidades reais.",
-                  icon: "diversity_3",
+                  marker: "01",
                 },
                 {
                   title: "Transparência",
                   text: "A plataforma organiza contribuições, evidências e prestação de contas para acompanhamento de impacto.",
-                  icon: "account_tree",
+                  marker: "02",
                 },
                 {
                   title: "Recibo digital",
                   text: "A contribuição pode gerar registros e comprovantes associados ao projeto apoiado.",
-                  icon: "verified",
+                  marker: "03",
                 },
               ].map((item) => (
                 <div
                   key={item.title}
-                  className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
+                  className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] p-5"
                 >
-                  <span className="material-symbols-outlined text-3xl text-[var(--color-primary)]">
-                    {item.icon}
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-dark)]">
+                    {item.marker}
                   </span>
                   <h3 className="mt-4 font-[var(--font-heading)] text-base font-semibold text-[var(--color-text)]">
                     {item.title}
@@ -641,7 +641,7 @@ export default function Contribute() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_14px_40px_rgba(15,0,161,0.05)]">
+          <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_14px_40px_rgba(28,26,23,0.05)]">
             <p className="text-sm font-medium uppercase tracking-[0.16em] text-[var(--color-accent-dark)]">
               Quem realiza
             </p>
@@ -654,7 +654,7 @@ export default function Contribute() {
             </p>
 
             {project?.walletAddress ? (
-              <div className="mt-5 rounded-2xl bg-[var(--color-surface)] p-4">
+              <div className="mt-5 rounded-sm bg-[var(--color-surface)] p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
                   Wallet EVM da organização
                 </p>
@@ -717,7 +717,7 @@ function CeloTokenPanel(props: {
   });
 
   return (
-    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-4">
+    <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
@@ -726,6 +726,11 @@ function CeloTokenPanel(props: {
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
             Conecte sua carteira para autorizar a contribuicao digital. A Celo
             registra a transacao para ampliar transparencia.
+          </p>
+          <p className="mt-2 text-xs leading-5 text-[var(--color-text-soft)]">
+            A Celo funciona como infraestrutura de registro das contribuicoes
+            digitais. Voce nao precisa entender a tecnologia para apoiar um
+            projeto.
           </p>
         </div>
 
@@ -741,7 +746,7 @@ function CeloTokenPanel(props: {
         ) : null}
       </div>
 
-      <div className="mt-3 rounded-xl bg-[var(--color-surface)] px-3 py-3">
+      <div className="mt-3 rounded-sm bg-[var(--color-surface)] px-3 py-3">
         <p className="text-xs font-semibold text-[var(--color-text-soft)]">
           Carteira conectada
         </p>
@@ -752,7 +757,7 @@ function CeloTokenPanel(props: {
         </p>
       </div>
 
-      <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3">
+      <div className="mt-3 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-3">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
           {props.asset} Celo Mainnet
         </p>
@@ -767,7 +772,7 @@ function CeloTokenPanel(props: {
             : "não configurado"}
         </p>
         {inlineMessage ? (
-          <p className="mt-3 rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
+          <p className="mt-3 rounded-sm bg-[var(--color-accent-light)] px-3 py-2 text-xs leading-5 text-[var(--color-primary-dark)]">
             {inlineMessage}
           </p>
         ) : null}
@@ -786,7 +791,7 @@ function PixPanel(props: {
   return (
     <div
       className={[
-        "rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-4",
+        "rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-4",
         props.compact ? "mt-5" : "",
       ].join(" ")}
     >
@@ -802,7 +807,7 @@ function PixPanel(props: {
       {props.project?.pixKey || props.project?.pixQrCodeUrl ? (
         <div className="mt-4 grid gap-4">
           {props.project.pixKey ? (
-            <div className="rounded-xl bg-[var(--color-surface)] px-3 py-3">
+            <div className="rounded-sm bg-[var(--color-surface)] px-3 py-3">
               <p className="text-xs font-semibold text-[var(--color-text-soft)]">
                 Chave PIX
               </p>
@@ -823,26 +828,26 @@ function PixPanel(props: {
           ) : null}
 
           {props.project.pixQrCodeUrl ? (
-            <div className="rounded-xl bg-[var(--color-surface)] px-3 py-3">
+            <div className="rounded-sm bg-[var(--color-surface)] px-3 py-3">
               <p className="text-xs font-semibold text-[var(--color-text-soft)]">
                 QR Code PIX
               </p>
               <img
                 src={props.project.pixQrCodeUrl}
                 alt={`QR Code PIX do projeto ${props.displayProjectName}`}
-                className="mt-3 h-40 w-40 rounded-xl border border-[var(--color-border)] object-cover"
+                className="mt-3 h-40 w-40 rounded-sm border border-[var(--color-border)] object-cover"
               />
             </div>
           ) : null}
 
           {props.feedback ? (
-            <p className="rounded-xl bg-[var(--color-accent-light)] px-3 py-2 text-xs font-semibold text-[var(--color-primary-dark)]">
+            <p className="rounded-sm bg-[var(--color-accent-light)] px-3 py-2 text-xs font-semibold text-[var(--color-primary-dark)]">
               {props.feedback}
             </p>
           ) : null}
         </div>
       ) : (
-        <p className="mt-4 rounded-xl bg-[var(--color-surface)] px-3 py-3 text-sm leading-6 text-[var(--color-text-muted)]">
+        <p className="mt-4 rounded-sm bg-[var(--color-surface)] px-3 py-3 text-sm leading-6 text-[var(--color-text-muted)]">
           PIX ainda não configurado para este projeto.
         </p>
       )}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
 
 type NavItem = {
@@ -18,10 +18,10 @@ export default function Navbar() {
 
   const navItems: NavItem[] = useMemo(
     () => [
-      { label: "Sobre nós", href: "/#sobreNos" },
       { label: "Projetos", href: "/projetos" },
-      { label: "Parceiros", href: "/#parceiros" },
-      { label: "Contato", href: "/contato" },
+      { label: "Transparencia", href: "/transparencia" },
+      { label: "Como funciona", href: "/#como-funciona" },
+      { label: "Sobre", href: "/#sobreNos" },
     ],
     [],
   );
@@ -87,31 +87,29 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="z-50 bg-[var(--color-primary)] py-3 font-[var(--font-body)]">
+    <nav className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[rgba(245,240,232,0.94)] py-3 font-[var(--font-body)] backdrop-blur">
       <div className="mx-auto grid max-w-[92rem] grid-cols-[auto_1fr_auto] items-center gap-6 px-6 lg:px-10">
-        {/* Logo */}
         <Link
           to="/"
           className="group inline-flex min-w-fit items-center"
           aria-label="Voltar para a Home"
         >
           <span className="hidden flex-col leading-none lg:flex">
-            <span className="font-[var(--font-heading)] text-sm font-black uppercase tracking-[0.08em] text-[var(--color-white)]">
+            <span className="font-[var(--font-heading)] text-lg font-black uppercase tracking-[0.08em] text-[var(--color-primary)]">
               Ponteia
             </span>
-            <span className="font-[var(--font-heading)] text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-accent)]">
-              Impacto com transparência
+            <span className="mt-1 font-[var(--font-heading)] text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+              Impacto com transparencia
             </span>
           </span>
 
           <span className="flex items-center lg:hidden">
-            <span className="font-[var(--font-heading)] text-2xl font-black uppercase text-[var(--color-white)]">
+            <span className="font-[var(--font-heading)] text-2xl font-black uppercase text-[var(--color-primary)]">
               Ponte<span className="text-[var(--color-accent)]">ia</span>
             </span>
           </span>
         </Link>
 
-        {/* Menu centralizado */}
         <div className="hidden justify-center lg:flex">
           <div className="flex items-center gap-10">
             {navItems.map((item) => (
@@ -121,7 +119,7 @@ export default function Navbar() {
                 className={`text-sm font-medium transition-colors ${
                   isPageActive(item.href)
                     ? "text-[var(--color-accent)]"
-                    : "text-[var(--color-white)] hover:text-[var(--color-accent)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
                 }`}
               >
                 {item.label}
@@ -130,26 +128,25 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Ações desktop */}
         <div className="hidden min-w-fit items-center gap-3 lg:flex">
           {!hasConnectedWallet ? (
             <button
               type="button"
               onClick={() => void handleConnect()}
               disabled={isWalletButtonDisabled}
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-white/25 bg-transparent px-5 py-2 text-sm font-medium text-[var(--color-white)] transition hover:border-[var(--color-accent)] hover:bg-white/10 disabled:opacity-60"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-[var(--color-border)] bg-transparent px-5 py-2 text-sm font-medium text-[var(--color-primary)] transition hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)] disabled:opacity-60"
             >
               {connectWalletLabel}
             </button>
           ) : (
             <div className="flex items-center gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-white)] px-4 py-2">
                 <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
                 <span className="flex flex-col leading-tight">
-                  <span className="text-[10px] font-semibold text-white/65">
+                  <span className="text-[10px] font-semibold text-[var(--color-text-muted)]">
                     {privyWalletStatusLabel}
                   </span>
-                  <span className="text-xs font-bold text-[var(--color-white)]">
+                  <span className="text-xs font-bold text-[var(--color-primary)]">
                     {connectedWalletLabel}
                   </span>
                 </span>
@@ -158,7 +155,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => void handleDisconnect()}
-                className="text-xs text-white/70 underline transition hover:text-[var(--color-white)]"
+                className="text-xs text-[var(--color-text-muted)] underline transition hover:text-[var(--color-primary)]"
               >
                 Sair
               </button>
@@ -166,28 +163,25 @@ export default function Navbar() {
           )}
 
           <Link
-            to="/contato"
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-[var(--color-white)] px-5 py-2 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
+            to="/projetos"
+            className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-[var(--color-primary)] px-5 py-2 text-sm font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary-dark)]"
           >
-            Faça parte
-            <ArrowRight size={16} strokeWidth={2} />
+            Conhecer projetos
           </Link>
         </div>
 
-        {/* Mobile Button */}
         <button
           type="button"
-          onClick={() => setMobileOpen((v) => !v)}
-          className="justify-self-end p-2 text-[var(--color-white)] lg:hidden"
+          onClick={() => setMobileOpen((value) => !value)}
+          className="justify-self-end p-2 text-[var(--color-primary)] lg:hidden"
           aria-label={mobileOpen ? "Fechar menu" : "Abrir menu"}
         >
           {mobileOpen ? <X size={28} /> : <Menu size={28} />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
       <div
-        className={`overflow-hidden bg-[var(--color-primary-dark)] transition-all duration-300 ease-in-out lg:hidden ${
+        className={`overflow-hidden border-t border-[var(--color-border)] bg-[var(--color-primary)] transition-all duration-300 ease-in-out lg:hidden ${
           mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
         }`}
       >
@@ -217,7 +211,7 @@ export default function Navbar() {
             </button>
           ) : (
             <div className="space-y-3">
-              <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-3">
+              <div className="rounded-sm border border-white/15 bg-white/10 px-4 py-3">
                 <p className="text-xs font-semibold text-white/65">
                   {privyWalletStatusLabel}
                 </p>
@@ -238,11 +232,10 @@ export default function Navbar() {
           )}
 
           <Link
-            to="/contato"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--color-white)] py-4 font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent)]"
+            to="/projetos"
+            className="inline-flex w-full items-center justify-center rounded-full bg-[var(--color-white)] py-4 font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent-light)]"
           >
-            Faça parte
-            <ArrowRight size={18} strokeWidth={2} />
+            Conhecer projetos
           </Link>
         </div>
       </div>

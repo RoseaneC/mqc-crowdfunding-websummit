@@ -1,4 +1,4 @@
-/* Import fonts for Stellar Design System */
+/* Import base fonts */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Inconsolata:wght@500&display=swap");
 
 /* Import fonts for Crowdfunding UI */
@@ -19,30 +19,30 @@
   --font-heading: "Montserrat", sans-serif;
   --font-code: "Inconsolata", monospace;
 
-  /* Brand colors */
-  --color-primary: #0f00a1;
-  --color-primary-dark: #0a0070;
-  --color-primary-light: #e8e6ff;
+  /* Ponteia institutional colors */
+  --color-primary: #1a4a2e;
+  --color-primary-dark: #123520;
+  --color-primary-light: #e8f2ec;
 
-  --color-accent: #ffca00;
-  --color-accent-dark: #d6a900;
-  --color-accent-light: #fff4bf;
+  --color-accent: #c17b2a;
+  --color-accent-dark: #8f581d;
+  --color-accent-light: #fbf0e0;
 
   /* Neutral colors */
   --color-white: #ffffff;
-  --color-black: #111111;
+  --color-black: #1c1a17;
 
-  --color-background: #ffffff;
-  --color-surface: #f8f9fc;
-  --color-surface-alt: #f1f3f8;
+  --color-background: #f5f0e8;
+  --color-surface: #f5f0e8;
+  --color-surface-alt: #ede8df;
 
-  --color-text: #111827;
-  --color-text-muted: #6b7280;
-  --color-text-soft: #9ca3af;
+  --color-text: #1c1a17;
+  --color-text-muted: #6b6558;
+  --color-text-soft: #8a8273;
   --color-text-light: #ffffff;
 
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
+  --color-border: #d4ccbc;
+  --color-border-strong: #b8ae9b;
 
   /* Feedback colors */
   --color-success: #16a34a;
@@ -101,8 +101,9 @@ pre {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .marquee__track,
   .animate-marquee {
-    animation-play-state: paused;
+    animation: none;
   }
 }
 
@@ -134,8 +135,12 @@ pre {
   display: flex;
   width: max-content;
   gap: 3rem;
-  animation: marquee 28s linear infinite;
+  animation: marquee 56s linear infinite;
   will-change: transform;
+}
+
+.marquee:hover .marquee__track {
+  animation-play-state: paused;
 }
 
 .marquee__item {
