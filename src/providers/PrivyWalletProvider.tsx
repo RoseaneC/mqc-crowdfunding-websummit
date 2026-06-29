@@ -10,9 +10,9 @@ import {
 const privyConfig = {
   appearance: {
     theme: "light",
-    accentColor: "#3f2fff",
+    accentColor: "#1A4A2E",
     landingHeader: "Ponteia",
-    loginMessage: "Entre para apoiar projetos de impacto com segurança.",
+    loginMessage: "Entre para apoiar projetos de impacto com seguranca.",
     walletChainType: "ethereum-only",
   },
   loginMethods: ["email", "google", "wallet"],

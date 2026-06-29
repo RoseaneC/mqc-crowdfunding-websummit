@@ -13,7 +13,10 @@
 /* Import Material Symbols Outlined (for newer icon variants) */
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
 
-:root {
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
   /* Fonts */
   --font-body: "Poppins", sans-serif;
   --font-heading: "Montserrat", sans-serif;
@@ -51,6 +54,38 @@
   --color-info: #2563eb;
 }
 
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-primary: #6fa781;
+  --color-primary-dark: #07150e;
+  --color-primary-light: #173526;
+
+  --color-accent: #d89a4b;
+  --color-accent-dark: #f0b969;
+  --color-accent-light: #352817;
+
+  --color-white: #142018;
+  --color-black: #f8f3ea;
+
+  --color-background: #0b120e;
+  --color-surface: #101b14;
+  --color-surface-alt: #18261d;
+
+  --color-text: #f8f3ea;
+  --color-text-muted: #c9bdab;
+  --color-text-soft: #9e927f;
+  --color-text-light: #f8f3ea;
+
+  --color-border: rgba(232, 242, 236, 0.16);
+  --color-border-strong: rgba(232, 242, 236, 0.28);
+
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-error: #fb7185;
+  --color-info: #93c5fd;
+}
+
 /* Tailwind directives */
 @tailwind base;
 @tailwind components;
@@ -62,6 +97,10 @@ body {
   font-family: var(--font-body);
   background-color: var(--color-background);
   color: var(--color-text);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {

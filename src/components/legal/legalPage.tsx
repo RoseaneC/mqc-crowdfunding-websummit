@@ -22,7 +22,7 @@ const navLinks = [
   { label: "Sobre nós", href: "/#sobreNos" },
   { label: "Projetos", href: "/projetos" },
   { label: "Parceiros", href: "/#parceiros" },
-  { label: "Contato", href: "/contato" },
+  { label: "Contato", href: "/#contato" },
 ];
 
 export default function LegalPage({
@@ -44,10 +44,10 @@ export default function LegalPage({
           >
             <span className="flex flex-col leading-none">
               <span className="font-[var(--font-heading)] text-xs font-black uppercase tracking-[0.08em] text-[var(--color-white)] sm:text-sm">
-                Mulheres
+                Ponteia
               </span>
-              <span className="font-[var(--font-heading)] text-base font-black uppercase tracking-[0.04em] text-[var(--color-white)] sm:text-lg">
-                Que <span className="text-[var(--color-accent)]">Codam</span>
+              <span className="mt-1 font-[var(--font-heading)] text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-accent)]">
+                Impacto com transparencia
               </span>
             </span>
           </Link>

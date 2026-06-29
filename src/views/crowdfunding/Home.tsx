@@ -150,7 +150,7 @@ export default function Home() {
                 Conhecer projetos
               </Link>
               <Link
-                to="/#como-funciona"
+                to="/#comoFunciona"
                 className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-transparent px-7 py-3 text-sm font-semibold text-[var(--color-primary)] transition hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]"
               >
                 Como funciona
@@ -397,7 +397,7 @@ export default function Home() {
 
       {/* COMO FUNCIONA */}
       <section
-        id="como-funciona"
+        id="comoFunciona"
         className="bg-[var(--color-white)] py-20 sm:py-24"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -532,9 +532,9 @@ export default function Home() {
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="py-20 bg-white">
+      <section id="faq" className="bg-[var(--color-white)] py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-display font-bold text-gray-900 text-center mb-12">
+          <h2 className="text-3xl font-display font-bold text-[var(--color-text)] text-center mb-12">
             Perguntas Frequentes
           </h2>
 
@@ -601,7 +601,7 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="w-full flex cursor-pointer items-center justify-between gap-1.5 p-4 text-left text-gray-900 font-bold"
+                    className="w-full flex cursor-pointer items-center justify-between gap-1.5 p-4 text-left text-[var(--color-text)] font-bold"
                     aria-expanded={isOpen}
                   >
                     <h3 className="text-lg">{faq.question}</h3>
@@ -623,7 +623,7 @@ export default function Home() {
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-4 pb-4 leading-relaxed text-gray-700">
+                      <p className="px-4 pb-4 leading-relaxed text-[var(--color-text-muted)]">
                         {faq.answer}
                       </p>
                     </div>
@@ -636,7 +636,10 @@ export default function Home() {
       </section>
 
       {/* CTA FINAL */}
-      <section className="bg-[var(--color-primary)] px-4 py-20 text-center text-[var(--color-white)] sm:px-6 lg:px-8">
+      <section
+        id="contato"
+        className="bg-[var(--color-primary)] px-4 py-20 text-center text-[var(--color-white)] sm:px-6 lg:px-8"
+      >
         <div className="mx-auto max-w-3xl">
           <h2 className="font-[var(--font-heading)] text-3xl font-bold leading-tight sm:text-4xl">
             Pronta para apoiar projetos que transformam territorios?
