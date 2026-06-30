@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
 import { useDonations } from "../../providers/DonationProvider";
 import {
   listProjectNftCatalog,
@@ -16,6 +17,7 @@ import {
 
 export default function Dashboard() {
   const { donations } = useDonations();
+  const privyWallet = usePrivyWalletAbstraction();
   const [catalog, setCatalog] = useState<ProjectNftCatalogItemDTO[]>([]);
   const [projectMedia, setProjectMedia] = useState<ProjectMediaItemDTO[]>([]);
   const [selectedNft, setSelectedNft] =
@@ -69,6 +71,44 @@ export default function Dashboard() {
         nftTokenByProjectId.get(Number(selectedNft.projectId)),
       )
     : null;
+  const isLoggedIn = privyWallet.authenticated;
+  const hasConnectedWallet = Boolean(privyWallet.evmAddress);
+
+  const handleConnectWallet = () => {
+    void Promise.resolve()
+      .then(() => privyWallet.login())
+      .catch(() => undefined);
+  };
+
+  if (!isLoggedIn || !hasConnectedWallet) {
+    return (
+      <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+        <main className="mx-auto flex min-h-[calc(100vh-120px)] max-w-3xl items-center px-4 py-16">
+          <section className="w-full rounded-[2.5rem] border border-slate-100 bg-white p-10 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+            <p className="text-[11px] font-black uppercase tracking-[0.35em] text-orange-500">
+              Painel do apoiador
+            </p>
+            <h1 className="mt-5 text-4xl font-black uppercase tracking-tighter text-slate-900">
+              Conecte sua carteira para acessar seu painel.
+            </h1>
+            <p className="mx-auto mt-4 max-w-xl text-sm font-semibold leading-7 text-slate-500">
+              Depois de entrar, a Ponteia busca seu histórico pela carteira EVM
+              conectada. Quando apoiar um projeto, seus comprovantes aparecerão
+              aqui.
+            </p>
+            <button
+              type="button"
+              onClick={handleConnectWallet}
+              disabled={!privyWallet.ready}
+              className="mt-8 inline-flex items-center justify-center rounded-full bg-orange-500 px-8 py-4 text-xs font-black uppercase tracking-[0.25em] text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Entrar / Conectar carteira
+            </button>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -96,13 +136,16 @@ export default function Dashboard() {
                   favorite_border
                 </span>
                 <h3 className="text-2xl font-black uppercase tracking-tight text-slate-400">
-                  Nenhuma doação confirmada
+                  Você ainda não tem apoios registrados.
                 </h3>
+                <p className="mx-auto max-w-lg text-sm font-semibold leading-7 text-slate-500">
+                  Quando apoiar um projeto, seus comprovantes aparecerão aqui.
+                </p>
                 <Link
-                  to="/contribuir"
+                  to="/projetos"
                   className="inline-block bg-orange-500 text-white font-black px-8 py-4 rounded-2xl text-xs uppercase tracking-[0.3em]"
                 >
-                  Fazer doação
+                  Conhecer projetos
                 </Link>
               </div>
             ) : (
