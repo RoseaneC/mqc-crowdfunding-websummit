@@ -192,7 +192,7 @@ export default function Home() {
         <div className="relative mx-auto mt-20 max-w-7xl">
           <div
             id="sobreNos"
-            className="border-t border-[var(--color-border)] pt-14 text-left"
+            className="scroll-mt-24 border-t border-[var(--color-border)] pt-14 text-left"
           >
             <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="border-l-4 border-[var(--color-accent)] pl-6">
@@ -346,7 +346,7 @@ export default function Home() {
       <section
         id="parceiros"
         aria-label="Nossos parceiros"
-        className="relative w-full overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-surface)] py-16"
+        className="relative w-full scroll-mt-24 overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-surface)] py-16"
       >
         <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-dark)]">
@@ -398,7 +398,7 @@ export default function Home() {
       {/* COMO FUNCIONA */}
       <section
         id="comoFunciona"
-        className="bg-[var(--color-white)] py-20 sm:py-24"
+        className="scroll-mt-24 bg-[var(--color-white)] py-20 sm:py-24"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto mb-16 max-w-3xl text-center">
@@ -638,7 +638,7 @@ export default function Home() {
       {/* CTA FINAL */}
       <section
         id="contato"
-        className="bg-[var(--color-primary)] px-4 py-20 text-center text-[var(--color-white)] sm:px-6 lg:px-8"
+        className="scroll-mt-24 bg-[var(--color-primary)] px-4 py-20 text-center text-[var(--color-white)] sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-3xl">
           <h2 className="font-[var(--font-heading)] text-3xl font-bold leading-tight sm:text-4xl">

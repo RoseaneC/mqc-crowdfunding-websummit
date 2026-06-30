@@ -103,6 +103,14 @@ html {
   scroll-behavior: smooth;
 }
 
+#sobreNos,
+#parceiros,
+#contato,
+#comoFunciona,
+#transparencia {
+  scroll-margin-top: 6rem;
+}
+
 body {
   margin: 0;
 }

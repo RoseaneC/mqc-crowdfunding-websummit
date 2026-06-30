@@ -341,11 +341,11 @@ export default function Projects() {
       </header>
 
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
-        <section className="-mt-16 rounded-sm border border-[var(--color-border)] bg-[rgba(255,255,255,0.92)] px-5 py-5 shadow-[0_18px_50px_rgba(28,26,23,0.08)] backdrop-blur sm:px-6">
+        <section className="-mt-16 rounded-sm border border-[var(--color-border-strong)] bg-[var(--color-white)] px-5 py-5 shadow-[0_18px_50px_rgba(28,26,23,0.10)] sm:px-6">
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="mt-2 font-[var(--font-body)] text-2xl font-medium tracking-tight text-[var(--color-text)]">
+                <h2 className="mt-2 font-[var(--font-body)] text-2xl font-semibold tracking-tight text-[var(--color-primary)]">
                   Projetos aprovados
                 </h2>
               </div>
@@ -366,7 +366,7 @@ export default function Projects() {
                 />
 
                 <input
-                  className="block h-12 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-white)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--color-text)] shadow-sm transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
+                  className="block h-12 w-full rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--color-text)] shadow-sm transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
                   placeholder="Buscar por projeto, eixo, ODS ou descrição..."
                   type="text"
                   value={query}
@@ -387,7 +387,7 @@ export default function Projects() {
                         "inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition",
                         isActive
                           ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-white)]"
-                          : "border-[var(--color-border)] bg-transparent text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
+                          : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
                       ].join(" ")}
                     >
                       <span>{theme}</span>
@@ -408,7 +408,7 @@ export default function Projects() {
               </div>
             </div>
 
-            <p className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-xs leading-6 text-[var(--color-text-muted)]">
+            <p className="rounded-sm border border-[var(--color-primary)]/20 bg-[var(--color-primary-light)] px-4 py-3 text-xs font-medium leading-6 text-[var(--color-primary)]">
               Apoie por PIX direto para a organizacao ou por moedas digitais
               estaveis com registro transparente na Celo.
             </p>

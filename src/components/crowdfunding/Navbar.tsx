@@ -41,10 +41,10 @@ export default function Navbar() {
   const navItems: NavItem[] = useMemo(
     () => [
       { label: "Projetos", href: "/projetos" },
-      { label: "Sobre nos", href: "/#sobreNos" },
+      { label: "Sobre nós", href: "/#sobreNos" },
       { label: "Parceiros", href: "/#parceiros" },
-      { label: "Contato", href: "/#contato" },
-      { label: "Transparencia", href: "/transparencia" },
+      { label: "Contato", href: "/contato" },
+      { label: "Transparência", href: "/transparencia" },
     ],
     [],
   );
@@ -53,7 +53,21 @@ export default function Navbar() {
 
   useEffect(() => {
     setMobileOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    if (!location.hash) return;
+
+    const targetId = decodeURIComponent(location.hash.slice(1));
+    const scrollToTarget = window.setTimeout(() => {
+      document.getElementById(targetId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 80);
+
+    return () => window.clearTimeout(scrollToTarget);
+  }, [location.pathname, location.hash]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -78,9 +92,7 @@ export default function Navbar() {
     : "Entrar / Conectar carteira";
   const disconnectWalletLabel = "Sair da conta";
   const nextTheme = theme === "dark" ? "light" : "dark";
-  const themeButtonLabel = theme === "dark" ? "Claro" : "Escuro";
-  const themeAriaLabel =
-    theme === "dark" ? "Alternar para tema claro" : "Alternar para tema escuro";
+  const themeAriaLabel = "Alternar tema claro e escuro";
 
   const handleConnect = async () => {
     if (walletActionPending) return;
@@ -169,9 +181,10 @@ export default function Navbar() {
             type="button"
             onClick={handleToggleTheme}
             aria-label={themeAriaLabel}
-            className="inline-flex items-center justify-center rounded-full border border-white/15 px-4 py-2 text-xs font-semibold text-[#f8f3ea] transition hover:border-[#d89a4b] hover:text-[#d89a4b]"
+            title={theme === "dark" ? "Tema escuro" : "Tema claro"}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-[#f8f3ea] transition hover:border-[#d89a4b] hover:bg-white/10 hover:text-[#d89a4b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d89a4b]"
           >
-            {themeButtonLabel}
+            <ThemeIcon theme={theme} />
           </button>
 
           {!hasConnectedWallet ? (
@@ -235,9 +248,10 @@ export default function Navbar() {
             type="button"
             onClick={handleToggleTheme}
             aria-label={themeAriaLabel}
-            className="w-full rounded-full border border-white/15 py-3 text-sm font-semibold text-[#f8f3ea] transition hover:border-[#d89a4b] hover:text-[#d89a4b]"
+            title={theme === "dark" ? "Tema escuro" : "Tema claro"}
+            className="inline-flex h-11 w-11 items-center justify-center self-start rounded-full border border-white/15 text-[#f8f3ea] transition hover:border-[#d89a4b] hover:bg-white/10 hover:text-[#d89a4b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d89a4b]"
           >
-            Tema: {themeButtonLabel}
+            <ThemeIcon theme={theme} />
           </button>
 
           {navItems.map((item) => (
@@ -294,5 +308,36 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
+  );
+}
+
+function ThemeIcon(props: { theme: ThemeMode }) {
+  if (props.theme === "dark") {
+    return (
+      <svg
+        aria-hidden="true"
+        className="h-4 w-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth={1.8}
+      >
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2.75v2.1M12 19.15v2.1M4.85 4.85l1.48 1.48M17.67 17.67l1.48 1.48M2.75 12h2.1M19.15 12h2.1M4.85 19.15l1.48-1.48M17.67 6.33l1.48-1.48" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="h-4 w-4"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
+      <path d="M20.25 14.25A8.25 8.25 0 0 1 9.75 3.75a8.25 8.25 0 1 0 10.5 10.5Z" />
+    </svg>
   );
 }

@@ -22,7 +22,7 @@ const navLinks = [
   { label: "Sobre nós", href: "/#sobreNos" },
   { label: "Projetos", href: "/projetos" },
   { label: "Parceiros", href: "/#parceiros" },
-  { label: "Contato", href: "/#contato" },
+  { label: "Contato", href: "/contato" },
 ];
 
 export default function LegalPage({

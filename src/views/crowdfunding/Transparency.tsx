@@ -183,7 +183,7 @@ export default function Transparency() {
             Conhecer projetos
           </Link>
           <Link
-            to="/#contato"
+            to="/contato"
             className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-strong)] px-7 py-3 text-sm font-semibold text-[var(--color-primary)] transition hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]"
           >
             Falar com a Ponteia
