@@ -1,4 +1,10 @@
-import React, { createContext, use, useEffect, useState } from "react";
+import React, {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { usePrivyWalletAbstraction } from "../hooks/usePrivyWalletAbstraction";
 import { useWallet } from "../hooks/useWallet";
 import {
@@ -40,7 +46,7 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
   const [donations, setDonations] = useState<Donation[]>([]);
   const activeWalletAddress = privyWallet.evmAddress ?? address;
 
-  const refreshDonations = async () => {
+  const refreshDonations = useCallback(async () => {
     if (!activeWalletAddress) {
       setDonations([]);
       return;
@@ -55,11 +61,11 @@ export function DonationProvider({ children }: { children: React.ReactNode }) {
       // Keep UI responsive even if API is not reachable.
       setDonations([]);
     }
-  };
+  }, [activeWalletAddress]);
 
   useEffect(() => {
     void refreshDonations();
-  }, [activeWalletAddress]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [refreshDonations]);
 
   const addDonation = async () => {
     await refreshDonations();

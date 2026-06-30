@@ -44,6 +44,8 @@ export default function Navbar() {
       { label: "Sobre nós", href: "/#sobreNos" },
       { label: "Parceiros", href: "/#parceiros" },
       { label: "Contato", href: "/contato" },
+      { label: "Cadastrar projeto", href: "/projetos/cadastrar" },
+      { label: "Admin", href: "/admin/projetos" },
       { label: "Transparência", href: "/transparencia" },
     ],
     [],
@@ -167,7 +169,7 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden justify-center lg:flex">
-          <div className="flex items-center gap-10">
+          <div className="flex items-center gap-6">
             {navItems.map((item) => (
               <Link
                 key={item.href}
