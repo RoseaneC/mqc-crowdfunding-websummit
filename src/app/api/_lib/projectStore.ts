@@ -177,6 +177,23 @@ export function isProjectDatabaseEnabled() {
   return hasDatabaseUrl();
 }
 
+export function canUseMemoryFallback() {
+  return (
+    !hasDatabaseUrl() &&
+    process.env.NODE_ENV !== "production" &&
+    !process.env.VERCEL_ENV
+  );
+}
+
+function assertMemoryFallbackAllowed(scope: string) {
+  if (canUseMemoryFallback()) return;
+
+  console.error(`[project-store] Database unavailable in ${scope}.`);
+  throw new Error(
+    "Banco de dados indisponivel. Nao foi possivel concluir a operacao.",
+  );
+}
+
 export async function listImpactProjects() {
   if (isProjectDatabaseEnabled()) {
     try {
@@ -187,10 +204,11 @@ export async function listImpactProjects() {
 
       return projects.map(projectFromPrisma);
     } catch (error) {
-      logPrismaFallback("listImpactProjects", error);
+      handlePrismaFailure("listImpactProjects", error);
     }
   }
 
+  assertMemoryFallbackAllowed("listImpactProjects");
   return listFallbackProjects();
 }
 
@@ -206,10 +224,11 @@ export async function getImpactProject(id: string) {
       const project = await prisma.project.findUnique({ where: { id } });
       return project ? projectFromPrisma(project) : null;
     } catch (error) {
-      logPrismaFallback("getImpactProject", error);
+      handlePrismaFailure("getImpactProject", error);
     }
   }
 
+  assertMemoryFallbackAllowed("getImpactProject");
   return (
     getFallbackState().projects.find((project) => project.id === id) ??
     demoProjects.map(projectFromDemo).find((project) => project.id === id) ??
@@ -250,10 +269,11 @@ export async function createImpactProject(input: CreateProjectInput) {
 
       return projectFromPrisma(project);
     } catch (error) {
-      logPrismaFallback("createImpactProject", error);
+      handlePrismaFailure("createImpactProject", error);
     }
   }
 
+  assertMemoryFallbackAllowed("createImpactProject");
   return createFallbackProject(input, slug, now);
 }
 
@@ -314,10 +334,11 @@ export async function updateImpactProject(
 
       return projectFromPrisma(project);
     } catch (error) {
-      logPrismaFallback("updateImpactProject", error);
+      handlePrismaFailure("updateImpactProject", error);
     }
   }
 
+  assertMemoryFallbackAllowed("updateImpactProject");
   const state = getFallbackState();
   const project = state.projects.find((item) => item.id === id);
 
@@ -386,10 +407,11 @@ export async function createProjectEvidence(input: CreateEvidenceInput) {
 
       return evidenceFromPrisma(evidence);
     } catch (error) {
-      logPrismaFallback("createProjectEvidence", error);
+      handlePrismaFailure("createProjectEvidence", error);
     }
   }
 
+  assertMemoryFallbackAllowed("createProjectEvidence");
   const state = getFallbackState();
   const evidence: EvidenceRecord = {
     id: String(state.nextEvidenceId),
@@ -422,10 +444,11 @@ export async function listProjectEvidences(projectId: string) {
 
       return evidences.map(evidenceFromPrisma);
     } catch (error) {
-      logPrismaFallback("listProjectEvidences", error);
+      handlePrismaFailure("listProjectEvidences", error);
     }
   }
 
+  assertMemoryFallbackAllowed("listProjectEvidences");
   return getFallbackState().evidences.filter(
     (evidence) => evidence.projectId === projectId,
   );
@@ -442,16 +465,19 @@ export async function listImpactDonationMetricRecords() {
 
       return donations.map(donationFromPrismaMetric);
     } catch (error) {
-      logPrismaFallback("listImpactDonationMetricRecords", error);
+      handlePrismaFailure("listImpactDonationMetricRecords", error);
     }
   }
 
+  assertMemoryFallbackAllowed("listImpactDonationMetricRecords");
   return listDonations().map(toDonationMetricRecord);
 }
 
 export async function createConfirmedDonation(
   input: CreateConfirmedDonationInput,
 ): Promise<ImpactDonationReceipt | null> {
+  const normalizedTxHash = input.txHash?.trim().toLowerCase() || null;
+
   if (input.network === "celo-mainnet" && !input.txHash) {
     throw new Error("Doacao Celo Mainnet confirmada exige txHash.");
   }
@@ -459,9 +485,9 @@ export async function createConfirmedDonation(
   if (isProjectDatabaseEnabled()) {
     try {
       const prisma = getPrisma();
-      const existing = input.txHash
+      const existing = normalizedTxHash
         ? await prisma.donation.findUnique({
-            where: { txHash: input.txHash },
+            where: { txHash: normalizedTxHash },
             include: {
               project: {
                 select: {
@@ -481,7 +507,7 @@ export async function createConfirmedDonation(
           amount: input.amount,
           asset: input.asset,
           network: input.network,
-          txHash: input.txHash?.trim() || null,
+          txHash: normalizedTxHash,
           status: "CONFIRMED",
           destinationAddress: normalizeWallet(input.destinationAddress),
         },
@@ -500,16 +526,17 @@ export async function createConfirmedDonation(
         metadata: {
           asset: input.asset,
           network: input.network,
-          txHash: input.txHash,
+          txHash: normalizedTxHash,
         },
       });
 
       return donationFromPrismaReceipt(donation);
     } catch (error) {
-      logPrismaFallback("createConfirmedDonation", error);
+      handlePrismaFailure("createConfirmedDonation", error);
     }
   }
 
+  assertMemoryFallbackAllowed("createConfirmedDonation");
   const project = await getImpactProject(input.projectId);
 
   const donation = addDonation({
@@ -519,7 +546,7 @@ export async function createConfirmedDonation(
     amount: input.amount,
     asset: input.asset === "PIX" ? "BRZ" : input.asset,
     network: input.network === "celo-mainnet" ? "celo-mainnet" : "demo",
-    txHash: input.txHash,
+    txHash: normalizedTxHash,
     status: "confirmed",
     walletAddress: normalizeWallet(input.donorWallet) ?? input.donorWallet,
     destinationAddress: normalizeWallet(input.destinationAddress) ?? undefined,
@@ -570,10 +597,11 @@ export async function getImpactDonationReceipt(
 
       return donation ? donationFromPrismaReceipt(donation) : null;
     } catch (error) {
-      logPrismaFallback("getImpactDonationReceipt", error);
+      handlePrismaFailure("getImpactDonationReceipt", error);
     }
   }
 
+  assertMemoryFallbackAllowed("getImpactDonationReceipt");
   return null;
 }
 
@@ -605,10 +633,11 @@ export async function listImpactDonationsByWallet(
 
       return donations.map(donationFromPrismaReceipt);
     } catch (error) {
-      logPrismaFallback("listImpactDonationsByWallet", error);
+      handlePrismaFailure("listImpactDonationsByWallet", error);
     }
   }
 
+  assertMemoryFallbackAllowed("listImpactDonationsByWallet");
   return [];
 }
 
@@ -719,7 +748,9 @@ async function createAuditLog(input: {
       },
     });
   } catch (error) {
-    logPrismaFallback("createAuditLog", error);
+    console.error("[project-store] Failed to create audit log.", {
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 }
 
@@ -988,7 +1019,16 @@ function parseEvidenceStatus(value: string): EvidenceStatus {
   return "PENDING";
 }
 
-function logPrismaFallback(scope: string, error: unknown) {
+function handlePrismaFailure(scope: string, error: unknown) {
+  if (!canUseMemoryFallback()) {
+    console.error(`[project-store] Prisma unavailable in ${scope}.`, {
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    throw new Error(
+      "Banco de dados indisponivel. Nao foi possivel concluir a operacao.",
+    );
+  }
+
   console.warn(
     `[project-store] Prisma unavailable in ${scope}; using fallback.`,
     {

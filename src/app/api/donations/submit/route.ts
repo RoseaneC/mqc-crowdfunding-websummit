@@ -7,6 +7,7 @@ import {
 } from "../../_lib/donationStore";
 import {
   createConfirmedDonation,
+  canUseMemoryFallback,
   getImpactProject,
 } from "../../_lib/projectStore";
 import { getApiBaseUrl, proxyToFastify } from "../../_lib/proxy";
@@ -40,7 +41,28 @@ export async function POST(request: Request) {
   const payload = (await request
     .json()
     .catch(() => null)) as DonationSubmitPayload | null;
-  const validation = await validateDonationSubmitPayload(payload);
+  const validation = await validateDonationSubmitPayload(payload).catch(
+    (error: unknown) => {
+      if (isDatabaseUnavailableError(error)) {
+        return {
+          ok: false as const,
+          error:
+            "Banco de dados indisponivel. Nao foi possivel registrar a doacao.",
+          status: 503,
+        };
+      }
+
+      console.error("[donations-submit] Unexpected validation error.", {
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
+
+      return {
+        ok: false as const,
+        error: "Nao foi possivel validar a doacao.",
+        status: 500,
+      };
+    },
+  );
 
   if (!validation.ok) {
     return Response.json(
@@ -52,25 +74,73 @@ export async function POST(request: Request) {
     );
   }
 
-  const persistedDonation =
+  const requiresPersistentReceipt =
     validation.value.status === "confirmed" &&
     (validation.value.network === "celo-mainnet" ||
-      validation.value.network === "stellar-mainnet")
-      ? await createConfirmedDonation({
-          projectId: String(validation.value.projectId),
-          donorWallet: validation.value.walletAddress,
-          amount: validation.value.amount,
-          asset: validation.value.asset,
-          network: validation.value.network,
-          txHash: validation.value.txHash,
-          destinationAddress: validation.value.destinationAddress,
-        })
-      : null;
+      validation.value.network === "stellar-mainnet");
 
-  const donation = addDonation(validation.value);
-  const receipt = persistedDonation ?? toDonationReceipt(donation);
+  const persistedDonation = requiresPersistentReceipt
+    ? await createConfirmedDonation({
+        projectId: String(validation.value.projectId),
+        donorWallet: validation.value.walletAddress,
+        amount: validation.value.amount,
+        asset: validation.value.asset,
+        network: validation.value.network,
+        txHash: validation.value.txHash,
+        destinationAddress: validation.value.destinationAddress,
+      }).catch((error: unknown) => {
+        if (isDatabaseUnavailableError(error)) {
+          return null;
+        }
 
-  console.info("[donations-submit] Confirmed donation stored locally.", {
+        console.error("[donations-submit] Donation persistence failed.", {
+          message: error instanceof Error ? error.message : "Unknown error",
+        });
+
+        return "persistence-failed" as const;
+      })
+    : null;
+
+  if (persistedDonation === "persistence-failed") {
+    return Response.json(
+      {
+        ok: false,
+        error: "Nao foi possivel registrar a doacao.",
+      },
+      { status: 500 },
+    );
+  }
+
+  if (
+    requiresPersistentReceipt &&
+    !persistedDonation &&
+    !canUseMemoryFallback()
+  ) {
+    return Response.json(
+      {
+        ok: false,
+        error:
+          "Banco de dados indisponivel. Nao foi possivel registrar a doacao.",
+      },
+      { status: 503 },
+    );
+  }
+
+  if (!persistedDonation && !canUseMemoryFallback()) {
+    return Response.json(
+      {
+        ok: false,
+        error:
+          "Banco de dados indisponivel. Nao foi possivel registrar a doacao.",
+      },
+      { status: 503 },
+    );
+  }
+
+  const receipt =
+    persistedDonation ?? toDonationReceipt(addDonation(validation.value));
+
+  console.info("[donations-submit] Confirmed donation stored.", {
     id: receipt.id,
     projectId: receipt.projectId,
     amount: receipt.amount,
@@ -228,4 +298,11 @@ function parseStatus(value: string | undefined): StoredDonationStatus | null {
 
 function isValidTxHash(hash: string | null | undefined) {
   return /^(0x)?[0-9a-fA-F]{64}$/.test((hash ?? "").trim());
+}
+
+function isDatabaseUnavailableError(error: unknown) {
+  return (
+    error instanceof Error &&
+    error.message.includes("Banco de dados indisponivel")
+  );
 }

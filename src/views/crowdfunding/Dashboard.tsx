@@ -16,7 +16,7 @@ import {
 } from "../../util/explorerLinks";
 
 export default function Dashboard() {
-  const { donations } = useDonations();
+  const { donations, refreshDonations } = useDonations();
   const privyWallet = usePrivyWalletAbstraction();
   const [catalog, setCatalog] = useState<ProjectNftCatalogItemDTO[]>([]);
   const [projectMedia, setProjectMedia] = useState<ProjectMediaItemDTO[]>([]);
@@ -73,6 +73,12 @@ export default function Dashboard() {
     : null;
   const isLoggedIn = privyWallet.authenticated;
   const hasConnectedWallet = Boolean(privyWallet.evmAddress);
+
+  useEffect(() => {
+    if (hasConnectedWallet) {
+      void refreshDonations();
+    }
+  }, [hasConnectedWallet, refreshDonations]);
 
   const handleConnectWallet = () => {
     void Promise.resolve()
@@ -158,6 +164,23 @@ export default function Dashboard() {
                   const txExplorerUrl = buildTransactionExplorerUrl(
                     donation.txHash,
                   );
+                  const receiptParams = new URLSearchParams({
+                    donationId: String(donation.id),
+                    projeto: donation.projectName,
+                    valor: String(donation.amount),
+                    asset: donation.asset ?? "USDGLO",
+                    rede: donation.network ?? "celo-mainnet",
+                  });
+                  if (donation.txHash) {
+                    receiptParams.set("txHash", donation.txHash);
+                  }
+                  if (donation.walletAddress) {
+                    receiptParams.set("wallet", donation.walletAddress);
+                  }
+                  if (donation.destinationAddress) {
+                    receiptParams.set("destino", donation.destinationAddress);
+                  }
+                  const receiptUrl = `/sucesso?${receiptParams.toString()}`;
                   const nftExplorerUrl = buildNftTokenExplorerUrl(
                     Number(donation.nftId),
                   );
@@ -188,6 +211,23 @@ export default function Dashboard() {
                           {formatDonationAmount(donation.amount)}{" "}
                           {donation.asset ?? "BRZ"}
                         </p>
+                        <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">
+                          <span>
+                            Status: {formatDonationStatus(donation.status)}
+                          </span>
+                          {donation.txHash ? (
+                            <span>TX: {formatShortHash(donation.txHash)}</span>
+                          ) : null}
+                        </div>
+                        <div className="pt-1 flex flex-wrap gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
+                          <Link
+                            to={receiptUrl}
+                            className="text-emerald-700 hover:underline"
+                            title="Abrir comprovante da doacao"
+                          >
+                            Ver comprovante
+                          </Link>
+                        </div>
                         {txExplorerUrl || nftExplorerUrl ? (
                           <div className="pt-1 flex flex-wrap gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
                             {txExplorerUrl ? (
@@ -363,4 +403,18 @@ function formatDonationAmount(value: string | number) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 6,
   });
+}
+
+function formatDonationStatus(
+  status: "PENDING" | "CONFIRMED" | "FAILED" | undefined,
+) {
+  if (status === "CONFIRMED") return "Confirmado";
+  if (status === "PENDING") return "Pendente";
+  if (status === "FAILED") return "Falhou";
+  return "Nao disponivel";
+}
+
+function formatShortHash(value: string) {
+  if (value.length <= 14) return value;
+  return `${value.slice(0, 8)}...${value.slice(-6)}`;
 }

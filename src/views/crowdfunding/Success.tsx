@@ -151,7 +151,7 @@ export default function Success() {
         }
 
         setReceiptNotice(
-          "Registro salvo. Atualize a página em instantes se os detalhes ainda não aparecerem.",
+          "Registro salvo localmente, mas ainda nao foi possivel carregar o comprovante completo. Tente atualizar em instantes.",
         );
       }
     }
