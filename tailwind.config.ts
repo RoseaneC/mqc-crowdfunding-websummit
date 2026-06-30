@@ -53,13 +53,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: "#0f00a1",
-        secondary: "#ff5c00",
-        accent: "#ffca00",
-        dark: "#0e0f14",
-        "background-light": "#FFFF",
-        "background-dark": "#070039",
-        "surface-light": "#fff2de",
+        primary: "#1A4A2E",
+        secondary: "#2D6B45",
+        accent: "#C17B2A",
+        dark: "#1C1A17",
+        "background-light": "#F5F0E8",
+        "background-dark": "#123520",
+        "surface-light": "#FBF0E0",
         "surface-dark": "#1F2937",
       },
       fontFamily: {

@@ -4,7 +4,7 @@ import {
   type DonationMetricRecord,
 } from "../../../util/donationMetrics";
 
-export type StoredDonationAsset = "USDGLO" | "XLM" | "USDC" | "BRZ";
+export type StoredDonationAsset = "USDGLO" | "CELO" | "XLM" | "USDC" | "BRZ";
 export type StoredDonationNetwork =
   | "celo-mainnet"
   | "stellar-mainnet"

@@ -59,3 +59,9 @@ export function isCeloUsdcEnabled() {
     Boolean(config.usdcAddress)
   );
 }
+
+export function isNativeCeloEnabled() {
+  const config = getCeloConfig();
+
+  return config.chainId === CELO_MAINNET_CHAIN_ID && config.rpcUrl.length > 0;
+}

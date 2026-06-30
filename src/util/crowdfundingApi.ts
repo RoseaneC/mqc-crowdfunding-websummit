@@ -6,7 +6,7 @@ import type {
 } from "./projectDemoMetadata";
 
 export type ImpactAxis = "AMBIENTAL" | "CULTURAL" | "SOCIAL";
-export type ProjectFundingAsset = DemoCurrencyCode | "USDGLO" | "PIX";
+export type ProjectFundingAsset = DemoCurrencyCode | "USDGLO" | "CELO" | "PIX";
 
 export interface ProjectDTO {
   id: number | string;
@@ -173,7 +173,7 @@ export interface AdminDonationSummaryDTO {
     projectId: number;
     projectName: string;
     amount: number;
-    asset: "USDGLO" | "XLM" | "USDC" | "BRZ";
+    asset: "USDGLO" | "CELO" | "XLM" | "USDC" | "BRZ";
     network: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
     txHash: string | null;
     status: "confirmed" | "pending" | "failed";
@@ -201,7 +201,10 @@ export interface AdminDonationResetResponseDTO {
 }
 
 export interface AdminProjectsDTO {
-  summary: {
+  data: AdminProjectPendingDTO[];
+  source?: string;
+  warning?: string;
+  summary?: {
     pending: number;
     approved: number;
     rejected: number;
@@ -222,6 +225,8 @@ export interface AdminProjectPendingDTO {
   pixQrCodeUrl?: string | null;
   goalAsset?: ProjectFundingAsset;
   targetXlm: number;
+  raisedXlm?: number;
+  donationCount?: number;
   status: "PENDING" | "APPROVED" | "REJECTED" | "INACTIVE" | "SUSPENDED";
   featured?: boolean;
   createdAt: string;
@@ -540,7 +545,7 @@ export function submitDonation(payload: {
   donorType?: "PF" | "PJ";
   document?: string;
   amount?: number | string;
-  asset?: "USDGLO" | "XLM" | "USDC" | "BRZ";
+  asset?: "USDGLO" | "CELO" | "XLM" | "USDC" | "BRZ";
   network?: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
   txHash: string;
   status?: "confirmed" | "pending" | "failed";

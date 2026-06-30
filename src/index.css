@@ -1,4 +1,4 @@
-/* Import fonts for Stellar Design System */
+/* Import base fonts */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Inconsolata:wght@500&display=swap");
 
 /* Import fonts for Crowdfunding UI */
@@ -13,42 +13,77 @@
 /* Import Material Symbols Outlined (for newer icon variants) */
 @import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
 
-:root {
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
   /* Fonts */
   --font-body: "Poppins", sans-serif;
   --font-heading: "Montserrat", sans-serif;
   --font-code: "Inconsolata", monospace;
 
-  /* Brand colors */
-  --color-primary: #0f00a1;
-  --color-primary-dark: #0a0070;
-  --color-primary-light: #e8e6ff;
+  /* Ponteia institutional colors */
+  --color-primary: #1a4a2e;
+  --color-primary-dark: #123520;
+  --color-primary-light: #e8f2ec;
 
-  --color-accent: #ffca00;
-  --color-accent-dark: #d6a900;
-  --color-accent-light: #fff4bf;
+  --color-accent: #c17b2a;
+  --color-accent-dark: #8f581d;
+  --color-accent-light: #fbf0e0;
 
   /* Neutral colors */
   --color-white: #ffffff;
-  --color-black: #111111;
+  --color-black: #1c1a17;
 
-  --color-background: #ffffff;
-  --color-surface: #f8f9fc;
-  --color-surface-alt: #f1f3f8;
+  --color-background: #f5f0e8;
+  --color-surface: #f5f0e8;
+  --color-surface-alt: #ede8df;
 
-  --color-text: #111827;
-  --color-text-muted: #6b7280;
-  --color-text-soft: #9ca3af;
+  --color-text: #1c1a17;
+  --color-text-muted: #6b6558;
+  --color-text-soft: #8a8273;
   --color-text-light: #ffffff;
 
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
+  --color-border: #d4ccbc;
+  --color-border-strong: #b8ae9b;
 
   /* Feedback colors */
   --color-success: #16a34a;
   --color-warning: #f59e0b;
   --color-error: #dc2626;
   --color-info: #2563eb;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-primary: #6fa781;
+  --color-primary-dark: #07150e;
+  --color-primary-light: #173526;
+
+  --color-accent: #d89a4b;
+  --color-accent-dark: #f0b969;
+  --color-accent-light: #352817;
+
+  --color-white: #142018;
+  --color-black: #f8f3ea;
+
+  --color-background: #0b120e;
+  --color-surface: #101b14;
+  --color-surface-alt: #18261d;
+
+  --color-text: #f8f3ea;
+  --color-text-muted: #c9bdab;
+  --color-text-soft: #9e927f;
+  --color-text-light: #f8f3ea;
+
+  --color-border: rgba(232, 242, 236, 0.16);
+  --color-border-strong: rgba(232, 242, 236, 0.28);
+
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+  --color-error: #fb7185;
+  --color-info: #93c5fd;
 }
 
 /* Tailwind directives */
@@ -62,6 +97,18 @@ body {
   font-family: var(--font-body);
   background-color: var(--color-background);
   color: var(--color-text);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+#sobreNos,
+#parceiros,
+#contato,
+#comoFunciona,
+#transparencia {
+  scroll-margin-top: 6rem;
 }
 
 body {
@@ -101,8 +148,9 @@ pre {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .marquee__track,
   .animate-marquee {
-    animation-play-state: paused;
+    animation: none;
   }
 }
 
@@ -134,8 +182,12 @@ pre {
   display: flex;
   width: max-content;
   gap: 3rem;
-  animation: marquee 28s linear infinite;
+  animation: marquee 56s linear infinite;
   will-change: transform;
+}
+
+.marquee:hover .marquee__track {
+  animation-play-state: paused;
 }
 
 .marquee__item {

@@ -1,0 +1,27 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  role="img"
+  aria-labelledby="title"
+>
+  <title id="title">Ponteia</title>
+  <rect width="64" height="64" rx="14" fill="#1A4A2E" />
+  <path
+    d="M14 40c8-13 28-13 36 0"
+    fill="none"
+    stroke="#C17B2A"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M20 40h24"
+    fill="none"
+    stroke="#F5F0E8"
+    stroke-width="5"
+    stroke-linecap="round"
+  />
+  <path
+    d="M21 24h17c6 0 10 3.6 10 8.7 0 5.3-4.1 8.9-10.2 8.9H29v7.6h-8V24Zm8 6.7v4.5h8.2c1.8 0 2.9-.9 2.9-2.3 0-1.4-1.1-2.2-2.9-2.2H29Z"
+    fill="#F5F0E8"
+  />
+</svg>

@@ -159,11 +159,13 @@ function getProjectAcceptedCurrencies(
 ): ProjectFundingAsset[] {
   const acceptedCurrencies =
     project.moedasAceitas?.filter(
-      (asset) => asset === "USDGLO" || asset === "USDC",
+      (asset) => asset === "USDGLO" || asset === "CELO" || asset === "USDC",
     ) ?? [];
 
   const options: ProjectFundingAsset[] =
-    acceptedCurrencies.length > 0 ? acceptedCurrencies : ["USDGLO", "USDC"];
+    acceptedCurrencies.length > 0
+      ? acceptedCurrencies
+      : ["USDGLO", "CELO", "USDC"];
 
   if (!options.includes("USDGLO")) {
     options.unshift("USDGLO");
@@ -171,6 +173,10 @@ function getProjectAcceptedCurrencies(
 
   if (!options.includes("USDC")) {
     options.push("USDC");
+  }
+
+  if (!options.includes("CELO")) {
+    options.splice(1, 0, "CELO");
   }
 
   if (project.pixKey || project.pixQrCodeUrl) {
@@ -188,6 +194,7 @@ function formatMetricCurrencyLabel(
 
   if (normalized === "USDGLO") return "USDGLO";
   if (normalized === "USDC") return "USDC";
+  if (normalized === "CELO") return "CELO";
   if (normalized === "PIX") return "PIX";
   if (normalized === "BRZ") return "BRZ";
 
@@ -197,6 +204,7 @@ function formatMetricCurrencyLabel(
 function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
   if (asset === "USDGLO") return "USDGLO";
   if (asset === "USDC") return "USDC";
+  if (asset === "CELO") return "CELO";
   if (asset === "PIX") return "PIX";
   if (asset === "BRZ") return "BRZ";
 
@@ -303,44 +311,41 @@ export default function Projects() {
   const hasActiveFilters = query.trim().length > 0 || selectedTheme !== "Todos";
 
   return (
-    <div className="min-h-screen bg-[#fbfcff] font-[var(--font-body)] text-[var(--color-text)]">
-      <header className="relative min-h-[520px] overflow-hidden bg-[var(--color-primary)]">
+    <div className="min-h-screen bg-[var(--color-background)] font-[var(--font-body)] text-[var(--color-text)]">
+      <header className="relative min-h-[480px] overflow-hidden bg-[var(--color-primary)]">
         <img
           src={HeroProjectsImg.src}
           alt="Participantes em programa de impacto social"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
 
-        <div className="absolute inset-0 backdrop-blur-[2px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(10,0,112,0.92)_0%,rgba(15,0,161,0.72)_48%,rgba(15,0,161,0.32)_100%)]" />
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[rgba(251,252,255,0.50)] to-transparent" />
+        <div className="absolute inset-0 bg-[rgba(26,74,46,0.78)]" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[var(--color-background)] to-transparent" />
 
-        <div className="relative mx-auto flex min-h-[520px] max-w-7xl items-center px-4 py-24 text-center sm:px-6 sm:text-left lg:px-8">
+        <div className="relative mx-auto flex min-h-[480px] max-w-7xl items-center px-4 py-24 text-center sm:px-6 sm:text-left lg:px-8">
           <div className="max-w-4xl">
-            <h1 className="mb-6 font-[var(--font-body)] text-4xl font-light leading-[1.05] tracking-tight text-[var(--color-white)] sm:text-5xl lg:text-6xl">
-              Juntas
-              <br />
-              <span className="font-medium text-[var(--color-accent)]">
-                programando o futuro.
-              </span>
+            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-light)]">
+              Projetos de impacto
+            </p>
+            <h1 className="mb-6 font-[var(--font-heading)] text-4xl font-semibold leading-[1.05] tracking-tight text-[var(--color-white)] sm:text-5xl lg:text-6xl">
+              Escolha uma iniciativa para apoiar
             </h1>
 
             <p className="max-w-2xl text-base font-normal leading-8 text-white/80 sm:text-lg">
-              Apoie projetos liderados por mulheres em eixos de impacto
-              conectados às ODS, com foco em educação, inclusão produtiva,
-              equidade, segurança alimentar e transição energética justa.
+              Conheca projetos sociais, culturais e ambientais analisados pela
+              Ponteia. Apoie por PIX ou moedas digitais estaveis e acompanhe as
+              atualizacoes de impacto.
             </p>
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
-        <section className="-mt-16 rounded-[1.75rem] border border-[var(--color-border)] bg-[rgba(255,255,255,0.88)] px-5 py-5 shadow-[0_18px_50px_rgba(15,0,161,0.08)] backdrop-blur sm:px-6">
+        <section className="-mt-16 rounded-sm border border-[var(--color-border-strong)] bg-[var(--color-white)] px-5 py-5 shadow-[0_18px_50px_rgba(28,26,23,0.10)] sm:px-6">
           <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h2 className="mt-2 font-[var(--font-body)] text-2xl font-medium tracking-tight text-[var(--color-text)]">
+                <h2 className="mt-2 font-[var(--font-body)] text-2xl font-semibold tracking-tight text-[var(--color-primary)]">
                   Projetos aprovados
                 </h2>
               </div>
@@ -361,7 +366,7 @@ export default function Projects() {
                 />
 
                 <input
-                  className="block h-12 w-full rounded-full border border-[var(--color-border)] bg-[var(--color-white)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--color-text)] shadow-sm transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
+                  className="block h-12 w-full rounded-full border border-[var(--color-border-strong)] bg-[var(--color-surface)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--color-text)] shadow-sm transition placeholder:text-[var(--color-text-soft)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10"
                   placeholder="Buscar por projeto, eixo, ODS ou descrição..."
                   type="text"
                   value={query}
@@ -382,7 +387,7 @@ export default function Projects() {
                         "inline-flex min-h-10 items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium transition",
                         isActive
                           ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-[var(--color-white)]"
-                          : "border-[var(--color-border)] bg-transparent text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
+                          : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
                       ].join(" ")}
                     >
                       <span>{theme}</span>
@@ -403,16 +408,16 @@ export default function Projects() {
               </div>
             </div>
 
-            <p className="rounded-2xl bg-[var(--color-surface)] px-4 py-3 text-xs leading-6 text-[var(--color-text-muted)]">
-              Projetos recebem USDGLO na Celo Mainnet e podem oferecer PIX como
-              doação fiduciária direta fora da blockchain.
+            <p className="rounded-sm border border-[var(--color-primary)]/20 bg-[var(--color-primary-light)] px-4 py-3 text-xs font-medium leading-6 text-[var(--color-primary)]">
+              Apoie por PIX direto para a organizacao ou por moedas digitais
+              estaveis com registro transparente na Celo.
             </p>
           </div>
         </section>
 
         <section className="mt-12">
           {loading ? (
-            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_18px_50px_rgba(15,0,161,0.05)]">
+            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_18px_44px_rgba(28,26,23,0.05)]">
               <p className="text-sm font-semibold text-[var(--color-text)]">
                 Carregando projetos aprovados...
               </p>
@@ -423,20 +428,20 @@ export default function Projects() {
                 {[0, 1, 2].map((item) => (
                   <div
                     key={item}
-                    className="h-44 animate-pulse rounded-2xl bg-[var(--color-surface-alt)]"
+                    className="h-44 animate-pulse rounded-sm bg-[var(--color-surface-alt)]"
                   />
                 ))}
               </div>
             </div>
           ) : error ? (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8">
+            <div className="rounded-sm border border-rose-200 bg-rose-50 p-8">
               <p className="text-sm font-semibold text-rose-700">
                 Não foi possível carregar os projetos.
               </p>
               <p className="mt-2 break-all text-xs text-rose-600">{error}</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_18px_50px_rgba(15,0,161,0.05)]">
+            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-8 shadow-[0_18px_44px_rgba(28,26,23,0.05)]">
               <h3 className="font-[var(--font-body)] text-xl font-medium tracking-tight text-[var(--color-text)]">
                 {approvedProjects.length === 0
                   ? "Ainda não há projetos aprovados disponíveis."
@@ -483,27 +488,33 @@ export default function Projects() {
                 return (
                   <article
                     key={project.id}
-                    className="group flex min-h-[600px] flex-col overflow-hidden rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_50px_rgba(15,0,161,0.06)] transition-shadow duration-300 hover:shadow-[0_24px_70px_rgba(15,0,161,0.12)]"
+                    className="group flex min-h-[610px] flex-col overflow-hidden rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_44px_rgba(28,26,23,0.06)] transition-shadow duration-300 hover:shadow-[0_24px_70px_rgba(28,26,23,0.12)]"
                   >
-                    <div className="relative h-48 overflow-hidden bg-[var(--color-primary)]">
+                    <div className="relative h-48 overflow-hidden bg-[var(--color-primary-light)]">
                       <img
                         src={projectImage}
                         alt={`Imagem do projeto ${project.title}`}
                         className="h-full w-full transform-gpu object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       />
 
-                      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(10,0,112,0.04),rgba(10,0,112,0.38))]" />
+                      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(28,26,23,0.02),rgba(26,74,46,0.34))]" />
                     </div>
 
                     <div className="flex flex-1 flex-col justify-between p-6">
                       <div>
-                        <p className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                        <p className="inline-flex w-fit rounded-full border border-[var(--color-border)] bg-[var(--color-primary-light)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-primary)]">
                           {theme}
                         </p>
 
                         <h3 className="mt-4 font-[var(--font-body)] text-xl font-medium leading-tight tracking-tight text-[var(--color-text)]">
                           {project.title}
                         </h3>
+
+                        <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-text-soft)]">
+                          {project.ngoName ??
+                            project.organization ??
+                            "Organizacao responsavel"}
+                        </p>
 
                         <p className="mt-5 text-sm leading-7 text-[var(--color-text-muted)]">
                           {project.description}
@@ -529,7 +540,7 @@ export default function Projects() {
                           </p>
                           <p>
                             <span className="font-semibold text-[var(--color-text)]">
-                              Opções de contribuição:
+                              Opções de apoio:
                             </span>{" "}
                             {acceptedCurrencies
                               .map(formatProjectFundingAssetLabel)
@@ -583,9 +594,9 @@ export default function Projects() {
                             to={`/contribuir?projeto=${project.id}&nome=${encodeURIComponent(
                               project.title,
                             )}`}
-                            className="shrink-0 rounded-full bg-[var(--color-black)] px-5 py-2.5 text-xs font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary)]"
+                            className="shrink-0 rounded-full bg-[var(--color-primary)] px-5 py-2.5 text-xs font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary-dark)]"
                           >
-                            Apoiar
+                            Apoiar este projeto
                           </Link>
                         </div>
                       </div>

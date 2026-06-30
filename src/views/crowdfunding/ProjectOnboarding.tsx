@@ -19,7 +19,7 @@ export default function ProjectOnboarding() {
     pixKey: "",
     pixQrCodeUrl: "",
     goalAmount: "",
-    axes: ["SOCIAL"] as ImpactAxis[],
+    axes: [] as ImpactAxis[],
   });
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,7 +41,9 @@ export default function ProjectOnboarding() {
     setFeedback(null);
 
     if (form.axes.length === 0) {
-      setFeedback("Selecione pelo menos um eixo de impacto.");
+      setFeedback(
+        "Selecione pelo menos um eixo de impacto para cadastrar o projeto.",
+      );
       return;
     }
 
@@ -89,7 +91,7 @@ export default function ProjectOnboarding() {
         pixKey: "",
         pixQrCodeUrl: "",
         goalAmount: "",
-        axes: ["SOCIAL"],
+        axes: [],
       });
     } catch (error) {
       setFeedback(
@@ -101,7 +103,7 @@ export default function ProjectOnboarding() {
   };
 
   return (
-    <main className="min-h-screen bg-[var(--color-surface)] px-4 py-10 text-[var(--color-text)] sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[var(--color-background)] px-4 py-10 text-[var(--color-text)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <Link
           to="/projetos"
@@ -113,17 +115,17 @@ export default function ProjectOnboarding() {
           Voltar para projetos
         </Link>
 
-        <section className="mt-8 rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm sm:p-8">
+        <section className="mt-8 rounded-sm border border-[var(--color-border)] bg-white p-6 shadow-[0_18px_44px_rgba(28,26,23,0.06)] sm:p-8">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-accent-dark)]">
               Cadastro de projetos sociais
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-              Submeta um projeto para apoio em USDGLO Celo e PIX
+              Cadastre um projeto para receber apoio pela Ponteia
             </h1>
             <p className="mt-4 text-sm leading-7 text-[var(--color-text-muted)]">
-              O projeto nasce como PENDING e precisa ser aprovado no admin antes
-              de aparecer como campanha ativa.
+              A equipe revisa as informacoes antes de publicar a campanha para
+              apoiadores.
             </p>
           </div>
 
@@ -158,7 +160,7 @@ export default function ProjectOnboarding() {
                 onChange={(event) =>
                   updateField("description", event.target.value)
                 }
-                className="mt-2 min-h-32 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
+                className="mt-2 min-h-32 w-full rounded-sm border border-[var(--color-border)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
               />
             </label>
 
@@ -173,8 +175,8 @@ export default function ProjectOnboarding() {
               value={form.walletAddress}
               onChange={(value) => updateField("walletAddress", value)}
             />
-            <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-              Endereço EVM/Celo que receberá doações em USDGLO.
+            <p className="rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm leading-6 text-[var(--color-text-muted)]">
+              Endereco EVM/Celo que recebera contribuicoes digitais em USDGLO.
             </p>
             <TextInput
               label="Chave PIX"
@@ -187,20 +189,28 @@ export default function ProjectOnboarding() {
               onChange={(value) => updateField("pixQrCodeUrl", value)}
             />
 
-            <p className="md:col-span-2 rounded-xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
-              O PIX permite doações fiduciárias diretas para o projeto, fora da
-              blockchain.
+            <p className="md:col-span-2 rounded-sm border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm leading-6 text-[var(--color-text-muted)]">
+              O PIX permite transferencias diretas para o projeto pelo app do
+              banco, fora da blockchain.
             </p>
 
-            <div className="md:col-span-2 rounded-xl border border-slate-200 p-4">
+            <div className="md:col-span-2 rounded-sm border border-[var(--color-border)] p-4">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Eixos obrigatorios
+              </p>
+              <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">
+                Selecione pelo menos um eixo para orientar a analise e a
+                prestacao de contas do projeto.
               </p>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {axisOptions.map((axis) => (
                   <label
                     key={axis.value}
-                    className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                    className={`flex cursor-pointer items-center gap-3 rounded-sm border px-4 py-3 text-sm font-semibold transition ${
+                      form.axes.includes(axis.value)
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary-light)] text-[var(--color-primary)]"
+                        : "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-primary)]"
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -208,6 +218,7 @@ export default function ProjectOnboarding() {
                       onChange={(event) =>
                         toggleAxis(axis.value, event.target.checked)
                       }
+                      className="h-4 w-4 accent-[var(--color-primary)]"
                     />
                     {axis.label}
                   </label>
@@ -226,7 +237,9 @@ export default function ProjectOnboarding() {
               {isSubmitting ? "Enviando..." : "Enviar para analise"}
             </button>
             {feedback ? (
-              <p className="text-sm font-semibold text-slate-600">{feedback}</p>
+              <p className="text-sm font-semibold text-[var(--color-text-muted)]">
+                {feedback}
+              </p>
             ) : null}
           </div>
         </section>
@@ -243,14 +256,14 @@ function TextInput(props: {
 }) {
   return (
     <label>
-      <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+      <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-text-soft)]">
         {props.label}
       </span>
       <input
         type={props.type ?? "text"}
         value={props.value}
         onChange={(event) => props.onChange(event.target.value)}
-        className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
+        className="mt-2 w-full rounded-sm border border-[var(--color-border)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary)]/10"
       />
     </label>
   );

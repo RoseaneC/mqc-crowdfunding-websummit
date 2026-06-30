@@ -120,94 +120,102 @@ export default function Home() {
   }, [projects]);
 
   return (
-    <div className="min-h-screen font-body bg-background-light">
+    <div className="min-h-screen bg-[var(--color-background)] font-body">
       {/* HERO */}
-      <header className="relative overflow-hidden bg-[var(--color-primary)] px-4 py-28 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-[var(--color-primary)]" />
+      <header className="relative overflow-hidden border-b border-[var(--color-border)] bg-[var(--color-background)] px-4 py-20 sm:px-6 lg:px-8">
+        <div className="absolute inset-y-0 left-0 w-2 bg-[var(--color-primary)]" />
+        <div className="absolute inset-x-0 top-0 h-px bg-[var(--color-border)]" />
 
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,var(--color-primary-light)_0%,rgba(232,230,255,0.45)_18%,transparent_42%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,202,0,0.20)_0%,transparent_28%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_20%,rgba(255,255,255,0.22)_0%,transparent_34%)]" />
+        <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[0.95fr_1.05fr]">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-dark)]">
+              Ponteia | impacto com transparencia
+            </p>
 
-        <div className="absolute inset-0 opacity-[0.60] mix-blend-soft-light bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.85)_1px,transparent_0)] bg-[size:14px_14px]" />
+            <h1 className="mt-7 max-w-4xl font-[var(--font-heading)] text-5xl font-semibold leading-[1.02] tracking-tight text-[var(--color-text)] sm:text-6xl lg:text-7xl">
+              Apoie projetos que transformam territorios
+            </h1>
 
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(15,0,161,0.10),rgba(5,0,36,0.62))]" />
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/35 to-transparent" />
+            <p className="mt-8 max-w-2xl text-lg leading-8 text-[var(--color-text-muted)]">
+              A Ponteia conecta pessoas e empresas a iniciativas sociais,
+              culturais e ambientais. Voce escolhe o projeto, contribui como
+              preferir e acompanha o impacto com transparencia.
+            </p>
 
-        <div className="relative mx-auto max-w-6xl text-center">
-          <h1 className="mx-auto mt-8 max-w-5xl font-[var(--font-body)] text-5xl font-light leading-tight tracking-tight text-[var(--color-white)] sm:text-6xl lg:text-7xl">
-            Conecte recursos a projetos que transformam territórios{" "}
-            <span className="whitespace-nowrap">
-              em{" "}
-              <span className="font-medium text-[var(--color-accent)]">
-                impacto
-              </span>
-            </span>
-          </h1>
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <Link
+                to="/projetos"
+                className="inline-flex items-center justify-center rounded-full bg-[var(--color-primary)] px-7 py-3 text-sm font-semibold text-[var(--color-white)] transition hover:bg-[var(--color-primary-dark)]"
+              >
+                Conhecer projetos
+              </Link>
+              <Link
+                to="/#comoFunciona"
+                className="inline-flex items-center justify-center rounded-full border border-[var(--color-border-strong)] bg-transparent px-7 py-3 text-sm font-semibold text-[var(--color-primary)] transition hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-light)]"
+              >
+                Como funciona
+              </Link>
+            </div>
 
-          <p className="mx-auto mt-8 max-w-2xl text-lg leading-8 text-white/70">
-            Ponteia é uma plataforma de apoio a projetos de impacto com Celo,
-            USDGLO, PIX e prestação de contas transparente.
-          </p>
-
-          <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row">
-            <Link
-              to="/projetos"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-7 py-3 text-sm font-semibold text-[var(--color-black)] transition hover:bg-[var(--color-accent-dark)]"
-            >
-              Explorar projetos
-              <ArrowRight size={16} strokeWidth={2} />
-            </Link>
+            <div className="mt-12 grid gap-4 border-t border-[var(--color-border)] pt-8 sm:grid-cols-3">
+              {["Social", "Cultural", "Ambiental"].map((axis) => (
+                <div key={axis}>
+                  <span className="block h-1 w-10 bg-[var(--color-accent)]" />
+                  <p className="mt-3 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-primary)]">
+                    {axis}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
 
+          <div className="relative">
+            <div className="absolute -left-5 -top-5 h-full w-full border border-[var(--color-border)]" />
+            <Image
+              src={fotoMeninas}
+              alt="Pessoas reunidas em programa de impacto social"
+              className="relative h-[520px] w-full rounded-sm object-cover shadow-[0_28px_80px_rgba(28,26,23,0.16)]"
+              priority
+            />
+            <div className="absolute bottom-6 left-6 max-w-xs border border-white/25 bg-[rgba(26,74,46,0.92)] p-5 text-white backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/70">
+                Tecnologia como meio
+              </p>
+              <p className="mt-2 text-sm leading-6">
+                Recursos, registros e prestacao de contas a servico de projetos
+                reais.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mx-auto mt-20 max-w-7xl">
           <div
             id="sobreNos"
-            className="mt-20 border-t border-white/15 pt-14 text-left"
+            className="scroll-mt-24 border-t border-[var(--color-border)] pt-14 text-left"
           >
             <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
-              <div className="relative">
-                <div className="absolute -left-6 top-10 h-40 w-40 rounded-full bg-[var(--color-accent)]/20 blur-3xl" />
-                <div className="absolute -right-6 bottom-8 h-52 w-52 rounded-full bg-white/10 blur-3xl" />
-
-                <div className="group relative overflow-hidden rounded-[1.2rem] shadow-[0_28px_90px_rgba(0,0,0,0.36)]">
-                  <div className="absolute inset-0 rounded-[1rem] bg-gradient-to-br from-white/10 via-transparent to-[var(--color-accent)]/10 opacity-70" />
-
-                  <Image
-                    src={fotoMeninas}
-                    alt="Pessoas reunidas em programa de impacto social"
-                    className="h-[520px] w-full rounded-[1.2rem] object-cover transition duration-700 ease-out group-hover:scale-[1.018]"
-                    priority
-                  />
-                </div>
+              <div className="border-l-4 border-[var(--color-accent)] pl-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-accent-dark)]">
+                  Sobre a Ponteia
+                </p>
+                <h2 className="mt-5 max-w-3xl font-[var(--font-heading)] text-3xl font-semibold leading-tight tracking-tight text-[var(--color-text)] sm:text-4xl lg:text-[3rem]">
+                  Uma ponte entre recursos, territorios e prestacao de contas.
+                </h2>
               </div>
 
-              <div className="relative">
-                <div className="absolute -left-8 top-8 h-44 w-44 rounded-full bg-[var(--color-accent)]/10 blur-3xl" />
-                <div className="absolute right-0 top-0 h-56 w-56 rounded-full bg-white/5 blur-3xl" />
+              <div>
+                <p className="max-w-2xl text-lg leading-9 text-[var(--color-text-muted)]">
+                  A Ponteia nasceu para aproximar apoiadores, organizacoes e
+                  projetos sociais, culturais e ambientais com clareza, cuidado
+                  e governanca simples.
+                </p>
 
-                <div className="relative">
-                  <h2 className="mt-6 max-w-3xl font-[var(--font-heading)] text-3xl font-semibold leading-tight tracking-tight text-[var(--color-white)] drop-shadow-[0_6px_24px_rgba(0,0,0,0.18)] sm:text-4xl lg:text-[3rem]">
-                    Mais que uma vitrine de projetos:
-                    <span className="block text-[var(--color-accent)]">
-                      uma ponte entre recursos e impacto.
-                    </span>
-                  </h2>
-
-                  <div className="mt-6 h-[3px] w-24 rounded-full bg-gradient-to-r from-[var(--color-accent)] via-white/80 to-transparent" />
-
-                  <p className="mt-8 max-w-2xl text-lg leading-9 text-white/80 sm:text-xl">
-                    A <span className="font-semibold text-white">Ponteia</span>{" "}
-                    nasceu para aproximar apoiadores, organizações e projetos
-                    sociais, culturais e ambientais com governança simples.
-                  </p>
-
-                  <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--color-white)] sm:text-lg">
-                    A plataforma reúne iniciativas de impacto, opções de doação
-                    em USDGLO na Celo Mainnet, PIX direto para a organização e
-                    evidências para prestação de contas.
-                  </p>
-                </div>
+                <p className="mt-5 max-w-2xl text-base leading-8 text-[var(--color-text-muted)]">
+                  A plataforma organiza iniciativas de impacto, apoio via PIX,
+                  contribuicoes digitais estaveis e evidencias para prestacao de
+                  contas. A tecnologia fica a servico da confianca.
+                </p>
               </div>
             </div>
           </div>
@@ -218,21 +226,6 @@ export default function Home() {
         id="projetos-destaque"
         className="relative overflow-hidden bg-[var(--color-white)] py-20 sm:py-24"
       >
-        {/* TEXTURA SUTIL DA HERO */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] overflow-hidden">
-          {/* brilho bem suave */}
-          <div className="absolute right-0 top-0 h-full w-[72%] bg-[radial-gradient(circle_at_65%_12%,rgba(15,0,161,0.08)_0%,rgba(232,230,255,0.22)_26%,transparent_62%)]" />
-
-          {/* pontinhos */}
-          <div className="absolute right-0 top-0 h-full w-[72%] opacity-[0.25] bg-[radial-gradient(circle_at_1px_1px,rgba(15,0,161,0.55)_1px,transparent_0)] bg-[size:14px_14px]" />
-
-          {/* fade para sumir no conteúdo */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,transparent_55%,var(--color-white)_100%)]" />
-
-          {/* fade lateral para não encostar forte no título */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--color-white)_0%,rgba(255,255,255,0.92)_28%,rgba(255,255,255,0)_62%)]" />
-        </div>
-
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-16 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-2xl">
@@ -241,8 +234,8 @@ export default function Home() {
               </h2>
 
               <p className="mt-5 max-w-xl text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">
-                Um primeiro olhar para projetos liderados por mulheres que unem
-                tecnologia, território e impacto social.
+                Um primeiro olhar para iniciativas que unem territorio, cultura,
+                sustentabilidade e impacto social com prestacao de contas.
               </p>
             </div>
 
@@ -260,17 +253,17 @@ export default function Home() {
           </div>
 
           {projectsLoading ? (
-            <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)] shadow-[0_18px_50px_rgba(15,0,161,0.05)]">
+            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)] shadow-[0_18px_44px_rgba(28,26,23,0.05)]">
               Carregando projetos em destaque...
             </div>
           ) : projectsError ? (
-            <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50 p-8">
+            <div className="rounded-sm border border-rose-200 bg-rose-50 p-8">
               <p className="text-sm font-semibold text-rose-700">
                 Não foi possível carregar os projetos em destaque.
               </p>
             </div>
           ) : featuredProjects.length === 0 ? (
-            <div className="rounded-[1.5rem] border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)] shadow-[0_18px_50px_rgba(15,0,161,0.05)]">
+            <div className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-8 text-sm font-medium text-[var(--color-text-muted)] shadow-[0_18px_44px_rgba(28,26,23,0.05)]">
               Nenhum projeto aprovado encontrado no momento.
             </div>
           ) : (
@@ -295,7 +288,7 @@ export default function Home() {
                 return (
                   <motion.article
                     key={project.id}
-                    className="group relative flex min-h-[455px] flex-col overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_50px_rgba(15,0,161,0.07)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_28px_80px_rgba(15,0,161,0.14)]"
+                    className="group relative flex min-h-[455px] flex-col overflow-hidden rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] shadow-[0_18px_44px_rgba(28,26,23,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(28,26,23,0.12)]"
                     variants={{
                       hidden: {
                         opacity: 0,
@@ -311,14 +304,14 @@ export default function Home() {
                       },
                     }}
                   >
-                    <div className="relative h-56 overflow-hidden bg-[var(--color-primary)]">
+                    <div className="relative h-56 overflow-hidden bg-[var(--color-primary-light)]">
                       <img
                         src={projectImage}
                         alt={`Imagem do projeto ${project.title}`}
                         className="h-full w-full transform-gpu object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       />
 
-                      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(10,0,112,0.02),rgba(10,0,112,0.42))]" />
+                      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(28,26,23,0.02),rgba(26,74,46,0.38))]" />
                     </div>
 
                     <div className="flex flex-1 flex-col justify-between p-6">
@@ -335,12 +328,10 @@ export default function Home() {
                       <div className="mt-8 flex items-center justify-between border-t border-[var(--color-border)] pt-5">
                         <Link
                           to="/projetos"
-                          className="group/button inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-text)] transition hover:text-[var(--color-black)]"
+                          className="group/button inline-flex items-center gap-3 text-sm font-semibold text-[var(--color-primary)] transition hover:text-[var(--color-accent-dark)]"
                         >
                           Saiba mais
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-black)] text-[var(--color-white)] transition group-hover/button:translate-x-1 group-hover/button:bg-[var(--color-accent)]">
-                            <ArrowRight size={14} strokeWidth={2} />
-                          </span>
+                          <span className="h-px w-8 bg-current transition group-hover/button:w-12" />
                         </Link>
                       </div>
                     </div>
@@ -355,18 +346,25 @@ export default function Home() {
       <section
         id="parceiros"
         aria-label="Nossos parceiros"
-        className="relative w-full overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-white)]"
+        className="relative w-full scroll-mt-24 overflow-hidden border-y border-[var(--color-border)] bg-[var(--color-surface)] py-16"
       >
-        <div className="mx-auto max-w-7xl px-4 pt-6 text-center sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--color-black)]">
+        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-accent-dark)]">
+            Rede que fortalece a Ponteia
+          </p>
+          <h2 className="mt-3 font-[var(--font-heading)] text-3xl font-semibold tracking-tight text-[var(--color-text)] sm:text-4xl">
             Nossos parceiros
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-[var(--color-text-muted)]">
+            Organizacoes e iniciativas que ajudam a conectar recursos,
+            tecnologia e impacto nos territorios.
           </p>
         </div>
 
-        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[var(--color-white)] to-transparent sm:w-28" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[var(--color-white)] to-transparent sm:w-28" />
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-[var(--color-surface)] to-transparent sm:w-32" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[var(--color-surface)] to-transparent sm:w-32" />
 
-        <div className="w-full py-8">
+        <div className="w-full pt-12">
           <div className="marquee">
             <div className="marquee__track">
               {[...partners, ...partners, ...partners, ...partners].map(
@@ -381,11 +379,11 @@ export default function Home() {
                     >
                       <img
                         src={p.src}
-                        alt={p.name}
+                        alt={`Logo ${p.name}`}
                         className={
                           p.name === "ITS"
-                            ? "h-12 w-auto scale-[1.22] object-contain opacity-95 transition-opacity sm:h-16 sm:scale-[1.28] lg:h-20"
-                            : "h-12 w-auto object-contain opacity-95 transition-opacity sm:h-16 lg:h-20"
+                            ? "h-12 w-auto scale-[1.12] object-contain opacity-90 transition-opacity hover:opacity-100 sm:h-14 sm:scale-[1.16] lg:h-16"
+                            : "h-12 w-auto object-contain opacity-90 transition-opacity hover:opacity-100 sm:h-14 lg:h-16"
                         }
                       />
                     </div>
@@ -399,22 +397,23 @@ export default function Home() {
 
       {/* COMO FUNCIONA */}
       <section
-        id="como-funciona"
-        className="bg-[var(--color-white)] py-20 sm:py-24"
+        id="comoFunciona"
+        className="scroll-mt-24 bg-[var(--color-white)] py-20 sm:py-24"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto mb-16 max-w-3xl text-center">
             <h2 className="mt-4 font-[var(--font-heading)] text-3xl font-bold leading-tight tracking-tight text-[var(--color-text)] sm:text-4xl lg:text-5xl">
-              Como você pode apoiar
+              Como funciona
             </h2>
 
             <p className="mt-3 font-[var(--font-body)] text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">
-              Conecte-se a iniciativas lideradas por mulheres.
+              Apoiar um projeto deve ser simples, transparente e facil de
+              acompanhar.
             </p>
           </div>
 
           <motion.div
-            className="grid gap-10 md:grid-cols-2 md:gap-8 lg:grid-cols-4 lg:gap-10"
+            className="grid gap-10 md:grid-cols-3 md:gap-8 lg:gap-10"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, amount: 0.25 }}
@@ -430,27 +429,21 @@ export default function Home() {
             {[
               {
                 number: "01",
-                title: "Explore projetos",
+                title: "Escolha um projeto",
                 description:
-                  "Conheça iniciativas lideradas por mulheres que estão criando soluções com impacto social e inovação.",
+                  "Conheca iniciativas sociais, culturais e ambientais prontas para receber apoio.",
               },
               {
                 number: "02",
-                title: "Escolha como contribuir",
+                title: "Contribua como preferir",
                 description:
-                  "Apoie projetos, apadrinhe uma aluna ou fortaleça a rede com doações e parcerias.",
+                  "Apoie via PIX ou moedas digitais estaveis na rede Celo.",
               },
               {
                 number: "03",
-                title: "Confirme sua contribuição",
-                description:
-                  "Conecte sua carteira digital, informe seus dados e finalize o apoio com segurança.",
-              },
-              {
-                number: "04",
                 title: "Acompanhe o impacto",
                 description:
-                  "Receba seu comprovante digital e acompanhe como sua doação fortalece cada projeto.",
+                  "Veja atualizacoes, registros e prestacao de contas do projeto apoiado.",
               },
             ].map((step) => (
               <motion.div
@@ -490,10 +483,58 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="bg-[var(--color-surface)] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-3xl">
+            <h2 className="font-[var(--font-heading)] text-3xl font-bold leading-tight tracking-tight text-[var(--color-text)] sm:text-4xl lg:text-5xl">
+              Por que confiar na Ponteia
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-[var(--color-text-muted)] sm:text-base">
+              A plataforma combina analise de projetos, registro das
+              contribuicoes digitais e espaco para prestacao de contas.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                title: "Projetos passam por analise",
+                text: "Iniciativas cadastradas podem ser revisadas antes de aparecerem para apoio publico.",
+              },
+              {
+                title: "Contribuicoes digitais tem registro publico",
+                text: "Quando o apoio acontece por moeda digital, a transacao fica verificavel na rede Celo.",
+              },
+              {
+                title: "Projetos publicam evidencias",
+                text: "Atualizacoes, registros e comprovantes ajudam apoiadores a acompanhar o uso dos recursos.",
+              },
+              {
+                title: "PIX vai direto para a organizacao",
+                text: "A chave PIX pertence ao projeto ou organizacao responsavel, sem criar pagamento blockchain.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="rounded-sm border border-[var(--color-border)] bg-[var(--color-white)] p-6 shadow-[0_14px_40px_rgba(28,26,23,0.05)]"
+              >
+                <span className="block h-1 w-10 bg-[var(--color-accent)]" />
+                <h3 className="mt-6 font-[var(--font-heading)] text-lg font-semibold leading-snug text-[var(--color-text)]">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-7 text-[var(--color-text-muted)]">
+                  {item.text}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ */}
-      <section id="faq" className="py-20 bg-white">
+      <section id="faq" className="bg-[var(--color-white)] py-20">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-display font-bold text-gray-900 text-center mb-12">
+          <h2 className="text-3xl font-display font-bold text-[var(--color-text)] text-center mb-12">
             Perguntas Frequentes
           </h2>
 
@@ -502,12 +543,12 @@ export default function Home() {
               {
                 question: "O que é a plataforma?",
                 answer:
-                  "Ponteia é uma plataforma de apoio a projetos de impacto social, cultural e ambiental, conectando recursos, doações em USDGLO, PIX e prestação de contas.",
+                  "Ponteia conecta recursos a projetos de impacto social, cultural e ambiental com transparencia, opcoes simples de apoio e prestacao de contas.",
               },
               {
                 question: "Preciso entender blockchain para doar?",
                 answer:
-                  "Não. A interface foi desenhada sem jargões complexos. Você pode apoiar via PIX ou conectar uma carteira EVM compatível para contribuir em USDGLO na Celo.",
+                  "Nao. Voce pode apoiar via PIX pelo app do seu banco. Quando escolher uma moeda digital estavel, a Celo funciona como infraestrutura de registro da contribuicao.",
               },
               {
                 question: "Minha doação pode ser deduzida?",
@@ -542,12 +583,12 @@ export default function Home() {
               {
                 question: "O que é Celo?",
                 answer:
-                  "Celo é uma rede EVM voltada a aplicações financeiras acessíveis, usada pela plataforma para preparar contribuições em USDGLO.",
+                  "A Celo funciona como infraestrutura de registro das contribuicoes digitais. Voce nao precisa entender a tecnologia para apoiar um projeto.",
               },
               {
-                question: "Por que usar blockchain?",
+                question: "O que sao USDGLO e USDC?",
                 answer:
-                  "A blockchain ajuda a registrar apoios de forma transparente, automatizando a divisão de valores e criando registros seguros.",
+                  "USDGLO e USDC sao moedas digitais estaveis. Na Ponteia, USDGLO ja permite contribuicoes rastreaveis na Celo; USDC esta preparado e sera ativado quando o contrato oficial estiver configurado.",
               },
             ].map((faq, index) => {
               const isOpen = openFaq === index;
@@ -555,12 +596,12 @@ export default function Home() {
               return (
                 <div
                   key={faq.question}
-                  className="bg-background-light rounded-xl border border-gray-100 overflow-hidden"
+                  className="overflow-hidden rounded-sm border border-[var(--color-border)] bg-[var(--color-background)]"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? null : index)}
-                    className="w-full flex cursor-pointer items-center justify-between gap-1.5 p-4 text-left text-gray-900 font-bold"
+                    className="w-full flex cursor-pointer items-center justify-between gap-1.5 p-4 text-left text-[var(--color-text)] font-bold"
                     aria-expanded={isOpen}
                   >
                     <h3 className="text-lg">{faq.question}</h3>
@@ -582,7 +623,7 @@ export default function Home() {
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-4 pb-4 leading-relaxed text-gray-700">
+                      <p className="px-4 pb-4 leading-relaxed text-[var(--color-text-muted)]">
                         {faq.answer}
                       </p>
                     </div>
@@ -595,16 +636,18 @@ export default function Home() {
       </section>
 
       {/* CTA FINAL */}
-      <section className="bg-[var(--color-primary)] px-4 py-20 text-center text-[var(--color-white)] sm:px-6 lg:px-8">
+      <section
+        id="contato"
+        className="scroll-mt-24 bg-[var(--color-primary)] px-4 py-20 text-center text-[var(--color-white)] sm:px-6 lg:px-8"
+      >
         <div className="mx-auto max-w-3xl">
           <h2 className="font-[var(--font-heading)] text-3xl font-bold leading-tight sm:text-4xl">
-            Pronta para apoiar projetos que transformam futuros?
+            Pronta para apoiar projetos que transformam territorios?
           </h2>
 
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-white/72">
-            Conheça iniciativas em andamento e ajude a construir uma rede mais
-            <br className="hidden sm:block" />
-            forte, diversa e tecnológica.
+            Conheca iniciativas em andamento e acompanhe como cada apoio pode
+            gerar impacto concreto.
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">

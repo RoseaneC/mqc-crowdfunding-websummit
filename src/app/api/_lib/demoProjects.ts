@@ -1,4 +1,4 @@
-const defaultDemoCurrencies = ["USDGLO", "USDC", "PIX", "BRZ"] as const;
+const defaultDemoCurrencies = ["USDGLO", "CELO", "USDC", "PIX", "BRZ"] as const;
 const demoNetwork = "CELO";
 const demoPrimaryAsset = "USDGLO";
 const demoWalletAddress = "0x228cbC1d913A463a9dC4D353AC9b5FdcfC1c71Cb";

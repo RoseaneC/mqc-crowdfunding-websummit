@@ -17,7 +17,13 @@ export type ImpactProjectStatus =
   | "APPROVED"
   | "REJECTED"
   | "SUSPENDED";
-export type ImpactDonationAsset = "USDGLO" | "XLM" | "USDC" | "BRZ" | "PIX";
+export type ImpactDonationAsset =
+  | "USDGLO"
+  | "CELO"
+  | "XLM"
+  | "USDC"
+  | "BRZ"
+  | "PIX";
 export type ImpactDonationStatus = "PENDING" | "CONFIRMED" | "FAILED";
 export type EvidenceType =
   | "REPORT"
@@ -533,7 +539,14 @@ export function toProjectDTO(
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
     moedaPrincipal: project.goalAsset,
-    moedasAceitas: [project.goalAsset],
+    moedasAceitas: [
+      ...new Set<ImpactDonationAsset>([
+        project.goalAsset,
+        "CELO",
+        "USDC",
+        ...(project.pixKey || project.pixQrCodeUrl ? (["PIX"] as const) : []),
+      ]),
+    ],
     payoutProvider: project.payoutProvider,
     payoutStatus: project.payoutStatus,
     bankAccountLast4: project.bankAccountLast4,
@@ -658,7 +671,7 @@ function projectFromDemo(
     goalAsset: project.primaryAsset,
     status: project.status,
     featured: ["1", "6", "8"].includes(String(project.id)),
-    axes: ["SOCIAL"],
+    axes: getDemoProjectAxes(project.ods),
     payoutProvider: null,
     payoutStatus: "NOT_REQUESTED",
     bankAccountLast4: null,
@@ -695,6 +708,22 @@ function evidenceFromPrisma(evidence: {
     status: parseEvidenceStatus(evidence.status),
     createdAt: evidence.createdAt.toISOString(),
   };
+}
+
+function getDemoProjectAxes(ods: readonly number[]): ImpactProjectAxis[] {
+  const axes = new Set<ImpactProjectAxis>();
+
+  if (ods.some((item) => [2, 7, 11, 12, 13, 14, 15].includes(item))) {
+    axes.add("AMBIENTAL");
+  }
+
+  if (ods.some((item) => [4, 5, 9, 10].includes(item))) {
+    axes.add("CULTURAL");
+  }
+
+  axes.add("SOCIAL");
+
+  return [...axes];
 }
 
 function donationFromPrismaMetric(donation: {
@@ -757,6 +786,7 @@ function parseProjectStatus(value: string): ImpactProjectStatus {
 function parseDonationAsset(value: string): ImpactDonationAsset {
   if (
     value === "USDGLO" ||
+    value === "CELO" ||
     value === "XLM" ||
     value === "USDC" ||
     value === "BRZ" ||
