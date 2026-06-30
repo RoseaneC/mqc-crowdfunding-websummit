@@ -52,37 +52,37 @@ export async function POST(request: Request) {
     );
   }
 
-  if (
+  const persistedDonation =
     validation.value.status === "confirmed" &&
     (validation.value.network === "celo-mainnet" ||
       validation.value.network === "stellar-mainnet")
-  ) {
-    await createConfirmedDonation({
-      projectId: String(validation.value.projectId),
-      donorWallet: validation.value.walletAddress,
-      amount: validation.value.amount,
-      asset: validation.value.asset,
-      network: validation.value.network,
-      txHash: validation.value.txHash,
-      destinationAddress: validation.value.destinationAddress,
-    });
-  }
+      ? await createConfirmedDonation({
+          projectId: String(validation.value.projectId),
+          donorWallet: validation.value.walletAddress,
+          amount: validation.value.amount,
+          asset: validation.value.asset,
+          network: validation.value.network,
+          txHash: validation.value.txHash,
+          destinationAddress: validation.value.destinationAddress,
+        })
+      : null;
 
   const donation = addDonation(validation.value);
+  const receipt = persistedDonation ?? toDonationReceipt(donation);
 
   console.info("[donations-submit] Confirmed donation stored locally.", {
-    id: donation.id,
-    projectId: donation.projectId,
-    amount: donation.amount,
-    asset: donation.asset,
-    network: donation.network,
-    txHash: donation.txHash,
+    id: receipt.id,
+    projectId: receipt.projectId,
+    amount: receipt.amount,
+    asset: receipt.asset,
+    network: receipt.network,
+    txHash: receipt.txHash,
   });
 
   return Response.json(
     {
       ok: true,
-      donation: toDonationReceipt(donation),
+      donation: receipt,
     },
     { status: 201 },
   );
@@ -133,6 +133,8 @@ async function validateDonationSubmitPayload(
   const network = parseNetwork(payload.network);
   const status = parseStatus(payload.status);
   const txHash = payload.txHash?.trim() || null;
+  const walletAddress = payload.walletAddress?.trim().toLowerCase();
+  const destinationAddress = payload.destinationAddress?.trim().toLowerCase();
 
   if (!asset) {
     return { ok: false, error: "Asset invalido.", status: 400 };
@@ -165,7 +167,7 @@ async function validateDonationSubmitPayload(
     };
   }
 
-  if (!payload.walletAddress?.trim()) {
+  if (!walletAddress) {
     return { ok: false, error: "Carteira doadora obrigatoria.", status: 400 };
   }
 
@@ -182,8 +184,8 @@ async function validateDonationSubmitPayload(
       network,
       txHash,
       status,
-      walletAddress: payload.walletAddress.trim(),
-      destinationAddress: payload.destinationAddress?.trim(),
+      walletAddress,
+      destinationAddress,
       contractDonationId: payload.contractDonationId,
       nftId: payload.nftId,
     },

@@ -69,6 +69,10 @@ function getState() {
 export function addDonation(input: DonationInput) {
   const state = getState();
   const normalizedTxHash = input.txHash?.trim() || null;
+  const normalizedWalletAddress =
+    input.walletAddress.trim().toLowerCase() || input.walletAddress;
+  const normalizedDestinationAddress =
+    input.destinationAddress?.trim().toLowerCase() || undefined;
 
   if (normalizedTxHash) {
     const existing = state.donations.find(
@@ -101,8 +105,8 @@ export function addDonation(input: DonationInput) {
     status: input.status,
     createdAt: now,
     confirmedAt: input.status === "confirmed" ? now : null,
-    walletAddress: input.walletAddress,
-    destinationAddress: input.destinationAddress,
+    walletAddress: normalizedWalletAddress,
+    destinationAddress: normalizedDestinationAddress,
     nftId:
       input.nftId === null || input.nftId === undefined
         ? null
@@ -127,9 +131,10 @@ export function listDonationsByProject(projectId: number | string) {
 }
 
 export function listDonationsByWallet(walletAddress: string) {
+  const normalizedWalletAddress = walletAddress.trim().toLowerCase();
   return listDonations().filter(
     (donation) =>
-      donation.walletAddress.toLowerCase() === walletAddress.toLowerCase(),
+      donation.walletAddress.toLowerCase() === normalizedWalletAddress,
   );
 }
 

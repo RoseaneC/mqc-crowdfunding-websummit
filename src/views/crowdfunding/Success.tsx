@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import {
   getDonationReceipt,
   listNftCatalog,
+  type DonationReceiptDTO,
   type NftCatalogItemDTO,
 } from "../../util/crowdfundingApi";
 import { resolveNftGradient } from "../../util/nftVisuals";
@@ -26,13 +27,23 @@ export default function Success() {
   );
   const [projectName, setProjectName] = useState(initialProjectName);
   const [catalog, setCatalog] = useState<NftCatalogItemDTO[]>([]);
+  const [receipt, setReceipt] = useState<DonationReceiptDTO | null>(null);
+  const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const donationId = Number(searchParams.get("donationId") ?? "0");
+  const donationId = searchParams.get("donationId")?.trim() ?? "";
   const valorDoadoXLM = Number(searchParams.get("xlm")) || 0;
   const moeda = parseDemoCurrency(searchParams.get("moeda"));
-  const valorSimulado = Number(searchParams.get("valor")) || valorDoadoXLM;
-  const mainnetAsset = searchParams.get("asset")?.toUpperCase() ?? moeda;
-  const paymentNetwork = parsePaymentNetwork(searchParams.get("rede"));
+  const receiptAmount = Number(receipt?.amount);
+  const valorSimulado =
+    (Number.isFinite(receiptAmount) && receiptAmount > 0
+      ? receiptAmount
+      : Number(searchParams.get("valor"))) || valorDoadoXLM;
+  const mainnetAsset =
+    receipt?.asset ?? searchParams.get("asset")?.toUpperCase() ?? moeda;
+  const paymentNetwork = parsePaymentNetwork(
+    receipt?.network ?? searchParams.get("rede"),
+  );
   const isCeloMainnetPayment = paymentNetwork === "celo-mainnet";
   const isStellarMainnetPayment = paymentNetwork === "stellar-mainnet";
   const isStellarTestnetPayment =
@@ -52,6 +63,11 @@ export default function Success() {
   });
   const tipo = searchParams.get("tipo") || "PF";
   const nftId = Number(searchParams.get("nftId")) || 0;
+  const donorWallet =
+    receipt?.walletAddress || searchParams.get("wallet")?.trim() || null;
+  const destinationWallet =
+    receipt?.destinationAddress || searchParams.get("destino")?.trim() || null;
+  const receiptCreatedAt = receipt?.createdAt ?? confirmedAt;
   const projetoNome =
     projectName ||
     (donationId ? `Campanha #${donationId}` : "Campanha apoiada");
@@ -88,6 +104,16 @@ export default function Success() {
   const explorerLabel = stellarExpertSegment
     ? "explorador da rede"
     : getExplorerLabel();
+  const isReceiptConfirmed =
+    receipt?.status === "CONFIRMED" ||
+    Boolean(receiptTxHash && isCeloMainnetPayment);
+  const receiptStatusLabel = isReceiptConfirmed
+    ? isCeloMainnetPayment
+      ? "Confirmado na Celo"
+      : "Registro confirmado"
+    : "Pendente";
+  const formattedDateTime = formatDate(receiptCreatedAt);
+  const fullTransactionLink = txExplorerUrl ?? null;
 
   useEffect(() => {
     void listNftCatalog()
@@ -97,16 +123,59 @@ export default function Success() {
 
   useEffect(() => {
     if (!donationId) return;
-    void getDonationReceipt(donationId)
-      .then((receipt) => {
-        setConfirmedAt(receipt.confirmedAt);
-        setReceiptTxHash(receipt.txHash);
-        if (receipt.projectName) {
-          setProjectName(receipt.projectName);
+    let active = true;
+    let attempts = 0;
+    let timeout: number | undefined;
+
+    async function loadReceipt() {
+      attempts += 1;
+
+      try {
+        const nextReceipt = await getDonationReceipt(donationId);
+        if (!active) return;
+
+        setReceipt(nextReceipt);
+        setConfirmedAt(nextReceipt.confirmedAt ?? nextReceipt.createdAt);
+        setReceiptTxHash(nextReceipt.txHash);
+        setReceiptNotice(null);
+        if (nextReceipt.projectName) {
+          setProjectName(nextReceipt.projectName);
         }
-      })
-      .catch(() => {});
+      } catch {
+        if (!active) return;
+
+        if (attempts < 6) {
+          timeout = window.setTimeout(() => {
+            void loadReceipt();
+          }, 1500);
+          return;
+        }
+
+        setReceiptNotice(
+          "Registro salvo. Atualize a página em instantes se os detalhes ainda não aparecerem.",
+        );
+      }
+    }
+
+    void loadReceipt();
+
+    return () => {
+      active = false;
+      if (timeout) window.clearTimeout(timeout);
+    };
   }, [donationId]);
+
+  const handleCopy = async (key: string, value: string | null | undefined) => {
+    if (!value) return;
+
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedKey(key);
+      window.setTimeout(() => setCopiedKey(null), 1800);
+    } catch {
+      setReceiptNotice("Não foi possível copiar automaticamente.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
@@ -136,7 +205,7 @@ export default function Success() {
               </h2>
               {isCeloMainnetPayment ? (
                 <p className="text-xs font-black text-slate-400 mt-2">
-                  Liquidação: USDGLO na Celo Mainnet
+                  Liquidação: {moedaLabel} na Celo Mainnet
                 </p>
               ) : isStellarMainnetPayment ? (
                 <p className="text-xs font-black text-slate-400 mt-2">
@@ -159,37 +228,103 @@ export default function Success() {
                 <span className="text-slate-400">Status</span>
                 <span
                   className={
-                    receiptTxHash ? "text-emerald-600" : "text-orange-500"
+                    isReceiptConfirmed ? "text-emerald-600" : "text-orange-500"
                   }
                 >
-                  {receiptTxHash ? "CONFIRMADA" : "PENDENTE"}
+                  {receiptStatusLabel}
                 </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">ID do comprovante</span>
+                <CopyValue
+                  copyKey="donation-id"
+                  label={
+                    donationId || String(receipt?.id ?? "") || "Não disponível"
+                  }
+                  value={donationId || String(receipt?.id ?? "") || null}
+                  copiedKey={copiedKey}
+                  onCopy={handleCopy}
+                />
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-slate-400">Hash da transação</span>
-                {txExplorerUrl ? (
-                  <a
-                    href={txExplorerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#002B99] font-mono hover:underline inline-flex items-center gap-1"
-                    title={`Abrir no ${explorerLabel}`}
-                  >
-                    {receiptTxHash ? shortHash(receiptTxHash) : "PENDENTE"}
-                    <span className="material-icons text-sm">open_in_new</span>
-                  </a>
-                ) : (
-                  <span className="text-[#002B99] font-mono">
-                    {receiptTxHash ? shortHash(receiptTxHash) : "PENDENTE"}
-                  </span>
-                )}
+                <CopyValue
+                  copyKey="tx-hash"
+                  label={receiptTxHash ? shortHash(receiptTxHash) : "PENDENTE"}
+                  value={receiptTxHash}
+                  copiedKey={copiedKey}
+                  onCopy={handleCopy}
+                  href={txExplorerUrl}
+                  title={`Abrir no ${explorerLabel}`}
+                />
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-slate-400">Data e Hora</span>
+                <CopyValue
+                  copyKey="date-time"
+                  label={formattedDateTime}
+                  value={
+                    formattedDateTime !== "PENDENTE" ? formattedDateTime : null
+                  }
+                  copiedKey={copiedKey}
+                  onCopy={handleCopy}
+                />
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Wallet apoiadora</span>
+                <CopyValue
+                  copyKey="donor-wallet"
+                  label={
+                    donorWallet ? shortHash(donorWallet) : "Não disponível"
+                  }
+                  value={donorWallet}
+                  copiedKey={copiedKey}
+                  onCopy={handleCopy}
+                />
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Wallet recebedora</span>
+                <CopyValue
+                  copyKey="destination-wallet"
+                  label={
+                    destinationWallet
+                      ? shortHash(destinationWallet)
+                      : "Não disponível"
+                  }
+                  value={destinationWallet}
+                  copiedKey={copiedKey}
+                  onCopy={handleCopy}
+                />
+              </div>
+              {fullTransactionLink ? (
+                <div className="flex justify-between gap-4">
+                  <span className="text-slate-400">Explorer</span>
+                  <CopyValue
+                    copyKey="explorer-link"
+                    label={
+                      isCeloMainnetPayment
+                        ? "Ver transação na Celo"
+                        : "Ver transação"
+                    }
+                    value={fullTransactionLink}
+                    copiedKey={copiedKey}
+                    onCopy={handleCopy}
+                    href={fullTransactionLink}
+                    title={`Abrir no ${explorerLabel}`}
+                  />
+                </div>
+              ) : null}
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-400">Rede</span>
                 <span className="text-slate-900">
-                  {formatDate(confirmedAt)}
+                  {formatNetworkLabel(paymentNetwork)}
                 </span>
               </div>
+              {receiptNotice ? (
+                <p className="rounded-2xl bg-orange-50 px-4 py-3 text-[11px] leading-5 text-orange-700 normal-case tracking-normal">
+                  {receiptNotice}
+                </p>
+              ) : null}
               <div className="flex justify-between gap-4">
                 <span className="text-slate-400">
                   Taxas Operacionais ({tipo === "PF" ? "7%" : "5%"})
@@ -237,17 +372,19 @@ export default function Success() {
 
               <div className="w-28 h-28 bg-white/10 backdrop-blur-xl rounded-[1.5rem] border border-white/25 flex items-center justify-center">
                 <span className="material-icons text-6xl">
-                  {nftData ? nftData.icon : "hourglass_empty"}
+                  {nftData ? nftData.icon : "receipt_long"}
                 </span>
               </div>
 
               <h3 className="text-5xl font-black uppercase leading-none tracking-tighter drop-shadow-md">
-                {nftData ? nftData.name : "Registro em processamento"}
+                {nftData ? nftData.name : "Registro confirmado"}
               </h3>
               <h4 className="text-2xl font-black uppercase tracking-[0.2em] opacity-80">
                 {nftData
                   ? `ID #${nftId.toString().padStart(2, "0")}`
-                  : "Aguardando indexação"}
+                  : donationId
+                    ? `Comprovante #${donationId}`
+                    : "Comprovante emitido"}
               </h4>
               <p className="text-[11px] font-black tracking-[0.35em] uppercase opacity-95">
                 CONTRIBUIÇÃO: {valorSimulado.toFixed(2)} {moedaLabel}
@@ -260,8 +397,8 @@ export default function Success() {
               Seu comprovante de impacto
             </h3>
             <p className="text-[10px] text-slate-500 leading-relaxed font-black uppercase tracking-[0.3em]">
-              Este colecionável digital intransferível comprova que você ajudou
-              a transformar {projetoNome} em realidade.
+              Este registro de impacto comprova que você ajudou a transformar{" "}
+              {projetoNome} em realidade.
             </p>
             <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 text-left space-y-2">
               <div className="flex justify-between items-center">
@@ -271,7 +408,7 @@ export default function Success() {
                 <span className="text-[10px] font-black uppercase text-orange-500 tracking-[0.3em]">
                   {nftData
                     ? `RARIDADE: ${nftData.rarity}`
-                    : "RARIDADE: PENDENTE"}
+                    : "REGISTRO OFF-CHAIN"}
                 </span>
               </div>
               <p className="text-xl font-black text-slate-900 tracking-tight uppercase leading-none mt-2">
@@ -308,6 +445,46 @@ function parseDemoCurrency(value: string | null): DemoCurrencyCode {
   return "BRZ";
 }
 
+function CopyValue(props: {
+  copyKey: string;
+  label: string;
+  value: string | null | undefined;
+  copiedKey: string | null;
+  onCopy: (key: string, value: string | null | undefined) => Promise<void>;
+  href?: string | null;
+  title?: string;
+}) {
+  const content = props.href ? (
+    <a
+      href={props.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-mono text-[#002B99] hover:underline inline-flex items-center gap-1"
+      title={props.title}
+    >
+      {props.label}
+      <span className="material-icons text-sm">open_in_new</span>
+    </a>
+  ) : (
+    <span className="font-mono text-slate-900">{props.label}</span>
+  );
+
+  return (
+    <span className="flex max-w-[60%] flex-wrap items-center justify-end gap-2 text-right">
+      {content}
+      {props.value ? (
+        <button
+          type="button"
+          onClick={() => void props.onCopy(props.copyKey, props.value)}
+          className="rounded-full border border-slate-200 px-2 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-slate-500 transition hover:border-[#002B99] hover:text-[#002B99]"
+        >
+          {props.copiedKey === props.copyKey ? "Copiado" : "Copiar"}
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
 type PaymentNetwork =
   | "celo-mainnet"
   | "stellar-mainnet"
@@ -331,6 +508,8 @@ function getSuccessAssetLabel(input: {
   moeda: DemoCurrencyCode;
   paymentNetwork: PaymentNetwork;
 }) {
+  if (input.asset === "CELO") return "CELO";
+  if (input.asset === "USDC") return "USDC";
   if (input.paymentNetwork === "celo-mainnet" || input.asset === "USDGLO") {
     return "USDGLO";
   }
@@ -352,7 +531,7 @@ function getTechnicalSettlementLabel(input: {
   paymentNetwork: PaymentNetwork;
 }) {
   if (input.paymentNetwork === "celo-mainnet" || input.asset === "USDGLO") {
-    return "USDGLO Celo Mainnet";
+    return `${getSuccessAssetLabel(input)} Celo Mainnet`;
   }
 
   if (input.paymentNetwork === "stellar-mainnet") {
@@ -360,6 +539,13 @@ function getTechnicalSettlementLabel(input: {
   }
 
   return "ambiente legado";
+}
+
+function formatNetworkLabel(value: PaymentNetwork) {
+  if (value === "celo-mainnet") return "Celo Mainnet";
+  if (value === "stellar-mainnet") return "Rede principal legada";
+  if (value === "stellar-testnet") return "Rede de teste legada";
+  return "Demonstração";
 }
 
 function getStellarExpertSegment(paymentNetwork: PaymentNetwork) {

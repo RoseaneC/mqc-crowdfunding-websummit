@@ -303,7 +303,7 @@ export default function Contribute() {
             onStatus,
           });
 
-      await submitDonation({
+      const submittedDonation = await submitDonation({
         projectId: project.id,
         projectName: displayProjectName,
         donorType: tipoDoador,
@@ -318,13 +318,22 @@ export default function Contribute() {
       });
 
       setDonationFeedback("Doação confirmada com sucesso.");
-      void navigate(
-        `/sucesso?projeto=${encodeURIComponent(displayProjectName)}&valor=${encodeURIComponent(
-          transfer.amount,
-        )}&asset=${transfer.asset}&rede=celo-mainnet&txHash=${encodeURIComponent(
-          transfer.txHash,
-        )}`,
-      );
+      const donationId = submittedDonation.donation?.id;
+      const receiptParams = new URLSearchParams({
+        projeto: displayProjectName,
+        valor: String(transfer.amount),
+        asset: transfer.asset,
+        rede: "celo-mainnet",
+        txHash: transfer.txHash,
+        wallet: transfer.donorWallet,
+        destino: transfer.recipientWallet,
+      });
+
+      if (donationId !== undefined && donationId !== null) {
+        receiptParams.set("donationId", String(donationId));
+      }
+
+      void navigate(`/sucesso?${receiptParams.toString()}`);
     } catch (error) {
       setDonationFeedback(
         error instanceof Error

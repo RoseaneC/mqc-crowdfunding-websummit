@@ -134,6 +134,26 @@ type CreateConfirmedDonationInput = {
   destinationAddress?: string | null;
 };
 
+export type ImpactDonationReceipt = {
+  id: string;
+  projectId: string;
+  projectName: string;
+  donorType: "PF" | "PJ";
+  amountXlm: number;
+  feeXlm: number;
+  projectXlm: number;
+  walletAddress: string;
+  status: ImpactDonationStatus;
+  txHash: string | null;
+  nftId: number | null;
+  createdAt: string;
+  confirmedAt: string | null;
+  asset: ImpactDonationAsset;
+  network: string;
+  amount: number;
+  destinationAddress: string | null;
+};
+
 const globalProjectStore = globalThis as typeof globalThis & {
   __mqcImpactProjectStore?: ProjectStoreState;
 };
@@ -431,7 +451,7 @@ export async function listImpactDonationMetricRecords() {
 
 export async function createConfirmedDonation(
   input: CreateConfirmedDonationInput,
-) {
+): Promise<ImpactDonationReceipt | null> {
   if (input.network === "celo-mainnet" && !input.txHash) {
     throw new Error("Doacao Celo Mainnet confirmada exige txHash.");
   }
@@ -440,21 +460,37 @@ export async function createConfirmedDonation(
     try {
       const prisma = getPrisma();
       const existing = input.txHash
-        ? await prisma.donation.findUnique({ where: { txHash: input.txHash } })
+        ? await prisma.donation.findUnique({
+            where: { txHash: input.txHash },
+            include: {
+              project: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          })
         : null;
 
-      if (existing) return existing;
+      if (existing) return donationFromPrismaReceipt(existing);
 
       const donation = await prisma.donation.create({
         data: {
           projectId: input.projectId,
-          donorWallet: input.donorWallet,
+          donorWallet: normalizeWallet(input.donorWallet),
           amount: input.amount,
           asset: input.asset,
           network: input.network,
-          txHash: input.txHash,
+          txHash: input.txHash?.trim() || null,
           status: "CONFIRMED",
-          destinationAddress: input.destinationAddress,
+          destinationAddress: normalizeWallet(input.destinationAddress),
+        },
+        include: {
+          project: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
@@ -468,7 +504,7 @@ export async function createConfirmedDonation(
         },
       });
 
-      return donation;
+      return donationFromPrismaReceipt(donation);
     } catch (error) {
       logPrismaFallback("createConfirmedDonation", error);
     }
@@ -476,7 +512,7 @@ export async function createConfirmedDonation(
 
   const project = await getImpactProject(input.projectId);
 
-  addDonation({
+  const donation = addDonation({
     projectId: input.projectId,
     projectName: project?.name ?? input.projectId,
     donorType: "PF",
@@ -485,9 +521,95 @@ export async function createConfirmedDonation(
     network: input.network === "celo-mainnet" ? "celo-mainnet" : "demo",
     txHash: input.txHash,
     status: "confirmed",
-    walletAddress: input.donorWallet,
-    destinationAddress: input.destinationAddress ?? undefined,
+    walletAddress: normalizeWallet(input.donorWallet) ?? input.donorWallet,
+    destinationAddress: normalizeWallet(input.destinationAddress) ?? undefined,
   });
+
+  return {
+    id: String(donation.id),
+    projectId: String(donation.projectId),
+    projectName: donation.projectName,
+    donorType: donation.donorType,
+    amountXlm: donation.asset === "XLM" ? donation.amount : 0,
+    feeXlm: 0,
+    projectXlm: donation.asset === "XLM" ? donation.amount : 0,
+    walletAddress: donation.walletAddress,
+    status:
+      donation.status === "confirmed"
+        ? "CONFIRMED"
+        : donation.status === "pending"
+          ? "PENDING"
+          : "FAILED",
+    txHash: donation.txHash,
+    nftId: donation.nftId,
+    createdAt: donation.createdAt,
+    confirmedAt: donation.confirmedAt,
+    asset: donation.asset === "BRZ" ? "BRZ" : donation.asset,
+    network: donation.network,
+    amount: donation.amount,
+    destinationAddress: donation.destinationAddress ?? null,
+  };
+}
+
+export async function getImpactDonationReceipt(
+  id: string,
+): Promise<ImpactDonationReceipt | null> {
+  if (isProjectDatabaseEnabled()) {
+    try {
+      const prisma = getPrisma();
+      const donation = await prisma.donation.findUnique({
+        where: { id },
+        include: {
+          project: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      return donation ? donationFromPrismaReceipt(donation) : null;
+    } catch (error) {
+      logPrismaFallback("getImpactDonationReceipt", error);
+    }
+  }
+
+  return null;
+}
+
+export async function listImpactDonationsByWallet(
+  walletAddress: string,
+): Promise<ImpactDonationReceipt[]> {
+  const normalizedWallet = normalizeWallet(walletAddress);
+  if (!normalizedWallet) return [];
+
+  if (isProjectDatabaseEnabled()) {
+    try {
+      const prisma = getPrisma();
+      const donations = await prisma.donation.findMany({
+        where: {
+          donorWallet: {
+            equals: normalizedWallet,
+            mode: "insensitive",
+          },
+        },
+        include: {
+          project: {
+            select: {
+              name: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      return donations.map(donationFromPrismaReceipt);
+    } catch (error) {
+      logPrismaFallback("listImpactDonationsByWallet", error);
+    }
+  }
+
+  return [];
 }
 
 export function toProjectDTO(
@@ -749,6 +871,54 @@ function donationFromPrismaMetric(donation: {
     walletAddress: donation.donorWallet,
     source: donation.network,
   };
+}
+
+function donationFromPrismaReceipt(donation: {
+  id: string;
+  projectId: string;
+  project?: { name: string } | null;
+  donorWallet: string | null;
+  amount: { toString(): string } | number | string;
+  asset: string;
+  network: string;
+  txHash: string | null;
+  status: string;
+  destinationAddress: string | null;
+  createdAt: Date;
+}): ImpactDonationReceipt {
+  const amount = Number(donation.amount);
+  const status =
+    donation.status === "CONFIRMED"
+      ? "CONFIRMED"
+      : donation.status === "PENDING"
+        ? "PENDING"
+        : "FAILED";
+
+  return {
+    id: donation.id,
+    projectId: donation.projectId,
+    projectName: donation.project?.name ?? `Projeto #${donation.projectId}`,
+    donorType: "PF",
+    amountXlm: donation.asset === "XLM" ? amount : 0,
+    feeXlm: 0,
+    projectXlm: donation.asset === "XLM" ? amount : 0,
+    walletAddress: donation.donorWallet ?? "",
+    status,
+    txHash: donation.txHash,
+    nftId: null,
+    createdAt: donation.createdAt.toISOString(),
+    confirmedAt:
+      status === "CONFIRMED" ? donation.createdAt.toISOString() : null,
+    asset: parseDonationAsset(donation.asset),
+    network: donation.network,
+    amount,
+    destinationAddress: donation.destinationAddress,
+  };
+}
+
+function normalizeWallet(value: string | null | undefined) {
+  const wallet = value?.trim();
+  return wallet ? wallet.toLowerCase() : null;
 }
 
 function slugify(value: string) {

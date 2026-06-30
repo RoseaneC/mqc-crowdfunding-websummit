@@ -1,4 +1,5 @@
 import { getDonationById, toDonationReceipt } from "../../_lib/donationStore";
+import { getImpactDonationReceipt } from "../../_lib/projectStore";
 import { getApiBaseUrl, proxyToFastify } from "../../_lib/proxy";
 
 export const runtime = "nodejs";
@@ -10,6 +11,12 @@ export async function GET(request: Request, context: Ctx) {
   const { id } = await context.params;
 
   if (!getApiBaseUrl()) {
+    const persistedDonation = await getImpactDonationReceipt(id);
+
+    if (persistedDonation) {
+      return Response.json(persistedDonation);
+    }
+
     const donation = getDonationById(id);
 
     if (!donation) {
