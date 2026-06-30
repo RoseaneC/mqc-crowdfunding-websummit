@@ -55,8 +55,8 @@ export interface DonationPrepareResponse {
 }
 
 export interface DonationReceiptDTO {
-  id: number;
-  projectId: number;
+  id: number | string;
+  projectId: number | string;
   projectName: string;
   donorType: "PF" | "PJ";
   amountXlm: number;
@@ -68,7 +68,7 @@ export interface DonationReceiptDTO {
   nftId: number | null;
   createdAt: string;
   confirmedAt: string | null;
-  asset?: "USDGLO" | "XLM" | "USDC" | "BRZ";
+  asset?: "USDGLO" | "CELO" | "XLM" | "USDC" | "BRZ" | "PIX";
   network?: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
   amount?: number | string;
   destinationAddress?: string | null;
@@ -563,7 +563,7 @@ export function submitDonation(payload: {
   );
 }
 
-export function getDonationReceipt(donationId: number) {
+export function getDonationReceipt(donationId: number | string) {
   return apiRequest<DonationReceiptDTO>(`/donations/${donationId}`);
 }
 

@@ -142,8 +142,8 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <p className="text-xs font-black uppercase tracking-widest text-emerald-600">
-                          R${" "}
-                          {Number(donation.amountBRL).toLocaleString("pt-BR")}
+                          {formatDonationAmount(donation.amount)}{" "}
+                          {donation.asset ?? "BRZ"}
                         </p>
                         {txExplorerUrl || nftExplorerUrl ? (
                           <div className="pt-1 flex flex-wrap gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
@@ -189,16 +189,16 @@ export default function Dashboard() {
             <div className="bg-slate-900 p-8 rounded-[2.5rem] border border-slate-800 shadow-2xl space-y-8">
               <div className="text-center space-y-2">
                 <h2 className="text-2xl font-black uppercase tracking-tighter text-white">
-                  NFTs de Impacto
+                  Comprovantes de Impacto
                 </h2>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.5em]">
                   Inventário
                 </p>
                 <p className="text-xs font-black text-orange-400 uppercase tracking-wider">
-                  NFTs recebidos: {ownedNftCount}
+                  Registros recebidos: {ownedNftCount}
                 </p>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Gerados ao confirmar sua doação on-chain
+                  Liberados ao confirmar sua doação digital
                 </p>
               </div>
 
@@ -233,7 +233,7 @@ export default function Dashboard() {
               <div className="h-3 w-full bg-slate-800 rounded-full shadow-[0_10px_20px_rgba(0,0,0,0.5)]" />
               {ownedNftCount === 0 ? (
                 <p className="text-xs text-slate-400 text-center font-bold uppercase tracking-wider">
-                  Você ainda não recebeu NFTs de impacto.
+                  Você ainda não possui comprovantes de impacto.
                 </p>
               ) : null}
             </div>
@@ -257,7 +257,7 @@ export default function Dashboard() {
               <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
                 <div className="space-y-5">
                   <p className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-300">
-                    Impact NFT
+                    Comprovante de impacto
                   </p>
                   <h3 className="text-4xl font-black uppercase tracking-tight">
                     {selectedNft.name}
@@ -295,14 +295,14 @@ export default function Dashboard() {
                       className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-300 hover:underline inline-flex items-center gap-1"
                       title={`Abrir NFT no ${explorerLabel}`}
                     >
-                      Ver NFT no {explorerLabel}
+                      Ver registro no {explorerLabel}
                       <span className="material-icons text-xs">
                         open_in_new
                       </span>
                     </a>
                   ) : (
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
-                      NFT indisponível no explorer
+                      Registro indisponível no explorer
                     </p>
                   )}
                 </div>
@@ -313,4 +313,11 @@ export default function Dashboard() {
       ) : null}
     </div>
   );
+}
+
+function formatDonationAmount(value: string | number) {
+  return Number(value).toLocaleString("pt-BR", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 6,
+  });
 }
