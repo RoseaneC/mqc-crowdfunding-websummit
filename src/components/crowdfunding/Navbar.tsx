@@ -75,7 +75,9 @@ export default function Navbar() {
   }, [theme]);
 
   const usesPrivyWallet = privyWallet.isUsingPrivy;
-  const hasConnectedWallet = privyWallet.authenticated;
+  const hasConnectedWallet = Boolean(
+    privyWallet.authenticated || privyWallet.evmAddress,
+  );
   const privyWalletStatusLabel =
     privyWallet.activeWalletType === "evm"
       ? "Carteira EVM conectada"
@@ -142,6 +144,12 @@ export default function Navbar() {
           className="group inline-flex min-w-fit items-center"
           aria-label="Voltar para a Home"
         >
+          <img
+            src="/ponteia-icon.svg"
+            alt="Ponteia"
+            className="mr-3 h-9 w-9 rounded-full border border-white/10 bg-[#f8f3ea] p-1"
+          />
+
           <span className="hidden flex-col leading-none lg:flex">
             <span className="font-[var(--font-heading)] text-lg font-black uppercase tracking-[0.08em] text-[#f8f3ea]">
               Ponteia
@@ -198,6 +206,13 @@ export default function Navbar() {
             </button>
           ) : (
             <div className="flex items-center gap-3">
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-full bg-[#d89a4b] px-5 py-2 text-sm font-semibold text-[#07150e] transition hover:bg-[#f0b969]"
+              >
+                Meu painel
+              </Link>
+
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2">
                 <span className="h-2 w-2 rounded-full bg-[var(--color-success)]" />
                 <span className="flex flex-col leading-tight">
@@ -279,6 +294,13 @@ export default function Navbar() {
             </button>
           ) : (
             <div className="space-y-3">
+              <Link
+                to="/dashboard"
+                className="inline-flex w-full items-center justify-center rounded-full bg-[#d89a4b] py-4 font-semibold text-[#07150e] transition hover:bg-[#f0b969]"
+              >
+                Meu painel
+              </Link>
+
               <div className="rounded-sm border border-white/15 bg-white/10 px-4 py-3">
                 <p className="text-xs font-semibold text-white/65">
                   {privyWalletStatusLabel}

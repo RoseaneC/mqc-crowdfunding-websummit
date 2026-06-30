@@ -61,7 +61,6 @@ export default function Success() {
     moeda,
     paymentNetwork,
   });
-  const tipo = searchParams.get("tipo") || "PF";
   const nftId = Number(searchParams.get("nftId")) || 0;
   const donorWallet =
     receipt?.walletAddress || searchParams.get("wallet")?.trim() || null;
@@ -81,7 +80,7 @@ export default function Success() {
         ? valorSimulado * cotacaoXLM
         : valorDoadoXLM * cotacaoXLM;
 
-  const taxaAdminPct = tipo === "PF" ? 0.07 : 0.05;
+  const taxaAdminPct = 0.007;
   const valorTaxa = valorTotalBRL * taxaAdminPct;
   const valorLiquido = valorTotalBRL - valorTaxa;
 
@@ -327,7 +326,7 @@ export default function Success() {
               ) : null}
               <div className="flex justify-between gap-4">
                 <span className="text-slate-400">
-                  Taxas Operacionais ({tipo === "PF" ? "7%" : "5%"})
+                  Taxas Operacionais (0,7%)
                 </span>
                 <span className="text-rose-500">
                   - R${" "}
