@@ -543,9 +543,7 @@ export default function Contribute() {
                     <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
                       {currency.description}
                     </p>
-                    {(selectedCurrency === "USDGLO" ||
-                      selectedCurrency === "USDC") &&
-                    numericContribution > 0 ? (
+                    {numericContribution > 0 ? (
                       <p className="mt-2">
                         <BrlEstimate
                           amount={numericContribution}
