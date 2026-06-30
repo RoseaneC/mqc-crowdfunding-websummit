@@ -17,7 +17,13 @@ export type ImpactProjectStatus =
   | "APPROVED"
   | "REJECTED"
   | "SUSPENDED";
-export type ImpactDonationAsset = "USDGLO" | "XLM" | "USDC" | "BRZ" | "PIX";
+export type ImpactDonationAsset =
+  | "USDGLO"
+  | "CELO"
+  | "XLM"
+  | "USDC"
+  | "BRZ"
+  | "PIX";
 export type ImpactDonationStatus = "PENDING" | "CONFIRMED" | "FAILED";
 export type EvidenceType =
   | "REPORT"
@@ -533,7 +539,14 @@ export function toProjectDTO(
     createdAt: project.createdAt,
     updatedAt: project.updatedAt,
     moedaPrincipal: project.goalAsset,
-    moedasAceitas: [project.goalAsset],
+    moedasAceitas: [
+      ...new Set<ImpactDonationAsset>([
+        project.goalAsset,
+        "CELO",
+        "USDC",
+        ...(project.pixKey || project.pixQrCodeUrl ? (["PIX"] as const) : []),
+      ]),
+    ],
     payoutProvider: project.payoutProvider,
     payoutStatus: project.payoutStatus,
     bankAccountLast4: project.bankAccountLast4,
@@ -773,6 +786,7 @@ function parseProjectStatus(value: string): ImpactProjectStatus {
 function parseDonationAsset(value: string): ImpactDonationAsset {
   if (
     value === "USDGLO" ||
+    value === "CELO" ||
     value === "XLM" ||
     value === "USDC" ||
     value === "BRZ" ||

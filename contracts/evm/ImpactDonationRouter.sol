@@ -25,6 +25,13 @@ contract ImpactDonationRouter {
         uint256 amount,
         string reference
     );
+    event NativeDonationReceived(
+        bytes32 indexed projectId,
+        address indexed donor,
+        address indexed projectWallet,
+        uint256 amount,
+        string reference
+    );
     event Paused(bool paused);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -64,6 +71,19 @@ contract ImpactDonationRouter {
         require(ok, "TRANSFER_FAILED");
 
         emit DonationReceived(projectId, msg.sender, project.wallet, amount, reference);
+    }
+
+    function donateCELO(bytes32 projectId, string calldata reference) external payable whenNotPaused {
+        ProjectReceiver memory project = projects[projectId];
+
+        require(project.approved, "PROJECT_NOT_APPROVED");
+        require(project.wallet != address(0), "PROJECT_WALLET_REQUIRED");
+        require(msg.value > 0, "AMOUNT_REQUIRED");
+
+        (bool ok, ) = payable(project.wallet).call{ value: msg.value }("");
+        require(ok, "NATIVE_TRANSFER_FAILED");
+
+        emit NativeDonationReceived(projectId, msg.sender, project.wallet, msg.value, reference);
     }
 
     function setPaused(bool value) external onlyOwner {

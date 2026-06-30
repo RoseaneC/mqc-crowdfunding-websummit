@@ -6,7 +6,7 @@ import type {
 } from "./projectDemoMetadata";
 
 export type ImpactAxis = "AMBIENTAL" | "CULTURAL" | "SOCIAL";
-export type ProjectFundingAsset = DemoCurrencyCode | "USDGLO" | "PIX";
+export type ProjectFundingAsset = DemoCurrencyCode | "USDGLO" | "CELO" | "PIX";
 
 export interface ProjectDTO {
   id: number | string;
@@ -173,7 +173,7 @@ export interface AdminDonationSummaryDTO {
     projectId: number;
     projectName: string;
     amount: number;
-    asset: "USDGLO" | "XLM" | "USDC" | "BRZ";
+    asset: "USDGLO" | "CELO" | "XLM" | "USDC" | "BRZ";
     network: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
     txHash: string | null;
     status: "confirmed" | "pending" | "failed";
@@ -545,7 +545,7 @@ export function submitDonation(payload: {
   donorType?: "PF" | "PJ";
   document?: string;
   amount?: number | string;
-  asset?: "USDGLO" | "XLM" | "USDC" | "BRZ";
+  asset?: "USDGLO" | "CELO" | "XLM" | "USDC" | "BRZ";
   network?: "celo-mainnet" | "stellar-mainnet" | "stellar-testnet" | "demo";
   txHash: string;
   status?: "confirmed" | "pending" | "failed";

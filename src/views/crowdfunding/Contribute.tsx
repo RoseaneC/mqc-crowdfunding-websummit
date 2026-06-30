@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { BrlEstimate } from "../../components/crowdfunding/BrlEstimate";
 import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
 import {
   listProjectMedia,
@@ -17,8 +18,13 @@ import {
 } from "../../util/donationMetrics";
 import { formatDemoCurrencyLabel } from "../../util/projectDemoMetadata";
 import { CELO_MAINNET_CHAIN_ID } from "../../util/celoConfig";
-import { isCeloUsdcEnabled, isCeloUsdgloEnabled } from "../../util/celoConfig";
+import {
+  isCeloUsdcEnabled,
+  isCeloUsdgloEnabled,
+  isNativeCeloEnabled,
+} from "../../util/celoConfig";
 import { transferCeloErc20 } from "../../util/erc20Celo";
+import { transferNativeCelo } from "../../util/nativeCelo";
 import { validateCeloWallet } from "../../util/usdgloCelo";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
@@ -29,7 +35,7 @@ import Web3CardImg from "../../images/projects-page/cards/web3-lideranca.jpeg";
 import FormacaoCardImg from "../../images/projects-page/cards/formacaoMulheres.jpeg";
 
 type DonorType = "PF" | "PJ";
-type CryptoCurrencyCode = "USDGLO" | "USDC";
+type CryptoCurrencyCode = "USDGLO" | "CELO" | "USDC";
 type CurrencyCode = CryptoCurrencyCode | "PIX" | "BRZ";
 
 type CurrencyOption = {
@@ -53,6 +59,13 @@ const currencyOptions: CurrencyOption[] = [
     description:
       "Moeda digital estavel via Celo/EVM. O fluxo esta preparado e sera ativado quando o contrato oficial estiver configurado.",
     brlRate: 5.2,
+  },
+  {
+    code: "CELO",
+    name: "CELO",
+    description:
+      "CELO e o ativo nativo da rede Celo. Voce pode apoiar diretamente com saldo CELO da sua carteira.",
+    brlRate: 0,
   },
   {
     code: "PIX",
@@ -115,8 +128,10 @@ export default function Contribute() {
   const numericContribution = Number(contributionValue || 0);
   const amountBRL = numericContribution * currency.brlRate;
   const isUsdGloCeloSelected = selectedCurrency === "USDGLO";
+  const isNativeCeloSelected = selectedCurrency === "CELO";
   const isUsdcCeloSelected = selectedCurrency === "USDC";
-  const isCryptoCeloSelected = isUsdGloCeloSelected || isUsdcCeloSelected;
+  const isCryptoCeloSelected =
+    isUsdGloCeloSelected || isNativeCeloSelected || isUsdcCeloSelected;
   const isPixSelected = selectedCurrency === "PIX";
   const isBrzSelected = selectedCurrency === "BRZ";
   const hasProjectPix = Boolean(project?.pixKey || project?.pixQrCodeUrl);
@@ -124,9 +139,11 @@ export default function Contribute() {
   const hasValidEvmWallet = validateCeloWallet(privyWallet.evmAddress);
   const isSelectedCryptoEnabled = isUsdGloCeloSelected
     ? isCeloUsdgloEnabled()
-    : isUsdcCeloSelected
-      ? isCeloUsdcEnabled()
-      : false;
+    : isNativeCeloSelected
+      ? isNativeCeloEnabled()
+      : isUsdcCeloSelected
+        ? isCeloUsdcEnabled()
+        : false;
   const projectMetrics = project
     ? calculateProjectDonationMetrics({
         ...project,
@@ -239,7 +256,7 @@ export default function Contribute() {
       return;
     }
 
-    if (!isUsdGloCeloSelected || !project?.walletAddress) {
+    if (!project?.walletAddress) {
       return;
     }
 
@@ -254,26 +271,37 @@ export default function Contribute() {
         throw new Error("Carteira EVM não conectada.");
       }
 
-      const transfer = await transferCeloErc20({
-        asset: "USDGLO",
-        provider,
-        donorWallet: privyWallet.evmAddress,
-        recipientWallet: project.walletAddress,
-        amount: contributionValue,
-        onStatus: (status) => {
-          if (status === "awaiting-signature") {
-            setDonationFeedback("Aguardando assinatura na carteira...");
-            return;
-          }
+      const onStatus = (
+        status: "awaiting-signature" | "submitted" | "awaiting-confirmation",
+      ) => {
+        if (status === "awaiting-signature") {
+          setDonationFeedback("Aguardando assinatura na carteira...");
+          return;
+        }
 
-          if (status === "submitted") {
-            setDonationFeedback("Transação enviada para a Celo Mainnet...");
-            return;
-          }
+        if (status === "submitted") {
+          setDonationFeedback("Transação enviada para a Celo Mainnet...");
+          return;
+        }
 
-          setDonationFeedback("Aguardando confirmação...");
-        },
-      });
+        setDonationFeedback("Aguardando confirmação...");
+      };
+      const transfer = isNativeCeloSelected
+        ? await transferNativeCelo({
+            provider,
+            donorWallet: privyWallet.evmAddress,
+            recipientWallet: project.walletAddress,
+            amount: contributionValue,
+            onStatus,
+          })
+        : await transferCeloErc20({
+            asset: "USDGLO",
+            provider,
+            donorWallet: privyWallet.evmAddress,
+            recipientWallet: project.walletAddress,
+            amount: contributionValue,
+            onStatus,
+          });
 
       await submitDonation({
         projectId: project.id,
@@ -281,7 +309,7 @@ export default function Contribute() {
         donorType: tipoDoador,
         document: identificacao,
         amount: transfer.amount,
-        asset: "USDGLO",
+        asset: transfer.asset,
         network: "celo-mainnet",
         txHash: transfer.txHash,
         status: "confirmed",
@@ -293,7 +321,7 @@ export default function Contribute() {
       void navigate(
         `/sucesso?projeto=${encodeURIComponent(displayProjectName)}&valor=${encodeURIComponent(
           transfer.amount,
-        )}&asset=USDGLO&rede=celo-mainnet&txHash=${encodeURIComponent(
+        )}&asset=${transfer.asset}&rede=celo-mainnet&txHash=${encodeURIComponent(
           transfer.txHash,
         )}`,
       );
@@ -515,6 +543,16 @@ export default function Contribute() {
                     <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
                       {currency.description}
                     </p>
+                    {(selectedCurrency === "USDGLO" ||
+                      selectedCurrency === "USDC") &&
+                    numericContribution > 0 ? (
+                      <p className="mt-2">
+                        <BrlEstimate
+                          amount={numericContribution}
+                          asset={selectedCurrency}
+                        />
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="rounded-sm border border-[var(--color-primary)]/15 bg-[var(--color-primary-light)] p-4">
@@ -694,6 +732,10 @@ function getCryptoInlineMessage(input: {
       return "USDC esta preparado para contribuicoes digitais na Celo e sera ativado quando o contrato oficial estiver configurado.";
     }
 
+    if (input.asset === "CELO") {
+      return "CELO nativo usa saldo da carteira na Celo Mainnet. Conecte uma carteira EVM na rede Celo para continuar.";
+    }
+
     return `${input.asset} esta preparado para contribuicoes digitais na Celo. Conecte uma carteira compativel para continuar.`;
   }
 
@@ -762,8 +804,9 @@ function CeloTokenPanel(props: {
           {props.asset} Celo Mainnet
         </p>
         <p className="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">
-          {props.asset} e uma moeda digital estavel usada para apoiar projetos
-          com registro publico da contribuicao.
+          {props.asset === "CELO"
+            ? "CELO e o ativo nativo da rede Celo. A contribuicao sai diretamente do saldo CELO da sua carteira."
+            : `${props.asset} e uma moeda digital estavel usada para apoiar projetos com registro publico da contribuicao.`}
         </p>
         <p className="mt-2 text-xs font-semibold text-[var(--color-text)]">
           Destino:{" "}
@@ -870,6 +913,10 @@ function normalizePrimaryAsset(
     return "USDGLO";
   }
 
+  if (project?.moedaPrincipal === "CELO" || project?.goalAsset === "CELO") {
+    return "CELO";
+  }
+
   return "USDGLO";
 }
 
@@ -958,6 +1005,7 @@ function formatMetricCurrencyLabel(
 
   if (normalized === "USDGLO") return "USDGLO";
   if (normalized === "USDC") return "USDC";
+  if (normalized === "CELO") return "CELO";
   if (normalized === "PIX") return "PIX";
   if (normalized === "BRZ") return "BRZ";
 
@@ -967,6 +1015,7 @@ function formatMetricCurrencyLabel(
 function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
   if (asset === "USDGLO") return "USDGLO";
   if (asset === "USDC") return "USDC";
+  if (asset === "CELO") return "CELO";
   if (asset === "PIX") return "PIX";
   if (asset === "BRZ") return "BRZ";
 

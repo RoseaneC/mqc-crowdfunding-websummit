@@ -21,6 +21,7 @@ enum ProjectAxis {
 
 enum DonationAsset {
   USDGLO
+  CELO
   XLM
   USDC
   BRZ

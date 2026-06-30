@@ -160,7 +160,7 @@ async function validateDonationSubmitPayload(
   if (status === "confirmed" && network !== "demo" && !isValidTxHash(txHash)) {
     return {
       ok: false,
-      error: "Doacao confirmada em rede Stellar exige txHash valido.",
+      error: "Doacao confirmada em Mainnet exige txHash valido.",
       status: 400,
     };
   }
@@ -193,6 +193,7 @@ async function validateDonationSubmitPayload(
 function parseAsset(value: string | undefined): StoredDonationAsset | null {
   if (
     value === "USDGLO" ||
+    value === "CELO" ||
     value === "XLM" ||
     value === "USDC" ||
     value === "BRZ"

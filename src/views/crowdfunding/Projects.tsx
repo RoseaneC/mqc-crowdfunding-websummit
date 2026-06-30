@@ -159,11 +159,13 @@ function getProjectAcceptedCurrencies(
 ): ProjectFundingAsset[] {
   const acceptedCurrencies =
     project.moedasAceitas?.filter(
-      (asset) => asset === "USDGLO" || asset === "USDC",
+      (asset) => asset === "USDGLO" || asset === "CELO" || asset === "USDC",
     ) ?? [];
 
   const options: ProjectFundingAsset[] =
-    acceptedCurrencies.length > 0 ? acceptedCurrencies : ["USDGLO", "USDC"];
+    acceptedCurrencies.length > 0
+      ? acceptedCurrencies
+      : ["USDGLO", "CELO", "USDC"];
 
   if (!options.includes("USDGLO")) {
     options.unshift("USDGLO");
@@ -171,6 +173,10 @@ function getProjectAcceptedCurrencies(
 
   if (!options.includes("USDC")) {
     options.push("USDC");
+  }
+
+  if (!options.includes("CELO")) {
+    options.splice(1, 0, "CELO");
   }
 
   if (project.pixKey || project.pixQrCodeUrl) {
@@ -188,6 +194,7 @@ function formatMetricCurrencyLabel(
 
   if (normalized === "USDGLO") return "USDGLO";
   if (normalized === "USDC") return "USDC";
+  if (normalized === "CELO") return "CELO";
   if (normalized === "PIX") return "PIX";
   if (normalized === "BRZ") return "BRZ";
 
@@ -197,6 +204,7 @@ function formatMetricCurrencyLabel(
 function formatProjectFundingAssetLabel(asset: ProjectFundingAsset) {
   if (asset === "USDGLO") return "USDGLO";
   if (asset === "USDC") return "USDC";
+  if (asset === "CELO") return "CELO";
   if (asset === "PIX") return "PIX";
   if (asset === "BRZ") return "BRZ";
 
