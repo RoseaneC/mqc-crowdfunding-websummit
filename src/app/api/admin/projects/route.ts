@@ -1,10 +1,14 @@
 import { listAdminImpactProjects, toProjectDTO } from "../../_lib/projectStore";
+import { requireAdmin } from "../../_lib/adminAuth";
 import { getApiBaseUrl, proxyToFastify } from "../../_lib/proxy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   if (!getApiBaseUrl()) {
     const projects = await listAdminImpactProjects();
 

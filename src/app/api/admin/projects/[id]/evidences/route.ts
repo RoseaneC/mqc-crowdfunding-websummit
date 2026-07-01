@@ -4,6 +4,7 @@ import {
   listProjectEvidences,
   type EvidenceType,
 } from "../../../../_lib/projectStore";
+import { requireAdmin } from "../../../../_lib/adminAuth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,7 +21,10 @@ type EvidencePayload = {
   userId?: string | null;
 };
 
-export async function GET(_request: Request, context: Ctx) {
+export async function GET(request: Request, context: Ctx) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   const { id } = await context.params;
   const evidences = await listProjectEvidences(id);
 
@@ -31,6 +35,9 @@ export async function GET(_request: Request, context: Ctx) {
 }
 
 export async function POST(request: Request, context: Ctx) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   const { id } = await context.params;
   const project = await getImpactProject(id);
 

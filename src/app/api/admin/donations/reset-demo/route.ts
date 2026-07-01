@@ -2,6 +2,7 @@ import {
   getConfirmedDonationMetrics,
   resetDemoDonations,
 } from "../../../_lib/donationStore";
+import { requireAdmin } from "../../../_lib/adminAuth";
 import { getApiBaseUrl } from "../../../_lib/proxy";
 
 export const runtime = "nodejs";
@@ -10,6 +11,9 @@ export const dynamic = "force-dynamic";
 const RESET_CONFIRMATION = "ZERAR_DOACOES_TESTE";
 
 export async function POST(request: Request) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   if (!isAdminResetEnabled()) {
     return Response.json(
       {

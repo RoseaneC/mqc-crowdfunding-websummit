@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
+import { useAuth } from "../../providers/AuthProvider";
+import { getAdminMe } from "../../util/crowdfundingApi";
 
 type NavItem = {
   label: string;
@@ -34,9 +36,11 @@ function readPreferredTheme(): ThemeMode {
 export default function Navbar() {
   const location = useLocation();
   const privyWallet = usePrivyWalletAbstraction();
+  const { user } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [walletActionPending, setWalletActionPending] = useState(false);
   const [theme, setTheme] = useState<ThemeMode>(() => readPreferredTheme());
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const navItems: NavItem[] = useMemo(
     () => [
@@ -45,7 +49,6 @@ export default function Navbar() {
       { label: "Parceiros", href: "/#parceiros" },
       { label: "Contato", href: "/contato" },
       { label: "Cadastrar projeto", href: "/projetos/cadastrar" },
-      { label: "Admin", href: "/admin/projetos" },
       { label: "Transparência", href: "/transparencia" },
     ],
     [],
@@ -75,6 +78,31 @@ export default function Navbar() {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    void getAdminMe()
+      .then((response) => {
+        if (!cancelled) {
+          setIsAdmin(response.isAdmin);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsAdmin(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const usesPrivyWallet = privyWallet.isUsingPrivy;
   const hasConnectedWallet = Boolean(
@@ -183,6 +211,18 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
+            {isAdmin ? (
+              <Link
+                to="/admin/projetos"
+                className={`text-sm font-medium transition-colors ${
+                  isPageActive("/admin/projetos")
+                    ? "text-[#d89a4b]"
+                    : "text-[#f8f3ea]/78 hover:text-[#d89a4b]"
+                }`}
+              >
+                Admin
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -284,6 +324,18 @@ export default function Navbar() {
               {item.label}
             </Link>
           ))}
+          {isAdmin ? (
+            <Link
+              to="/admin/projetos"
+              className={`border-b border-white/10 pb-2 text-lg font-bold transition-colors ${
+                isPageActive("/admin/projetos")
+                  ? "text-[#d89a4b]"
+                  : "text-[#f8f3ea] hover:text-[#d89a4b]"
+              }`}
+            >
+              Admin
+            </Link>
+          ) : null}
 
           {!hasConnectedWallet ? (
             <button

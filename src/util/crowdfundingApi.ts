@@ -324,6 +324,12 @@ export interface AuthMeDTO {
   email: string;
   walletAddress: string | null;
   roles: Array<"SUPERADMIN" | "PROJECT_ADMIN">;
+  isAdmin?: boolean;
+}
+
+export interface AdminMeDTO {
+  isAdmin: boolean;
+  email?: string;
 }
 
 export interface AdminUserDTO {
@@ -523,6 +529,10 @@ export function logoutUser() {
 
 export function getAuthMe() {
   return apiRequest<AuthMeDTO>("/auth/me");
+}
+
+export function getAdminMe() {
+  return apiRequest<AdminMeDTO>("/admin/me");
 }
 
 export function prepareDonation(payload: {

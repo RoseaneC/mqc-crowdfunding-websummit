@@ -2,12 +2,16 @@ import {
   getConfirmedDonationMetrics,
   listDonations,
 } from "../../../_lib/donationStore";
+import { requireAdmin } from "../../../_lib/adminAuth";
 import { getApiBaseUrl } from "../../../_lib/proxy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   const apiBaseUrl = getApiBaseUrl();
 
   if (apiBaseUrl) {
