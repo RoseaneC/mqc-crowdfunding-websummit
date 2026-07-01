@@ -89,7 +89,7 @@ export default function AdminAuth() {
         {mode === "register" ? (
           <label className="block">
             <span className="text-xs font-bold text-slate-500">
-              Wallet Stellar (opcional)
+              Wallet EVM (opcional)
             </span>
             <input
               value={walletAddress}

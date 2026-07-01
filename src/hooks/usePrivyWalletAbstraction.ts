@@ -194,7 +194,13 @@ export function PrivyWalletAbstractionBridge({
         return signed.signature;
       },
       login: () => privy.login(),
-      logout: () => privy.logout(),
+      logout: async () => {
+        for (const wallet of privyWallets.wallets) {
+          wallet.disconnect();
+        }
+        clearLegacyWalletSession();
+        await privy.logout();
+      },
       connectWallet: () => {
         if (privy.authenticated) {
           privy.connectWallet();
@@ -257,6 +263,16 @@ function formatShortWalletAddress(value: string): string {
   if (value.length <= 14) return value;
 
   return `${value.slice(0, 6)}...${value.slice(-6)}`;
+}
+
+function clearLegacyWalletSession() {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem("walletId", "");
+  window.localStorage.setItem("walletAddress", "");
+  window.localStorage.setItem("walletNetwork", "");
+  window.localStorage.setItem("networkPassphrase", "");
+  window.dispatchEvent(new Event("wallet:changed"));
 }
 
 function findLinkedWalletAddress(
