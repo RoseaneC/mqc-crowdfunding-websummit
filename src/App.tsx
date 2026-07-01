@@ -135,7 +135,7 @@ function App() {
         />
       </Route>
 
-      {/* Debugger Routes with Stellar Design layout */}
+      {/* Debugger routes kept outside the public Ponteia experience */}
       <Route element={<AppLayout />}>
         <Route path="/debug" element={<Debugger />} />
         <Route path="/debug/:contractName" element={<Debugger />} />

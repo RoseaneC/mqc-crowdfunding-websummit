@@ -194,6 +194,12 @@ function assertMemoryFallbackAllowed(scope: string) {
   );
 }
 
+function warnProjectReadFallback(scope: string, reason: string) {
+  console.warn(`[project-store] ${scope}; using public demo fallback.`, {
+    reason,
+  });
+}
+
 export async function listImpactProjects() {
   if (isProjectDatabaseEnabled()) {
     try {
@@ -202,13 +208,19 @@ export async function listImpactProjects() {
         orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
       });
 
-      return projects.map(projectFromPrisma);
+      if (projects.length > 0) {
+        return projects.map(projectFromPrisma);
+      }
+
+      warnProjectReadFallback("No database projects found", "empty-table");
     } catch (error) {
-      handlePrismaFailure("listImpactProjects", error);
+      warnProjectReadFallback(
+        "Unable to list projects from database",
+        error instanceof Error ? error.message : "Unknown error",
+      );
     }
   }
 
-  assertMemoryFallbackAllowed("listImpactProjects");
   return listFallbackProjects();
 }
 
@@ -222,13 +234,15 @@ export async function getImpactProject(id: string) {
     try {
       const prisma = getPrisma();
       const project = await prisma.project.findUnique({ where: { id } });
-      return project ? projectFromPrisma(project) : null;
+      if (project) return projectFromPrisma(project);
     } catch (error) {
-      handlePrismaFailure("getImpactProject", error);
+      warnProjectReadFallback(
+        "Unable to get project from database",
+        error instanceof Error ? error.message : "Unknown error",
+      );
     }
   }
 
-  assertMemoryFallbackAllowed("getImpactProject");
   return (
     getFallbackState().projects.find((project) => project.id === id) ??
     demoProjects.map(projectFromDemo).find((project) => project.id === id) ??
@@ -465,12 +479,15 @@ export async function listImpactDonationMetricRecords() {
 
       return donations.map(donationFromPrismaMetric);
     } catch (error) {
-      handlePrismaFailure("listImpactDonationMetricRecords", error);
+      console.warn("[project-store] Unable to list donation metrics.", {
+        message: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   }
 
-  assertMemoryFallbackAllowed("listImpactDonationMetricRecords");
-  return listDonations().map(toDonationMetricRecord);
+  return canUseMemoryFallback()
+    ? listDonations().map(toDonationMetricRecord)
+    : [];
 }
 
 export async function createConfirmedDonation(
