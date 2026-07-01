@@ -25,6 +25,11 @@ import {
 } from "../../util/celoConfig";
 import { transferCeloErc20 } from "../../util/erc20Celo";
 import { transferNativeCelo } from "../../util/nativeCelo";
+import {
+  removePendingDonationReceipt,
+  savePendingDonationReceipt,
+  type PendingDonationReceipt,
+} from "../../util/pendingDonationReceipts";
 import { validateCeloWallet } from "../../util/usdgloCelo";
 
 import MqcCardImg from "../../images/projects-page/cards/mqc-edicao-2.jpeg";
@@ -303,7 +308,7 @@ export default function Contribute() {
             onStatus,
           });
 
-      const submittedDonation = await submitDonation({
+      const pendingReceipt: PendingDonationReceipt = {
         projectId: project.id,
         projectName: displayProjectName,
         donorType: tipoDoador,
@@ -312,14 +317,15 @@ export default function Contribute() {
         asset: transfer.asset,
         network: "celo-mainnet",
         txHash: transfer.txHash,
-        status: "confirmed",
-        walletAddress: transfer.donorWallet,
-        destinationAddress: transfer.recipientWallet,
-      });
+        donorWallet: transfer.donorWallet,
+        recipientWallet: transfer.recipientWallet,
+        createdAt: new Date().toISOString(),
+        localStatus: "PENDING_PLATFORM_SYNC",
+      };
+      savePendingDonationReceipt(pendingReceipt);
 
-      setDonationFeedback("Doação confirmada com sucesso.");
-      const donationId = submittedDonation.donation?.id;
       const receiptParams = new URLSearchParams({
+        projectId: String(project.id),
         projeto: displayProjectName,
         valor: String(transfer.amount),
         asset: transfer.asset,
@@ -329,6 +335,40 @@ export default function Contribute() {
         destino: transfer.recipientWallet,
       });
 
+      let submittedDonation: Awaited<ReturnType<typeof submitDonation>>;
+
+      try {
+        submittedDonation = await submitDonation({
+          projectId: project.id,
+          projectName: displayProjectName,
+          donorType: tipoDoador,
+          document: identificacao,
+          amount: transfer.amount,
+          asset: transfer.asset,
+          network: "celo-mainnet",
+          txHash: transfer.txHash,
+          status: "confirmed",
+          walletAddress: transfer.donorWallet,
+          destinationAddress: transfer.recipientWallet,
+        });
+      } catch (syncError) {
+        console.warn("[contribute] Platform donation sync failed.", {
+          message:
+            syncError instanceof Error ? syncError.message : "Unknown error",
+          txHash: transfer.txHash,
+        });
+        setDonationFeedback(
+          "Transacao confirmada na Celo, mas ainda nao conseguimos sincronizar o registro na plataforma.",
+        );
+        receiptParams.set("sync", "pending");
+        void navigate(`/sucesso?${receiptParams.toString()}`);
+        return;
+      }
+
+      removePendingDonationReceipt(transfer.txHash);
+
+      const donationId = submittedDonation.donation?.id;
+      setDonationFeedback("Doacao confirmada com sucesso.");
       if (donationId !== undefined && donationId !== null) {
         receiptParams.set("donationId", String(donationId));
       }

@@ -28,7 +28,7 @@ export function getExplorerLabel() {
 }
 
 export function isValidTxHash(hash: string | null | undefined) {
-  return /^[0-9a-fA-F]{64}$/.test((hash ?? "").trim());
+  return /^(0x)?[0-9a-fA-F]{64}$/.test((hash ?? "").trim());
 }
 
 export function isValidContractId(contractId: string | null | undefined) {
@@ -45,6 +45,10 @@ export function resolveImpactSbtContractId() {
 export function buildTransactionExplorerUrl(txHash: string | null | undefined) {
   if (!isValidTxHash(txHash)) return null;
   const hash = txHash!.trim();
+  if (hash.toLowerCase().startsWith("0x")) {
+    return `https://celoscan.io/tx/${hash}`;
+  }
+
   const expertBase = getExpertBaseUrl();
   if (!expertBase) return null;
   return `${expertBase}/tx/${hash}`;

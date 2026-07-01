@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { usePrivyWalletAbstraction } from "../../hooks/usePrivyWalletAbstraction";
 import { useDonations } from "../../providers/DonationProvider";
 import {
+  submitDonation,
   listProjectNftCatalog,
   listProjectMedia,
   type ProjectNftCatalogItemDTO,
@@ -14,6 +15,11 @@ import {
   buildTransactionExplorerUrl,
   getExplorerLabel,
 } from "../../util/explorerLinks";
+import {
+  listPendingDonationReceiptsByWallet,
+  removePendingDonationReceipt,
+  type PendingDonationReceipt,
+} from "../../util/pendingDonationReceipts";
 
 export default function Dashboard() {
   const { donations, refreshDonations } = useDonations();
@@ -22,6 +28,10 @@ export default function Dashboard() {
   const [projectMedia, setProjectMedia] = useState<ProjectMediaItemDTO[]>([]);
   const [selectedNft, setSelectedNft] =
     useState<ProjectNftCatalogItemDTO | null>(null);
+  const [pendingReceipts, setPendingReceipts] = useState<
+    PendingDonationReceipt[]
+  >([]);
+  const [syncingTxHash, setSyncingTxHash] = useState<string | null>(null);
 
   useEffect(() => {
     void Promise.all([listProjectNftCatalog(), listProjectMedia()])
@@ -80,6 +90,58 @@ export default function Dashboard() {
     }
   }, [hasConnectedWallet, refreshDonations]);
 
+  useEffect(() => {
+    const loadPendingReceipts = () => {
+      setPendingReceipts(
+        listPendingDonationReceiptsByWallet(privyWallet.evmAddress),
+      );
+    };
+
+    loadPendingReceipts();
+    window.addEventListener(
+      "ponteia:pending-donations-changed",
+      loadPendingReceipts,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "ponteia:pending-donations-changed",
+        loadPendingReceipts,
+      );
+    };
+  }, [privyWallet.evmAddress]);
+
+  const handleSyncPendingReceipt = async (receipt: PendingDonationReceipt) => {
+    if (syncingTxHash) return;
+
+    setSyncingTxHash(receipt.txHash);
+
+    try {
+      await submitDonation({
+        projectId: receipt.projectId,
+        projectName: receipt.projectName,
+        donorType: receipt.donorType,
+        document: receipt.document,
+        amount: receipt.amount,
+        asset: receipt.asset,
+        network: receipt.network,
+        txHash: receipt.txHash,
+        status: "confirmed",
+        walletAddress: receipt.donorWallet,
+        destinationAddress: receipt.recipientWallet,
+      });
+      removePendingDonationReceipt(receipt.txHash);
+      await refreshDonations();
+    } catch (error) {
+      console.warn("[dashboard] Pending donation sync failed.", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        txHash: receipt.txHash,
+      });
+    } finally {
+      setSyncingTxHash(null);
+    }
+  };
+
   const handleConnectWallet = () => {
     void Promise.resolve()
       .then(() => privyWallet.login())
@@ -133,6 +195,67 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
           <div className="lg:col-span-8 space-y-8">
+            {pendingReceipts.length > 0 ? (
+              <section className="rounded-[2rem] border border-orange-200 bg-orange-50 p-6">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">
+                  Transacoes confirmadas aguardando sincronizacao
+                </p>
+                <div className="mt-5 space-y-4">
+                  {pendingReceipts.map((receipt) => {
+                    const txExplorerUrl = buildTransactionExplorerUrl(
+                      receipt.txHash,
+                    );
+
+                    return (
+                      <div
+                        key={receipt.txHash}
+                        className="rounded-2xl border border-orange-100 bg-white p-5"
+                      >
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                          <div className="space-y-2">
+                            <h3 className="text-lg font-black uppercase tracking-tight text-slate-900">
+                              {receipt.projectName}
+                            </h3>
+                            <p className="text-xs font-black uppercase tracking-widest text-orange-600">
+                              {formatDonationAmount(receipt.amount)}{" "}
+                              {receipt.asset}
+                            </p>
+                            <p className="font-mono text-xs text-slate-500">
+                              {formatShortHash(receipt.txHash)}
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-3 text-[10px] font-black uppercase tracking-[0.18em]">
+                            {txExplorerUrl ? (
+                              <a
+                                href={txExplorerUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-full border border-orange-200 px-4 py-3 text-orange-700 hover:bg-orange-100"
+                              >
+                                Ver transacao na Celo
+                              </a>
+                            ) : null}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void handleSyncPendingReceipt(receipt)
+                              }
+                              disabled={syncingTxHash === receipt.txHash}
+                              className="rounded-full bg-orange-500 px-4 py-3 text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {syncingTxHash === receipt.txHash
+                                ? "Sincronizando..."
+                                : "Sincronizar registro"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+
             <h2 className="text-4xl font-black uppercase tracking-tighter italic border-b-4 border-slate-100 pb-4">
               Projetos Apoiados
             </h2>

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   getDonationReceipt,
   listNftCatalog,
+  submitDonation,
   type DonationReceiptDTO,
   type NftCatalogItemDTO,
 } from "../../util/crowdfundingApi";
@@ -17,8 +18,15 @@ import {
   formatDemoCurrencyLabel,
   type DemoCurrencyCode,
 } from "../../util/projectDemoMetadata";
+import {
+  getPendingDonationReceiptByTxHash,
+  removePendingDonationReceipt,
+  savePendingDonationReceipt,
+  type PendingDonationReceipt,
+} from "../../util/pendingDonationReceipts";
 
 export default function Success() {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialProjectName = searchParams.get("projeto")?.trim() ?? "";
   const [confirmedAt, setConfirmedAt] = useState<string | null>(null);
@@ -30,6 +38,9 @@ export default function Success() {
   const [receipt, setReceipt] = useState<DonationReceiptDTO | null>(null);
   const [receiptNotice, setReceiptNotice] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [pendingReceipt, setPendingReceipt] =
+    useState<PendingDonationReceipt | null>(null);
+  const [isSyncingReceipt, setIsSyncingReceipt] = useState(false);
 
   const donationId = searchParams.get("donationId")?.trim() ?? "";
   const valorDoadoXLM = Number(searchParams.get("xlm")) || 0;
@@ -100,19 +111,26 @@ export default function Success() {
     ? `https://stellar.expert/explorer/${stellarExpertSegment}/tx/${stellarTxHash}`
     : buildTransactionExplorerUrl(receiptTxHash);
   const nftExplorerUrl = buildNftTokenExplorerUrl(nftId);
-  const explorerLabel = stellarExpertSegment
-    ? "explorador da rede"
-    : getExplorerLabel();
+  const explorerLabel = isCeloMainnetPayment
+    ? "Celo"
+    : stellarExpertSegment
+      ? "explorador da rede"
+      : getExplorerLabel();
   const isReceiptConfirmed =
     receipt?.status === "CONFIRMED" ||
     Boolean(receiptTxHash && isCeloMainnetPayment);
   const receiptStatusLabel = isReceiptConfirmed
     ? isCeloMainnetPayment
-      ? "Confirmado na Celo"
+      ? receipt || donationId
+        ? "Registro confirmado"
+        : "Transacao confirmada na Celo"
       : "Registro confirmado"
     : "Pendente";
   const formattedDateTime = formatDate(receiptCreatedAt);
   const fullTransactionLink = txExplorerUrl ?? null;
+  const hasPendingPlatformSync = Boolean(
+    !receipt && isCeloMainnetPayment && receiptTxHash && pendingReceipt,
+  );
 
   useEffect(() => {
     void listNftCatalog()
@@ -163,6 +181,73 @@ export default function Success() {
       if (timeout) window.clearTimeout(timeout);
     };
   }, [donationId]);
+
+  useEffect(() => {
+    if (donationId || !receiptTxHash || !isCeloMainnetPayment) return;
+
+    const pending =
+      getPendingDonationReceiptByTxHash(receiptTxHash) ??
+      createPendingReceiptFromSearch(searchParams, receiptTxHash);
+
+    if (pending) {
+      savePendingDonationReceipt(pending);
+      setPendingReceipt(pending);
+      setConfirmedAt(pending.createdAt);
+      setReceiptNotice(
+        "Transacao confirmada na Celo, mas ainda nao conseguimos sincronizar o registro na plataforma.",
+      );
+    }
+  }, [donationId, isCeloMainnetPayment, receiptTxHash, searchParams]);
+
+  const handleSyncPendingReceipt = async () => {
+    if (!pendingReceipt || isSyncingReceipt) return;
+
+    setIsSyncingReceipt(true);
+    setReceiptNotice("Sincronizando registro da plataforma...");
+
+    try {
+      const response = await submitDonation({
+        projectId: pendingReceipt.projectId,
+        projectName: pendingReceipt.projectName,
+        donorType: pendingReceipt.donorType,
+        document: pendingReceipt.document,
+        amount: pendingReceipt.amount,
+        asset: pendingReceipt.asset,
+        network: pendingReceipt.network,
+        txHash: pendingReceipt.txHash,
+        status: "confirmed",
+        walletAddress: pendingReceipt.donorWallet,
+        destinationAddress: pendingReceipt.recipientWallet,
+      });
+      const nextReceipt = response.donation;
+
+      if (!nextReceipt) {
+        throw new Error("Backend nao retornou comprovante persistido.");
+      }
+
+      removePendingDonationReceipt(pendingReceipt.txHash);
+      setPendingReceipt(null);
+      setReceipt(nextReceipt);
+      setConfirmedAt(nextReceipt.confirmedAt ?? nextReceipt.createdAt);
+      setReceiptTxHash(nextReceipt.txHash);
+      setReceiptNotice("Registro da plataforma sincronizado com sucesso.");
+
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("sync");
+      nextParams.set("donationId", String(nextReceipt.id));
+      void navigate(`/sucesso?${nextParams.toString()}`, { replace: true });
+    } catch (error) {
+      console.warn("[success] Pending donation sync failed.", {
+        message: error instanceof Error ? error.message : "Unknown error",
+        txHash: pendingReceipt.txHash,
+      });
+      setReceiptNotice(
+        "Transacao confirmada. Registro da plataforma pendente. Tente sincronizar novamente em instantes.",
+      );
+    } finally {
+      setIsSyncingReceipt(false);
+    }
+  };
 
   const handleCopy = async (key: string, value: string | null | undefined) => {
     if (!value) return;
@@ -324,6 +409,28 @@ export default function Success() {
                   {receiptNotice}
                 </p>
               ) : null}
+              {hasPendingPlatformSync ? (
+                <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 text-left normal-case tracking-normal">
+                  <p className="text-xs font-bold text-orange-800">
+                    Ainda estamos sincronizando o registro da plataforma.
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-orange-700">
+                    A transacao on-chain ja foi confirmada. Nao faca uma nova
+                    doacao; use o botao abaixo para tentar registrar este mesmo
+                    txHash novamente.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void handleSyncPendingReceipt()}
+                    disabled={isSyncingReceipt}
+                    className="mt-4 rounded-full bg-orange-500 px-5 py-3 text-[11px] font-black uppercase tracking-[0.22em] text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSyncingReceipt
+                      ? "Sincronizando..."
+                      : "Sincronizar registro"}
+                  </button>
+                </div>
+              ) : null}
               <div className="flex justify-between gap-4">
                 <span className="text-slate-400">
                   Taxas Operacionais (0,7%)
@@ -482,6 +589,43 @@ function CopyValue(props: {
       ) : null}
     </span>
   );
+}
+
+function createPendingReceiptFromSearch(
+  searchParams: URLSearchParams,
+  txHash: string,
+): PendingDonationReceipt | null {
+  const projectId = searchParams.get("projectId")?.trim();
+  const projectName = searchParams.get("projeto")?.trim() || "Projeto apoiado";
+  const amount = Number(searchParams.get("valor"));
+  const asset = searchParams.get("asset")?.toUpperCase();
+  const donorWallet = searchParams.get("wallet")?.trim();
+  const recipientWallet = searchParams.get("destino")?.trim();
+
+  if (
+    !projectId ||
+    !Number.isFinite(amount) ||
+    amount <= 0 ||
+    (asset !== "USDGLO" && asset !== "CELO") ||
+    !donorWallet ||
+    !recipientWallet
+  ) {
+    return null;
+  }
+
+  return {
+    projectId,
+    projectName,
+    donorType: "PF",
+    amount,
+    asset,
+    network: "celo-mainnet",
+    txHash,
+    donorWallet,
+    recipientWallet,
+    createdAt: new Date().toISOString(),
+    localStatus: "PENDING_PLATFORM_SYNC",
+  };
 }
 
 type PaymentNetwork =
