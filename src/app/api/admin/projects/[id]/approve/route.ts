@@ -2,6 +2,7 @@ import {
   setImpactProjectStatus,
   toProjectDTO,
 } from "../../../../_lib/projectStore";
+import { requireAdmin } from "../../../../_lib/adminAuth";
 import { getApiBaseUrl } from "../../../../_lib/proxy";
 
 export const runtime = "nodejs";
@@ -9,7 +10,10 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string }> };
 
-export async function POST(_request: Request, context: Ctx) {
+export async function POST(request: Request, context: Ctx) {
+  const unauthorized = await requireAdmin(request);
+  if (unauthorized) return unauthorized;
+
   const { id } = await context.params;
 
   if (getApiBaseUrl()) {

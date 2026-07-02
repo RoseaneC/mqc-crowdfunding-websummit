@@ -98,7 +98,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       refresh,
-      hasRole: (role) => Boolean(user?.roles.includes(role)),
+      hasRole: (role) =>
+        Boolean(
+          user?.roles.includes(role) ||
+            (role === "SUPERADMIN" && user?.isAdmin),
+        ),
     }),
     [user, isLoading],
   );
