@@ -4,6 +4,7 @@
  *
  * Provides a fully-typed interface to localStorage, and is easy to modify for other storage strategies (i.e. sessionStorage)
  */
+import { safeJsonParse } from "./safeStorage";
 
 /**
  * Valid localStorage key names mapped to an arbitrary value of the correct
@@ -47,16 +48,23 @@ class TypedStorage<T> {
       return item;
     }
 
+    if (retrievalMode !== "raw") {
+      const parsed = safeJsonParse<T[U] | null>(item, null);
+      if (parsed !== null) return parsed;
+    }
+
     try {
       return JSON.parse(item) as T[U];
-    } catch (error) {
+    } catch {
       switch (retrievalMode) {
         case "safe":
+          this.storage?.removeItem(key.toString());
           return null;
         case "raw":
           return item as unknown as T[U];
         default:
-          throw error;
+          this.storage?.removeItem(key.toString());
+          return null;
       }
     }
   }

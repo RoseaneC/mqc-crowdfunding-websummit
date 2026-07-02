@@ -22,7 +22,13 @@ function isThemeMode(value: string | null): value is ThemeMode {
 function readPreferredTheme(): ThemeMode {
   if (typeof window === "undefined") return "light";
 
-  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  const storedTheme = (() => {
+    try {
+      return window.localStorage.getItem(THEME_STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  })();
 
   if (isThemeMode(storedTheme)) {
     return storedTheme;
@@ -76,7 +82,11 @@ export default function Navbar() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Storage can be unavailable in restricted browsers; theme still applies.
+    }
   }, [theme]);
 
   useEffect(() => {

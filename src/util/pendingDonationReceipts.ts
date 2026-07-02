@@ -1,3 +1,5 @@
+import { safeLocalStorageGetJson } from "./safeStorage";
+
 export const PENDING_DONATION_RECEIPTS_KEY =
   "ponteia_pending_donation_receipts";
 
@@ -19,17 +21,14 @@ export type PendingDonationReceipt = {
 export function listPendingDonationReceipts(): PendingDonationReceipt[] {
   if (typeof window === "undefined") return [];
 
-  try {
-    const parsed: unknown = JSON.parse(
-      window.localStorage.getItem(PENDING_DONATION_RECEIPTS_KEY) ?? "[]",
-    );
+  const parsed = safeLocalStorageGetJson<unknown>(
+    PENDING_DONATION_RECEIPTS_KEY,
+    [],
+  );
 
-    if (!Array.isArray(parsed)) return [];
+  if (!Array.isArray(parsed)) return [];
 
-    return parsed.filter(isPendingDonationReceipt);
-  } catch {
-    return [];
-  }
+  return parsed.filter(isPendingDonationReceipt);
 }
 
 export function listPendingDonationReceiptsByWallet(wallet: string | null) {
